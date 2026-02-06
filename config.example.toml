@@ -15,8 +15,8 @@ Be concise and helpful.
 
 [keys]
 # Set these here or as environment variables (OPENAI_API_KEY, ANTHROPIC_API_KEY).
-# openai_api_key = "sk-..."
-# anthropic_api_key = "sk-ant-..."
+# openai_api_key = ""       # Or set OPENAI_API_KEY
+# anthropic_api_key = ""    # Or set ANTHROPIC_API_KEY
 
 [channels.webchat]
 enabled = true
