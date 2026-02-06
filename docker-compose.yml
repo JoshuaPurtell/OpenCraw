@@ -1,14 +1,18 @@
-version: "3.8"
-
 services:
   opencraw:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        HORIZONS_REF: ${HORIZONS_REF:-main}
     ports:
       - "3000:3000"
     volumes:
       - opencraw-data:/home/opencraw/.opencraw
-    env_file:
-      - .env
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      RUST_LOG: ${RUST_LOG:-info}
     depends_on:
       postgres:
         condition: service_healthy
