@@ -5,7 +5,7 @@ WORKDIR /build
 
 # OpenCraw uses path dependencies to a sibling `../Horizons` checkout.
 # In Docker we clone Horizons into `/Horizons` to satisfy those paths.
-ARG HORIZONS_REF=v0.1.0
+ARG HORIZONS_REF=main
 RUN git clone --depth 1 --branch "${HORIZONS_REF}" https://github.com/synth-laboratories/Horizons /Horizons \
     || git clone --depth 1 https://github.com/synth-laboratories/Horizons /Horizons
 
