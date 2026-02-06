@@ -1,0 +1,63 @@
+# OpenCraw Configuration
+# Copy to ~/.opencraw/config.toml and fill in your values.
+
+[general]
+# Model name — auto-detects provider from prefix.
+# "claude-*" → Anthropic, anything else → OpenAI-compatible.
+model = "claude-sonnet-4-5-20250929"
+
+# System prompt for the assistant.
+system_prompt = """
+You are OpenCraw, a helpful personal AI assistant.
+You have access to tools for executing shell commands, reading/writing files, and more.
+Be concise and helpful.
+"""
+
+[keys]
+# Set these here or as environment variables (OPENAI_API_KEY, ANTHROPIC_API_KEY).
+# openai_api_key = "sk-..."
+# anthropic_api_key = "sk-ant-..."
+
+[channels.webchat]
+enabled = true
+port = 3000
+
+[channels.telegram]
+enabled = false
+# bot_token = ""  # Or set TELEGRAM_BOT_TOKEN env var.
+
+[channels.discord]
+enabled = false
+# bot_token = ""  # Or set DISCORD_BOT_TOKEN env var.
+
+[channels.imessage]
+enabled = false
+# source_db = "~/Library/Messages/chat.db" # Or set IMESSAGE_SOURCE_DB env var.
+poll_interval_ms = 1500
+start_from_latest = true
+# In group chats, OpenCraw only responds to messages starting with one of these prefixes.
+group_prefixes = ["@opencraw", "opencraw"]
+
+[tools]
+shell = true
+filesystem = true
+browser = false      # Stub in v0.1.0
+clipboard = false    # Stub in v0.1.0
+
+[security]
+# Approval modes: "human" (always ask), "ai" (LLM decides), "auto" (always allow).
+shell_approval = "human"
+browser_approval = "ai"
+filesystem_write_approval = "ai"
+
+# Allowlist: for external channels (iMessage/Telegram/Discord), OpenCraw will not respond
+# unless the sender is allowlisted. WebChat is always allowed for local dev.
+# allowed_users = ["imessage:+14155551212", "telegram:12345", "discord:67890"]
+allow_all_senders = false
+
+[memory]
+enabled = false
+
+[optimization]
+enabled = false
+schedule = "0 0 * * 0"  # Weekly cron

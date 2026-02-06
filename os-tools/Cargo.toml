@@ -1,0 +1,23 @@
+[package]
+name = "os-tools"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+base64 = { workspace = true }
+horizons_core = { workspace = true }
+os-llm = { path = "../os-llm" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+arboard = "3.4"
+regex = "1"
+
+[dev-dependencies]
+tempfile = "3"

@@ -1,0 +1,12 @@
+/target
+.openshell_dev
+.DS_Store
+data/
+*.swp
+*.swo
+.env
+web/node_modules
+web/dist
+web/.vite
+web/.env
+web/.env.*

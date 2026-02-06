@@ -1,0 +1,48 @@
+# Local dev config with iMessage enabled. Relies on OPENAI_API_KEY in env.
+
+[general]
+model = "gpt-4o-mini"
+system_prompt = """
+You are OpenCraw, a helpful personal AI assistant.
+Be concise.
+"""
+
+[keys]
+
+[channels.webchat]
+enabled = true
+port = 3000
+
+[channels.telegram]
+enabled = false
+
+[channels.discord]
+enabled = false
+
+[channels.imessage]
+enabled = true
+# source_db = "~/Library/Messages/chat.db"
+poll_interval_ms = 1500
+start_from_latest = true
+# In group chats, only respond when prefixed.
+group_prefixes = ["@opencraw", "opencraw"]
+
+[tools]
+shell = true
+filesystem = true
+browser = false
+clipboard = false
+
+[security]
+# For local testing only. Do not use "auto" in production.
+shell_approval = "auto"
+browser_approval = "auto"
+filesystem_write_approval = "auto"
+allowed_users = []
+
+[memory]
+enabled = false
+
+[optimization]
+enabled = false
+schedule = "0 0 * * 0"

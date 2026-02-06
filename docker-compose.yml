@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  opencraw:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - opencraw-data:/home/opencraw/.opencraw
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: opencraw
+      POSTGRES_PASSWORD: opencraw
+      POSTGRES_DB: opencraw
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opencraw"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  opencraw-data:
+  pg-data:
+  redis-data:
