@@ -3,12 +3,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        HORIZONS_REF: ${HORIZONS_REF:-main}
     ports:
       - "3000:3000"
     volumes:
-      - opencraw-data:/home/opencraw/.opencraw
+      - ~/.opencraw/config.toml:/home/opencraw/.opencraw/config.toml:ro
+      - opencraw-data:/home/opencraw/.opencraw/data
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}

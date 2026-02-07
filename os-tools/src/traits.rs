@@ -17,11 +17,8 @@ pub trait Tool: Send + Sync {
 
 pub fn to_llm_tool_def(tool: &dyn Tool) -> os_llm::ToolDefinition {
     let spec = tool.spec();
-    os_llm::ToolDefinition {
-        name: spec.name,
-        description: spec.description,
-        parameters: spec.parameters_schema,
-    }
+    os_llm::ToolDefinition::validated(spec.name, spec.description, spec.parameters_schema)
+        .expect("tool name must be valid for all LLM providers")
 }
 
 pub(crate) fn require_string(args: &serde_json::Value, key: &str) -> Result<String> {

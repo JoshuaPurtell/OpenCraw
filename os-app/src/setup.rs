@@ -22,7 +22,7 @@ pub async fn register_subscriptions(bus: &dyn EventBus, org_id: &str) -> Result<
         SubscriptionConfig::default(),
         None,
     )?;
-    let _ = bus.subscribe(sub).await?;
+    bus.subscribe(sub).await?;
 
     let sub = Subscription::new(
         org_id,
@@ -34,7 +34,7 @@ pub async fn register_subscriptions(bus: &dyn EventBus, org_id: &str) -> Result<
         SubscriptionConfig::default(),
         None,
     )?;
-    let _ = bus.subscribe(sub).await?;
+    bus.subscribe(sub).await?;
 
     let sub = Subscription::new(
         org_id,
@@ -46,7 +46,7 @@ pub async fn register_subscriptions(bus: &dyn EventBus, org_id: &str) -> Result<
         SubscriptionConfig::default(),
         None,
     )?;
-    let _ = bus.subscribe(sub).await?;
+    bus.subscribe(sub).await?;
 
     Ok(())
 }

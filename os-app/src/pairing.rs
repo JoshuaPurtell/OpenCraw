@@ -27,9 +27,9 @@ pub fn is_allowed(cfg: &OpenShellConfig, channel_id: &str, sender_id: &str) -> b
 mod tests {
     use super::*;
     use crate::config::{
-        ApprovalMode, ChannelsConfig, DiscordConfig, GeneralConfig, ImessageConfig, KeysConfig,
-        MemoryConfig, OpenShellConfig, OptimizationConfig, SecurityConfig, TelegramConfig,
-        ToolsConfig, WebChatConfig,
+        ApprovalMode, ChannelsConfig, ContextConfig, DiscordConfig, GeneralConfig, ImessageConfig,
+        KeysConfig, MemoryConfig, OpenShellConfig, OptimizationConfig, QueueConfig, RuntimeConfig,
+        SecurityConfig, TelegramConfig, ToolsConfig, WebChatConfig,
     };
 
     fn base_cfg() -> OpenShellConfig {
@@ -56,6 +56,9 @@ mod tests {
                 allowed_users: vec![],
                 allow_all_senders: false,
             },
+            runtime: RuntimeConfig::default(),
+            queue: QueueConfig::default(),
+            context: ContextConfig::default(),
             memory: MemoryConfig::default(),
             optimization: OptimizationConfig::default(),
         }

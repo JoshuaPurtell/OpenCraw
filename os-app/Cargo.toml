@@ -16,8 +16,9 @@ os-tools = { path = "../os-tools" }
 horizons_core = { workspace = true }
 horizons_rs = { workspace = true }
 horizons_graph = { workspace = true }
+horizons_integrations = { workspace = true }
 mipro_v2 = { workspace = true }
-voyager = { path = "../../Horizons/voyager" }
+voyager = { workspace = true }
 
 anyhow = { workspace = true }
 async-trait = { workspace = true }
@@ -26,6 +27,7 @@ base64 = { workspace = true }
 bytes = { workspace = true }
 chrono = { workspace = true }
 clap = { workspace = true }
+dotenvy = { workspace = true }
 dashmap = { workspace = true }
 futures-util = { workspace = true }
 reqwest = { workspace = true }

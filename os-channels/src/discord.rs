@@ -17,20 +17,14 @@ pub struct DiscordAdapter {
 }
 
 impl DiscordAdapter {
-    pub fn new(bot_token: &str) -> Self {
-        Self {
-            http: reqwest::Client::builder()
-                .timeout(std::time::Duration::from_secs(60))
-                .build()
-                .unwrap_or_else(|e| {
-                    tracing::warn!(
-                        %e,
-                        "reqwest client build failed; falling back to default client"
-                    );
-                    reqwest::Client::new()
-                }),
+    pub fn new(bot_token: &str) -> Result<Self> {
+        let http = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(60))
+            .build()?;
+        Ok(Self {
+            http,
             bot_token: bot_token.to_string(),
-        }
+        })
     }
 
     fn api_url(&self, path: &str) -> String {
@@ -71,8 +65,10 @@ impl ChannelAdapter for DiscordAdapter {
             .await?;
         if !resp.status().is_success() {
             let status = resp.status();
-            let text = resp.text().await.unwrap_or_default();
-            tracing::warn!(%status, %text, "discord send failed");
+            let text = resp.text().await?;
+            return Err(anyhow::anyhow!(
+                "discord send failed: status={status} body={text}"
+            ));
         }
         Ok(())
     }
@@ -80,14 +76,7 @@ impl ChannelAdapter for DiscordAdapter {
 
 impl DiscordAdapter {
     async fn run_gateway_loop(&self, tx: mpsc::Sender<InboundMessage>) -> Result<()> {
-        let mut reconnects: usize = 0;
-        loop {
-            reconnects += 1;
-            if let Err(e) = self.run_gateway_once(tx.clone()).await {
-                tracing::warn!(%e, reconnects, "discord gateway failed; retrying");
-                tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-            }
-        }
+        self.run_gateway_once(tx).await
     }
 
     async fn run_gateway_once(&self, tx: mpsc::Sender<InboundMessage>) -> Result<()> {
@@ -96,16 +85,16 @@ impl DiscordAdapter {
         let write = Arc::new(Mutex::new(write));
 
         // HELLO.
-        let mut heartbeat_interval_ms: u64 = 41_250;
-        if let Some(msg) = read.next().await {
+        let heartbeat_interval_ms: u64 = if let Some(msg) = read.next().await {
             let msg = msg?;
             let v: serde_json::Value = serde_json::from_str(msg.to_text()?)?;
-            heartbeat_interval_ms = v
-                .get("d")
+            v.get("d")
                 .and_then(|d| d.get("heartbeat_interval"))
                 .and_then(|x| x.as_u64())
-                .unwrap_or(heartbeat_interval_ms);
-        }
+                .ok_or_else(|| anyhow::anyhow!("discord HELLO missing heartbeat_interval"))?
+        } else {
+            return Err(anyhow::anyhow!("discord gateway closed before HELLO"));
+        };
 
         // IDENTIFY.
         let identify = serde_json::json!({
@@ -158,14 +147,17 @@ impl DiscordAdapter {
                 *seq.write().await = Some(s);
             }
 
-            let op = v.get("op").and_then(|o| o.as_i64()).unwrap_or(-1);
+            let op = v
+                .get("op")
+                .and_then(|o| o.as_i64())
+                .ok_or_else(|| anyhow::anyhow!("discord payload missing op"))?;
             if op == 11 {
                 continue;
             }
 
-            let t = v.get("t").and_then(|t| t.as_str()).unwrap_or("");
+            let t = v.get("t").and_then(|t| t.as_str());
             match t {
-                "READY" => {
+                Some("READY") => {
                     let id = v
                         .get("d")
                         .and_then(|d| d.get("user"))
@@ -174,11 +166,13 @@ impl DiscordAdapter {
                         .map(|s| s.to_string());
                     *bot_user_id.write().await = id;
                 }
-                "MESSAGE_CREATE" => {
-                    let event: DiscordMessageCreate = serde_json::from_value(
-                        v.get("d").cloned().unwrap_or_else(|| serde_json::json!({})),
-                    )?;
-                    if event.author.bot.unwrap_or(false) {
+                Some("MESSAGE_CREATE") => {
+                    let event_payload = v
+                        .get("d")
+                        .cloned()
+                        .ok_or_else(|| anyhow::anyhow!("discord MESSAGE_CREATE missing payload"))?;
+                    let event: DiscordMessageCreate = serde_json::from_value(event_payload)?;
+                    if event.author.bot {
                         continue;
                     }
 
@@ -195,8 +189,7 @@ impl DiscordAdapter {
                         }
                     }
 
-                    let metadata =
-                        serde_json::to_value(&event).unwrap_or_else(|_| serde_json::json!({}));
+                    let metadata = serde_json::to_value(&event)?;
                     let inbound = InboundMessage {
                         kind: InboundMessageKind::Message,
                         message_id: event.id,
@@ -208,13 +201,15 @@ impl DiscordAdapter {
                         metadata,
                         received_at: Utc::now(),
                     };
-                    let _ = tx.send(inbound).await;
+                    tx.send(inbound)
+                        .await
+                        .map_err(|e| anyhow::anyhow!("discord inbound queue closed: {e}"))?;
                 }
-                _ => {}
+                Some(_) | None => {}
             }
         }
 
-        Ok(())
+        Err(anyhow::anyhow!("discord gateway stream ended unexpectedly"))
     }
 }
 
@@ -232,6 +227,5 @@ struct DiscordMessageCreate {
 #[derive(Debug, Deserialize, serde::Serialize)]
 struct DiscordAuthor {
     id: String,
-    #[serde(default)]
-    bot: Option<bool>,
+    bot: bool,
 }

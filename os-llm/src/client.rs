@@ -1,16 +1,109 @@
 use crate::anthropic::AnthropicClient;
+use crate::error::LlmError;
 use crate::error::Result;
 use crate::openai::OpenAiClient;
 use crate::types::{ChatMessage, ChatResponse, StreamChunk, ToolDefinition};
 use futures_util::Stream;
-use futures_util::StreamExt;
-use std::collections::HashMap;
+use std::collections::HashSet;
 use std::pin::Pin;
+use std::time::Instant;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Provider {
     OpenAI,
     Anthropic,
+}
+
+const ALL_PROVIDERS: &[Provider] = &[Provider::OpenAI, Provider::Anthropic];
+
+pub struct ToolNameConstraints {
+    pub pattern: &'static str,
+    pub max_length: usize,
+}
+
+impl Provider {
+    pub fn tool_name_constraints(&self) -> ToolNameConstraints {
+        match self {
+            Provider::OpenAI => ToolNameConstraints {
+                pattern: "^[a-zA-Z0-9_-]+$",
+                max_length: 64,
+            },
+            Provider::Anthropic => ToolNameConstraints {
+                pattern: "^[a-zA-Z0-9_-]+$",
+                max_length: 128,
+            },
+        }
+    }
+}
+
+fn matches_tool_name_pattern(name: &str, _pattern: &str) -> bool {
+    // All current provider patterns are ^[a-zA-Z0-9_-]+$
+    !name.is_empty()
+        && name
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+}
+
+/// Validate a tool name against every provider's constraints.
+/// Returns `Ok(())` if the name satisfies all providers, or an error describing the violation.
+pub fn validate_tool_name_all_providers(name: &str) -> Result<()> {
+    for provider in ALL_PROVIDERS {
+        let c = provider.tool_name_constraints();
+        if name.len() > c.max_length {
+            return Err(LlmError::InvalidInput(format!(
+                "tool name '{name}' exceeds {provider:?} max length {} (got {})",
+                c.max_length,
+                name.len()
+            )));
+        }
+        if !matches_tool_name_pattern(name, c.pattern) {
+            return Err(LlmError::InvalidInput(format!(
+                "tool name '{name}' does not match {provider:?} pattern {}",
+                c.pattern
+            )));
+        }
+    }
+    Ok(())
+}
+
+fn validate_request_payload(messages: &[ChatMessage], tools: &[ToolDefinition]) -> Result<()> {
+    let mut tool_names: HashSet<&str> = HashSet::with_capacity(tools.len());
+    for tool in tools {
+        validate_tool_name_all_providers(&tool.name)?;
+        if !tool_names.insert(tool.name.as_str()) {
+            return Err(LlmError::InvalidInput(format!(
+                "duplicate tool definition name '{}'",
+                tool.name
+            )));
+        }
+    }
+
+    for (message_idx, message) in messages.iter().enumerate() {
+        for (tool_call_idx, tool_call) in message.tool_calls.iter().enumerate() {
+            if tool_call.id.trim().is_empty() {
+                return Err(LlmError::InvalidInput(format!(
+                    "message[{message_idx}] tool_calls[{tool_call_idx}] has empty id"
+                )));
+            }
+
+            validate_tool_name_all_providers(&tool_call.name)?;
+            if !tool_names.contains(tool_call.name.as_str()) {
+                return Err(LlmError::InvalidInput(format!(
+                    "message[{message_idx}] tool_calls[{tool_call_idx}] references unknown tool '{}'",
+                    tool_call.name
+                )));
+            }
+
+            serde_json::from_str::<serde_json::Value>(&tool_call.arguments).map_err(|e| {
+                LlmError::InvalidInput(format!(
+                    "message[{message_idx}] tool_calls[{tool_call_idx}] has invalid JSON arguments for '{}': {e}",
+                    tool_call.name
+                ))
+            })?;
+        }
+    }
+
+    Ok(())
 }
 
 #[derive(Clone)]
@@ -23,21 +116,23 @@ pub struct LlmClient {
 
 impl LlmClient {
     #[tracing::instrument(level = "debug", skip_all)]
-    pub fn new(api_key: &str, model: &str) -> Self {
-        let provider = detect_provider(model);
+    pub fn new(api_key: &str, model: &str) -> Result<Self> {
+        let provider = detect_provider(model)?;
         let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(60))
-            .build()
-            .unwrap_or_else(|e| {
-                tracing::warn!(%e, "reqwest client build failed; falling back to default client");
-                reqwest::Client::new()
-            });
-        Self {
+            .build()?;
+        tracing::info!(
+            provider = ?provider,
+            model = %model,
+            http_timeout_seconds = 60,
+            "llm client initialized"
+        );
+        Ok(Self {
             provider,
             api_key: api_key.to_string(),
             model: model.to_string(),
             client,
-        }
+        })
     }
 
     pub fn provider(&self) -> Provider {
@@ -54,20 +149,36 @@ impl LlmClient {
         messages: &[ChatMessage],
         tools: &[ToolDefinition],
     ) -> Result<ChatResponse> {
-        match self.provider {
+        validate_request_payload(messages, tools)?;
+        tracing::info!(
+            provider = ?self.provider,
+            model = %self.model,
+            message_count = messages.len(),
+            tool_count = tools.len(),
+            "llm chat request started"
+        );
+        let started = Instant::now();
+        let resp = match self.provider {
             Provider::OpenAI => {
                 let c = OpenAiClient::new(self.client.clone(), &self.api_key, &self.model);
-                let (tools_sanitized, forward, reverse) = sanitize_tools_for_openai(tools);
-                let messages_sanitized = sanitize_messages_for_openai(messages, &forward);
-                let mut resp = c.chat(&messages_sanitized, &tools_sanitized).await?;
-                remap_tool_calls_in_response(&mut resp, &reverse);
-                Ok(resp)
+                c.chat(messages, tools).await?
             }
             Provider::Anthropic => {
                 let c = AnthropicClient::new(self.client.clone(), &self.api_key, &self.model);
-                c.chat(messages, tools).await
+                c.chat(messages, tools).await?
             }
-        }
+        };
+        tracing::info!(
+            provider = ?self.provider,
+            model = %self.model,
+            latency_ms = started.elapsed().as_millis() as u64,
+            prompt_tokens = resp.usage.prompt_tokens,
+            completion_tokens = resp.usage.completion_tokens,
+            tool_calls = resp.message.tool_calls.len(),
+            finish_reason = %resp.finish_reason,
+            "llm chat request completed"
+        );
+        Ok(resp)
     }
 
     #[tracing::instrument(level = "info", skip_all)]
@@ -76,111 +187,46 @@ impl LlmClient {
         messages: &[ChatMessage],
         tools: &[ToolDefinition],
     ) -> Result<Pin<Box<dyn Stream<Item = Result<StreamChunk>> + Send>>> {
-        match self.provider {
+        validate_request_payload(messages, tools)?;
+        tracing::info!(
+            provider = ?self.provider,
+            model = %self.model,
+            message_count = messages.len(),
+            tool_count = tools.len(),
+            "llm stream request started"
+        );
+        let started = Instant::now();
+        let stream = match self.provider {
             Provider::OpenAI => {
                 let c = OpenAiClient::new(self.client.clone(), &self.api_key, &self.model);
-                let (tools_sanitized, forward, reverse) = sanitize_tools_for_openai(tools);
-                let messages_sanitized = sanitize_messages_for_openai(messages, &forward);
-                let stream = c
-                    .chat_stream(&messages_sanitized, &tools_sanitized)
-                    .await?;
-                Ok(Box::pin(stream.map(move |chunk| match chunk {
-                    Ok(StreamChunk::ToolCallStart { id, name }) => Ok(StreamChunk::ToolCallStart {
-                        id,
-                        name: reverse.get(&name).cloned().unwrap_or(name),
-                    }),
-                    other => other,
-                })))
+                c.chat_stream(messages, tools).await?
             }
             Provider::Anthropic => {
                 let c = AnthropicClient::new(self.client.clone(), &self.api_key, &self.model);
-                c.chat_stream(messages, tools).await
+                c.chat_stream(messages, tools).await?
             }
-        }
+        };
+        tracing::info!(
+            provider = ?self.provider,
+            model = %self.model,
+            latency_ms = started.elapsed().as_millis() as u64,
+            "llm stream request established"
+        );
+        Ok(stream)
     }
 }
 
-fn detect_provider(model: &str) -> Provider {
+fn detect_provider(model: &str) -> Result<Provider> {
     let m = model.to_ascii_lowercase();
     if m.starts_with("claude-") {
-        return Provider::Anthropic;
+        return Ok(Provider::Anthropic);
     }
-    Provider::OpenAI
-}
-
-fn sanitize_tools_for_openai(
-    tools: &[ToolDefinition],
-) -> (Vec<ToolDefinition>, HashMap<String, String>, HashMap<String, String>) {
-    let mut used: HashMap<String, usize> = HashMap::new();
-    let mut forward: HashMap<String, String> = HashMap::new(); // original -> sanitized
-    let mut reverse: HashMap<String, String> = HashMap::new(); // sanitized -> original
-    let mut out = Vec::with_capacity(tools.len());
-
-    for t in tools {
-        let mut name = sanitize_openai_tool_name(&t.name);
-        if let Some(n) = used.get_mut(&name) {
-            *n += 1;
-            name = format!("{name}_{}", *n);
-        } else {
-            used.insert(name.clone(), 0);
-        }
-        forward.insert(t.name.clone(), name.clone());
-        reverse.insert(name.clone(), t.name.clone());
-        out.push(ToolDefinition {
-            name,
-            description: t.description.clone(),
-            parameters: t.parameters.clone(),
-        });
+    if m.starts_with("gpt-") || m.starts_with("o1") || m.starts_with("o3") || m.starts_with("o4") {
+        return Ok(Provider::OpenAI);
     }
-
-    (out, forward, reverse)
-}
-
-fn remap_tool_calls_in_response(resp: &mut ChatResponse, reverse: &HashMap<String, String>) {
-    for tc in resp.message.tool_calls.iter_mut() {
-        if let Some(orig) = reverse.get(&tc.name) {
-            tc.name = orig.clone();
-        }
-    }
-}
-
-fn sanitize_messages_for_openai(
-    messages: &[ChatMessage],
-    forward: &HashMap<String, String>,
-) -> Vec<ChatMessage> {
-    let mut out = Vec::with_capacity(messages.len());
-    for m in messages {
-        let mut m2 = m.clone();
-        for tc in m2.tool_calls.iter_mut() {
-            if let Some(s) = forward.get(&tc.name) {
-                tc.name = s.clone();
-            } else {
-                // Best-effort: if tool name isn't in the current tool list, still sanitize to
-                // satisfy OpenAI validation.
-                tc.name = sanitize_openai_tool_name(&tc.name);
-            }
-        }
-        out.push(m2);
-    }
-    out
-}
-
-fn sanitize_openai_tool_name(name: &str) -> String {
-    // OpenAI tool names must match: ^[a-zA-Z0-9_-]+$
-    // We preserve readability by replacing invalid characters with underscores.
-    let mut out = String::with_capacity(name.len());
-    for ch in name.chars() {
-        if ch.is_ascii_alphanumeric() || ch == '_' || ch == '-' {
-            out.push(ch);
-        } else {
-            out.push('_');
-        }
-    }
-    if out.is_empty() {
-        "tool".to_string()
-    } else {
-        out
-    }
+    Err(LlmError::InvalidInput(format!(
+        "unsupported model '{model}': provider cannot be inferred"
+    )))
 }
 
 #[cfg(test)]
@@ -190,68 +236,93 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    fn openai_tool_names_are_sanitized_and_unique() {
+    fn valid_tool_name_passes_all_providers() {
+        validate_tool_name_all_providers("shell_execute").unwrap();
+        validate_tool_name_all_providers("memory-search").unwrap();
+        validate_tool_name_all_providers("a").unwrap();
+    }
+
+    #[test]
+    fn dot_in_tool_name_is_rejected() {
+        let err =
+            validate_tool_name_all_providers("shell.execute").expect_err("dots should be rejected");
+        assert!(err.to_string().contains("does not match"));
+    }
+
+    #[test]
+    fn empty_tool_name_is_rejected() {
+        let err = validate_tool_name_all_providers("").expect_err("empty name should be rejected");
+        assert!(err.to_string().contains("does not match"));
+    }
+
+    #[test]
+    fn too_long_tool_name_is_rejected() {
+        let long = "a".repeat(65);
+        let err = validate_tool_name_all_providers(&long)
+            .expect_err("name exceeding 64 chars should be rejected");
+        assert!(err.to_string().contains("max length"));
+    }
+
+    #[test]
+    fn duplicate_tool_names_are_rejected() {
         let tools = vec![
             ToolDefinition {
-                name: "shell.execute".to_string(),
+                name: "shell_execute".to_string(),
                 description: "run shell".to_string(),
                 parameters: json!({}),
             },
             ToolDefinition {
                 name: "shell_execute".to_string(),
-                description: "run shell 2".to_string(),
+                description: "run shell again".to_string(),
                 parameters: json!({}),
             },
         ];
 
-        let (sanitized, forward, reverse) = sanitize_tools_for_openai(&tools);
-        assert_eq!(sanitized.len(), 2);
-        assert!(sanitized[0].name.chars().all(|c| {
-            c.is_ascii_alphanumeric() || c == '_' || c == '-'
-        }));
-        assert!(sanitized[1].name.chars().all(|c| {
-            c.is_ascii_alphanumeric() || c == '_' || c == '-'
-        }));
-        assert_ne!(sanitized[0].name, sanitized[1].name);
-
-        let s1 = forward.get("shell.execute").expect("forward mapping exists");
-        let s2 = forward
-            .get("shell_execute")
-            .expect("forward mapping exists");
-        assert_ne!(s1, s2);
-        assert_eq!(
-            reverse.get(s1).expect("reverse mapping exists"),
-            "shell.execute"
-        );
-        assert_eq!(
-            reverse.get(s2).expect("reverse mapping exists"),
-            "shell_execute"
-        );
+        let err = validate_request_payload(&[], &tools)
+            .expect_err("duplicate tool names should be rejected");
+        assert!(err
+            .to_string()
+            .contains("duplicate tool definition name 'shell_execute'"));
     }
 
     #[test]
-    fn openai_messages_tool_calls_are_sanitized_before_send() {
+    fn tool_call_unknown_name_is_rejected() {
         let tools = vec![ToolDefinition {
-            name: "shell.execute".to_string(),
-            description: "run shell".to_string(),
+            name: "filesystem".to_string(),
+            description: "filesystem".to_string(),
             parameters: json!({}),
         }];
-        let (_sanitized, forward, _reverse) = sanitize_tools_for_openai(&tools);
-
         let messages = vec![ChatMessage {
             role: Role::Assistant,
-            content: "".to_string(),
+            content: String::new(),
             tool_calls: vec![ToolCall {
                 id: "tc1".to_string(),
-                name: "shell.execute".to_string(),
+                name: "shell_execute".to_string(),
                 arguments: "{}".to_string(),
             }],
             tool_call_id: None,
         }];
 
-        let sanitized = sanitize_messages_for_openai(&messages, &forward);
-        assert_eq!(sanitized.len(), 1);
-        assert_eq!(sanitized[0].tool_calls.len(), 1);
-        assert_eq!(sanitized[0].tool_calls[0].name, "shell_execute");
+        let err = validate_request_payload(&messages, &tools)
+            .expect_err("unknown tool call name should be rejected");
+        assert!(err
+            .to_string()
+            .contains("references unknown tool 'shell_execute'"));
+    }
+
+    #[test]
+    fn detect_provider_openai_models() {
+        assert_eq!(detect_provider("gpt-4").unwrap(), Provider::OpenAI);
+        assert_eq!(detect_provider("o1-preview").unwrap(), Provider::OpenAI);
+        assert_eq!(detect_provider("o3-mini").unwrap(), Provider::OpenAI);
+        assert_eq!(detect_provider("o4-mini").unwrap(), Provider::OpenAI);
+    }
+
+    #[test]
+    fn detect_provider_anthropic_models() {
+        assert_eq!(
+            detect_provider("claude-3-sonnet").unwrap(),
+            Provider::Anthropic
+        );
     }
 }

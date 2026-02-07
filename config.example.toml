@@ -13,6 +13,15 @@ You have access to tools for executing shell commands, reading/writing files, an
 Be concise and helpful.
 """
 
+[runtime]
+# Runtime mode:
+# - "dev": local dev runtime wiring (current implementation)
+# - "prod": strict Horizons production wiring (fails fast if required env vars are missing)
+mode = "dev"
+
+# Data directory for local runtime state (sessions, dev project db/files, etc).
+data_dir = "data"
+
 [keys]
 # Set these here or as environment variables (OPENAI_API_KEY, ANTHROPIC_API_KEY).
 # openai_api_key = ""       # Or set OPENAI_API_KEY
@@ -38,6 +47,23 @@ start_from_latest = true
 # In group chats, OpenCraw only responds to messages starting with one of these prefixes.
 group_prefixes = ["@opencraw", "opencraw"]
 
+[channels.email]
+enabled = false
+provider = "gmail"
+# gmail_access_token = "" # Or set GMAIL_ACCESS_TOKEN env var.
+poll_interval_ms = 2000
+query = "in:inbox is:unread"
+start_from_latest = true
+mark_processed_as_read = true
+
+[channels.linear]
+enabled = false
+# api_key = "" # Or set LINEAR_API_KEY env var.
+poll_interval_ms = 3000
+# Optional include filter by team id/key/name (case-insensitive).
+team_ids = []
+start_from_latest = true
+
 [tools]
 shell = true
 filesystem = true
@@ -52,8 +78,52 @@ filesystem_write_approval = "ai"
 
 # Allowlist: for external channels (iMessage/Telegram/Discord), OpenCraw will not respond
 # unless the sender is allowlisted. WebChat is always allowed for local dev.
-# allowed_users = ["imessage:+14155551212", "telegram:12345", "discord:67890"]
+# allowed_users = ["imessage:+14155551212", "telegram:12345", "discord:67890", "email:user@example.com", "linear:user_id"]
 allow_all_senders = false
+
+[queue]
+# Lane behavior mode:
+# - "followup": process every inbound message in FIFO order
+# - "collect": merge queued message bursts into a single assistant run
+# - "steer": keep only the latest queued message before each run
+# - "interrupt": cancel the in-flight run when a newer message arrives, then run latest
+mode = "followup"
+
+# Max messages processed concurrently across all lanes.
+max_concurrency = 8
+
+# Per-lane queue buffer (lane key is currently channel+sender).
+lane_buffer = 64
+
+# Burst debounce window before lane shaping modes apply.
+# Set to 0 to disable debounce.
+debounce_ms = 250
+
+[context]
+# Approximate prompt budget for system+history window (char/4 token estimate).
+max_prompt_tokens = 8000
+
+# Always keep at least this many most-recent messages before trimming older history.
+min_recent_messages = 8
+
+# Trim individual tool messages above this size before sending to the model.
+max_tool_chars = 4000
+
+# If true, run Horizons-backed context compaction before LLM calls when history exceeds
+# compaction_trigger_tokens. Requires [memory].enabled = true.
+compaction_enabled = false
+
+# Trigger compaction when estimated history tokens reaches this threshold.
+compaction_trigger_tokens = 6000
+
+# Keep this many most-recent history messages after compaction.
+compaction_retain_messages = 12
+
+# Horizons/Voyager summary horizon (supports ms|s|m|h|d suffixes, e.g. "30d").
+compaction_horizon = "30d"
+
+# Max characters written into pre-compaction memory flush transcript payload.
+compaction_flush_max_chars = 16000
 
 [memory]
 enabled = false

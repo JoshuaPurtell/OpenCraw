@@ -30,10 +30,9 @@ Usage:
 Notes:
   - Uses docker compose if available, falls back to docker-compose.
   - Set COMPOSE_FILE to override the compose file path.
-  - Set HORIZONS_REF to control the Horizons git ref used during docker build.
 
 Examples:
-  HORIZONS_REF=main scripts/compose.sh build
+  scripts/compose.sh build
   scripts/compose.sh up
   scripts/compose.sh logs opencraw
 EOF

@@ -13,19 +13,14 @@ pub async fn retrieve_context(
     memory: &dyn HorizonsMemory,
     org_id: OrgId,
     user_message: &str,
-) -> Vec<String> {
+) -> anyhow::Result<Vec<String>> {
     let query = RetrievalQuery::new(user_message, 5);
 
-    match memory.retrieve(org_id, AGENT_ID, query).await {
-        Ok(items) => items
-            .into_iter()
-            .map(|item| item.content_as_text())
-            .collect(),
-        Err(e) => {
-            tracing::warn!("memory retrieve failed: {e}");
-            vec![]
-        }
-    }
+    let items = memory.retrieve(org_id, AGENT_ID, query).await?;
+    Ok(items
+        .into_iter()
+        .map(|item| item.content_as_text())
+        .collect())
 }
 
 /// Append an observation from the conversation.
@@ -34,7 +29,7 @@ pub async fn append_observation(
     memory: &dyn HorizonsMemory,
     org_id: OrgId,
     content: &str,
-) {
+) -> anyhow::Result<()> {
     let scope = Scope::new(org_id.to_string(), AGENT_ID.to_string());
     let item = MemoryItem::new(
         &scope,
@@ -43,7 +38,6 @@ pub async fn append_observation(
         chrono::Utc::now(),
     );
 
-    if let Err(e) = memory.append_item(org_id, item).await {
-        tracing::warn!("memory append failed: {e}");
-    }
+    memory.append_item(org_id, item).await?;
+    Ok(())
 }

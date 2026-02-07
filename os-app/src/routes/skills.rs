@@ -7,12 +7,14 @@ use serde::Deserialize;
 use std::sync::Arc;
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct InstallSkillRequest {
     name: String,
     description: String,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct SearchQuery {
     q: String,
 }
@@ -41,7 +43,9 @@ async fn install_skill(
     let item = MemoryItem::new(&scope, MemoryType::skill(), content, chrono::Utc::now())
         .with_importance(1.0)
         .with_index_text("skill".to_string());
-    let _ = mem.append_item(state.org_id, item).await;
+    if let Err(e) = mem.append_item(state.org_id, item).await {
+        return Json(serde_json::json!({ "status": "error", "error": e.to_string() }));
+    }
 
     Json(serde_json::json!({ "status": "ok" }))
 }
@@ -58,10 +62,12 @@ async fn search_skills(
     let mut query = RetrievalQuery::new(q.q, 10);
     query.type_filter = Some(vec![MemoryType::skill()]);
 
-    let items = mem
-        .retrieve(state.org_id, "os.skills", query)
-        .await
-        .unwrap_or_default();
+    let items = match mem.retrieve(state.org_id, "os.skills", query).await {
+        Ok(items) => items,
+        Err(e) => {
+            return Json(serde_json::json!({ "status": "error", "error": e.to_string() }));
+        }
+    };
 
     Json(serde_json::json!({ "skills": items }))
 }

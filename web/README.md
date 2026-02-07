@@ -1,6 +1,6 @@
-# OpenCraw WebChat (Vite)
+# OpenCraw WebChat (Bun)
 
-This is a small Vite + React client that connects to the OpenCraw WebChat WebSocket.
+This is a small Bun + React client that connects to the OpenCraw WebChat WebSocket.
 
 ## Run
 
@@ -14,15 +14,14 @@ cargo run -p os-app -- serve
 
 ```bash
 cd web
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 By default the client connects to `ws://localhost:3000/ws`.
 
-To override:
+To override at build time:
 
 ```bash
-VITE_WS_URL=ws://localhost:3000/ws npm run dev
+OPENCRAW_WS_URL=ws://localhost:3000/ws bun run build
 ```
-

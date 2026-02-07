@@ -14,20 +14,14 @@ pub struct TelegramAdapter {
 }
 
 impl TelegramAdapter {
-    pub fn new(bot_token: &str) -> Self {
-        Self {
-            http: reqwest::Client::builder()
-                .timeout(std::time::Duration::from_secs(60))
-                .build()
-                .unwrap_or_else(|e| {
-                    tracing::warn!(
-                        %e,
-                        "reqwest client build failed; falling back to default client"
-                    );
-                    reqwest::Client::new()
-                }),
+    pub fn new(bot_token: &str) -> Result<Self> {
+        let http = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(60))
+            .build()?;
+        Ok(Self {
+            http,
             bot_token: bot_token.to_string(),
-        }
+        })
     }
 
     fn api_url(&self, method: &str) -> Result<Url> {
@@ -68,8 +62,10 @@ impl ChannelAdapter for TelegramAdapter {
         let resp = self.http.post(url).json(&body).send().await?;
         if !resp.status().is_success() {
             let status = resp.status();
-            let text = resp.text().await.unwrap_or_default();
-            tracing::warn!(%status, %text, "telegram send failed");
+            let text = resp.text().await?;
+            return Err(anyhow::anyhow!(
+                "telegram send failed: status={status} body={text}"
+            ));
         }
         Ok(())
     }
@@ -99,10 +95,10 @@ impl TelegramAdapter {
 
             if !resp.status().is_success() {
                 let status = resp.status();
-                let text = resp.text().await.unwrap_or_default();
-                tracing::warn!(%status, %text, "telegram getUpdates failed");
-                tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-                continue;
+                let text = resp.text().await?;
+                return Err(anyhow::anyhow!(
+                    "telegram getUpdates failed: status={status} body={text}"
+                ));
             }
 
             let parsed: TelegramGetUpdatesResponse = resp.json().await?;
@@ -110,15 +106,17 @@ impl TelegramAdapter {
                 offset = update.update_id + 1;
 
                 if let Some(m) = update.message {
-                    let Some(ref text) = m.text else { continue };
+                    let text = m
+                        .text
+                        .as_deref()
+                        .ok_or_else(|| anyhow::anyhow!("telegram message missing text"))?;
                     let is_group = m.chat.r#type != "private";
                     let sender_id = m
                         .from
                         .as_ref()
                         .map(|f| f.id.to_string())
-                        .unwrap_or_default();
-                    let metadata =
-                        serde_json::to_value(&m).unwrap_or_else(|_| serde_json::json!({}));
+                        .ok_or_else(|| anyhow::anyhow!("telegram message missing sender"))?;
+                    let metadata = serde_json::to_value(&m)?;
                     let inbound = InboundMessage {
                         kind: InboundMessageKind::Message,
                         message_id: m.message_id.to_string(),
@@ -126,11 +124,13 @@ impl TelegramAdapter {
                         sender_id,
                         thread_id: Some(m.chat.id.to_string()),
                         is_group,
-                        content: text.clone(),
+                        content: text.to_string(),
                         metadata,
                         received_at: Utc::now(),
                     };
-                    let _ = tx.send(inbound).await;
+                    tx.send(inbound)
+                        .await
+                        .map_err(|e| anyhow::anyhow!("telegram inbound queue closed: {e}"))?;
                 }
 
                 if let Some(r) = update.message_reaction {
@@ -138,12 +138,12 @@ impl TelegramAdapter {
                         .user
                         .as_ref()
                         .map(|u| u.id.to_string())
-                        .unwrap_or_default();
+                        .ok_or_else(|| anyhow::anyhow!("telegram reaction missing sender"))?;
                     let emoji = r
                         .new_reaction
                         .first()
                         .and_then(|x| x.emoji.clone())
-                        .unwrap_or_default();
+                        .ok_or_else(|| anyhow::anyhow!("telegram reaction missing emoji"))?;
                     let inbound = InboundMessage {
                         kind: InboundMessageKind::Reaction,
                         message_id: Uuid::new_v4().to_string(),
@@ -152,11 +152,12 @@ impl TelegramAdapter {
                         thread_id: Some(r.chat.id.to_string()),
                         is_group: r.chat.r#type != "private",
                         content: emoji,
-                        metadata: serde_json::to_value(&r)
-                            .unwrap_or_else(|_| serde_json::json!({})),
+                        metadata: serde_json::to_value(&r)?,
                         received_at: Utc::now(),
                     };
-                    let _ = tx.send(inbound).await;
+                    tx.send(inbound)
+                        .await
+                        .map_err(|e| anyhow::anyhow!("telegram inbound queue closed: {e}"))?;
                 }
             }
         }

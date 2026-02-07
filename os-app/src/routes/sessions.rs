@@ -25,6 +25,8 @@ async fn delete_session(
     let Ok(id) = Uuid::parse_str(&id) else {
         return Json(serde_json::json!({ "status": "error", "error": "invalid id" }));
     };
-    let ok = state.sessions.delete_by_id(id);
-    Json(serde_json::json!({ "status": if ok { "ok" } else { "not_found" } }))
+    match state.sessions.delete_by_id(id).await {
+        Ok(ok) => Json(serde_json::json!({ "status": if ok { "ok" } else { "not_found" } })),
+        Err(e) => Json(serde_json::json!({ "status": "error", "error": e.to_string() })),
+    }
 }

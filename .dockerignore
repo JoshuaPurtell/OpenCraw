@@ -1,0 +1,9 @@
+target/
+.cargo/config.toml
+.git/
+.DS_Store
+data/
+web/node_modules/
+web/dist/
+*.swp
+*.swo

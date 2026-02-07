@@ -59,9 +59,14 @@ async fn handle_socket(adapter: Arc<WebChatAdapter>, socket: WebSocket) {
         .insert(sender_id.clone(), outbound_tx);
 
     let hello = serde_json::json!({ "type": "hello", "sender_id": sender_id });
-    let _ = ws_sender
+    if ws_sender
         .send(Message::Text(hello.to_string().into()))
-        .await;
+        .await
+        .is_err()
+    {
+        adapter.state.connections.remove(&sender_id);
+        return;
+    }
 
     let adapter_out = adapter.clone();
     let sender_id_out = sender_id.clone();
@@ -81,12 +86,22 @@ async fn handle_socket(adapter: Arc<WebChatAdapter>, socket: WebSocket) {
 
         let parsed: serde_json::Value = match serde_json::from_str(&text) {
             Ok(v) => v,
-            Err(_) => continue,
+            Err(e) => {
+                tracing::error!(%e, sender_id = %sender_id, "webchat received invalid json");
+                break;
+            }
         };
         let msg_type = parsed
             .get("type")
             .and_then(|v| v.as_str())
-            .unwrap_or("message");
+            .ok_or_else(|| anyhow::anyhow!("webchat payload missing type"));
+        let msg_type = match msg_type {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!(%e, sender_id = %sender_id, "webchat invalid payload");
+                break;
+            }
+        };
 
         let (kind, content) = match msg_type {
             "reaction" => (
@@ -94,17 +109,28 @@ async fn handle_socket(adapter: Arc<WebChatAdapter>, socket: WebSocket) {
                 parsed
                     .get("emoji")
                     .and_then(|v| v.as_str())
-                    .unwrap_or("")
-                    .to_string(),
+                    .ok_or_else(|| anyhow::anyhow!("webchat reaction missing emoji"))
+                    .map(|s| s.to_string()),
             ),
-            _ => (
+            "message" => (
                 InboundMessageKind::Message,
                 parsed
                     .get("content")
                     .and_then(|v| v.as_str())
-                    .unwrap_or("")
-                    .to_string(),
+                    .ok_or_else(|| anyhow::anyhow!("webchat message missing content"))
+                    .map(|s| s.to_string()),
             ),
+            other => {
+                tracing::error!(sender_id = %sender_id, message_type = other, "webchat unsupported message type");
+                break;
+            }
+        };
+        let content = match content {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!(%e, sender_id = %sender_id, "webchat invalid payload");
+                break;
+            }
         };
 
         let inbound = InboundMessage {
@@ -121,7 +147,13 @@ async fn handle_socket(adapter: Arc<WebChatAdapter>, socket: WebSocket) {
 
         let tx = adapter.state.inbound_tx.read().await.clone();
         if let Some(tx) = tx {
-            let _ = tx.send(inbound).await;
+            if let Err(e) = tx.send(inbound).await {
+                tracing::error!(%e, sender_id = %sender_id, "webchat inbound queue closed");
+                break;
+            }
+        } else {
+            tracing::error!(sender_id = %sender_id, "webchat adapter started without inbound queue");
+            break;
         }
     }
 
@@ -142,14 +174,55 @@ impl ChannelAdapter for WebChatAdapter {
 
     async fn send(&self, recipient_id: &str, message: OutboundMessage) -> Result<()> {
         let Some(conn) = self.state.connections.get(recipient_id) else {
-            return Ok(());
+            return Err(anyhow::anyhow!(
+                "webchat connection not found for recipient_id={recipient_id}"
+            ));
         };
         let payload = serde_json::json!({
             "type": "message",
             "content": message.content,
         });
-        let _ = conn.send(Message::Text(payload.to_string().into()));
+        conn.send(Message::Text(payload.to_string().into()))
+            .map_err(|_| anyhow::anyhow!("webchat send failed: socket closed"))?;
         Ok(())
+    }
+
+    async fn send_delta(&self, recipient_id: &str, delta: &str) -> Result<()> {
+        let Some(conn) = self.state.connections.get(recipient_id) else {
+            return Err(anyhow::anyhow!(
+                "webchat connection not found for recipient_id={recipient_id}"
+            ));
+        };
+        let payload = serde_json::json!({
+            "type": "delta",
+            "content": delta,
+        });
+        conn.send(Message::Text(payload.to_string().into()))
+            .map_err(|_| anyhow::anyhow!("webchat delta send failed: socket closed"))?;
+        Ok(())
+    }
+
+    async fn send_typing(&self, recipient_id: &str, active: bool) -> Result<()> {
+        let Some(conn) = self.state.connections.get(recipient_id) else {
+            return Err(anyhow::anyhow!(
+                "webchat connection not found for recipient_id={recipient_id}"
+            ));
+        };
+        let payload = serde_json::json!({
+            "type": "typing",
+            "active": active,
+        });
+        conn.send(Message::Text(payload.to_string().into()))
+            .map_err(|_| anyhow::anyhow!("webchat typing send failed: socket closed"))?;
+        Ok(())
+    }
+
+    fn supports_streaming_deltas(&self) -> bool {
+        true
+    }
+
+    fn supports_typing_events(&self) -> bool {
+        true
     }
 
     fn supports_reactions(&self) -> bool {

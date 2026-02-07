@@ -18,7 +18,7 @@ impl ShellTool {
 impl Tool for ShellTool {
     fn spec(&self) -> ToolSpec {
         ToolSpec {
-            name: "shell.execute".to_string(),
+            name: "shell_execute".to_string(),
             description: "Execute a shell command on the host machine.".to_string(),
             parameters_schema: serde_json::json!({
                 "type": "object",
