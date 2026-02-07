@@ -5,6 +5,7 @@ use serde::Deserialize;
 use std::sync::Arc;
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct SendRequest {
     channel: String,
     recipient: String,

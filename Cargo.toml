@@ -13,12 +13,12 @@ license = "MIT"
 version = "0.1.0"
 
 [workspace.dependencies]
-horizons_core = { path = "../Horizons/horizons_core", default-features = false, features = ["memory", "optimization", "evaluation"] }
-# Code imports this as `horizons_rs`, but in the checked-out Horizons repo the server crate is
-# named `horizons_server` (feature set: `all`).
-horizons_rs = { package = "horizons_server", path = "../Horizons/horizons_server", default-features = false, features = ["all"] }
-horizons_graph = { path = "../Horizons/horizons_graph" }
-mipro_v2 = { path = "../Horizons/mipro_v2" }
+horizons_core = { git = "https://github.com/synth-laboratories/Horizons", branch = "main", default-features = false, features = ["memory", "optimization", "evaluation"] }
+horizons_rs = { package = "horizons_server", git = "https://github.com/synth-laboratories/Horizons", branch = "main", default-features = false, features = ["all"] }
+horizons_graph = { git = "https://github.com/synth-laboratories/Horizons", branch = "main" }
+horizons_integrations = { git = "https://github.com/synth-laboratories/Horizons", branch = "main" }
+mipro_v2 = { git = "https://github.com/synth-laboratories/Horizons", branch = "main" }
+voyager = { git = "https://github.com/synth-laboratories/Horizons", branch = "main" }
 
 anyhow = "1.0"
 async-trait = "0.1"
@@ -41,4 +41,5 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 uuid = { version = "1.15", features = ["v4", "serde"] }
 ulid = { version = "1", features = ["serde"] }
+dotenvy = "0.15"
 rusqlite = "0.32"

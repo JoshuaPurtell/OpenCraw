@@ -33,6 +33,12 @@ browser_approval = "auto"
 filesystem_write_approval = "auto"
 allowed_users = []
 
+[queue]
+mode = "followup"
+max_concurrency = 8
+lane_buffer = 64
+debounce_ms = 250
+
 [memory]
 enabled = false
 
