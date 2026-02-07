@@ -1,49 +1,158 @@
+@import "tailwindcss";
+
 :root {
-  font-family: "Space Grotesk", system-ui, -apple-system, Segoe UI, Roboto, Arial,
-    sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --font-sans: "Sora", "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "SF Mono", Menlo, Monaco, Consolas, "Courier New",
+    monospace;
 
-  color-scheme: light;
-  color: #1f1c16;
-  background-color: #fbf7ef;
+  /* WATER — background / canvas */
+  --canvas:        188 35% 86%;
+  --canvas-deep:   192 30% 76%;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* MOSS — card / panel surfaces */
+  --surface:       128 16% 94%;
+  --surface-strong: 140 12% 87%;
+
+  /* INK — text */
+  --ink:           195 40% 12%;
+  --ink-muted:     190 15% 40%;
+
+  /* LINE — borders */
+  --line:          185 18% 68%;
+
+  /* ACCENTS — creek materials */
+  --accent:        182 50% 30%;
+  --accent-soft:   184 28% 44%;
+  --accent-alt:    22 50% 45%;
+  --accent-support: 140 35% 36%;
+
+  --radius-xl: 1rem;
+  --shadow-surface: 0 26px 40px -30px hsl(188 22% 18% / 0.32),
+    0 10px 18px -14px hsl(188 22% 18% / 0.2);
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: transparent;
-  cursor: pointer;
-  transition: border-color 0.25s;
+@layer base {
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    font-family: var(--font-sans);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: hsl(var(--ink));
+    background-color: hsl(var(--canvas));
+    background-image: linear-gradient(
+      180deg,
+      hsl(var(--canvas)),
+      hsl(var(--canvas-deep))
+    );
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+  }
+
+  ::selection {
+    color: hsl(var(--ink));
+    background: hsl(var(--accent) / 0.24);
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--accent) / 0.55);
+    outline-offset: 2px;
+  }
 }
-button:hover {
-  border-color: #646cff;
+
+@layer components {
+  .surface-card {
+    @apply rounded-[var(--radius-xl)] border border-[hsl(var(--line)/0.84)] bg-[hsl(var(--surface)/0.95)] shadow-[var(--shadow-surface)];
+  }
+
+  .chip {
+    @apply inline-flex items-center rounded-full border px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.12em];
+  }
+
+  .chat-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--line)) transparent;
+  }
+
+  .chat-scroll::-webkit-scrollbar {
+    width: 0.5rem;
+  }
+
+  .chat-scroll::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: hsl(var(--line));
+  }
 }
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-border {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 hsl(var(--accent) / 0.34);
+  }
+  50% {
+    box-shadow: 0 0 0 5px hsl(var(--accent) / 0);
+  }
+}
+
+@layer utilities {
+  .animate-rise {
+    animation: rise 260ms cubic-bezier(0.2, 0.7, 0.15, 1) both;
+  }
+
+  .status-active {
+    animation: pulse-border 3.2s ease-in-out infinite;
+  }
 }
