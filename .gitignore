@@ -12,3 +12,4 @@ web/dist
 web/src/styles.css
 web/.env
 web/.env.*
+plans/
