@@ -50,6 +50,12 @@ enum Command {
         #[arg(long)]
         config: Option<PathBuf>,
     },
+    /// Show current runtime status and health summary.
+    Status {
+        /// Path to config file. Defaults to ~/.opencraw/config.toml
+        #[arg(long)]
+        config: Option<PathBuf>,
+    },
     /// One-shot send to a recipient via a configured channel.
     Send {
         channel: String,
@@ -82,6 +88,7 @@ async fn main() -> anyhow::Result<()> {
     match command {
         Command::Serve { config } => server::serve(config).await,
         Command::Doctor { config } => server::doctor(config).await,
+        Command::Status { config } => server::status(config).await,
         Command::Send {
             channel,
             recipient,

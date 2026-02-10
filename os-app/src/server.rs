@@ -71,6 +71,18 @@ pub async fn doctor(config_path: Option<PathBuf>) -> Result<()> {
     Ok(())
 }
 
+pub async fn status(config_path: Option<PathBuf>) -> Result<()> {
+    let (cfg, path) = OpenShellConfig::load_with_path(config_path).await?;
+    tracing::info!(
+        model = %cfg.general.model,
+        runtime_mode = ?cfg.runtime.mode,
+        runtime_data_dir = %cfg.runtime.data_dir,
+        config_path = %path.display(),
+        "status ok"
+    );
+    Ok(())
+}
+
 pub async fn send_one_shot(
     config_path: Option<PathBuf>,
     channel: &str,
