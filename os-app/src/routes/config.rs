@@ -1,4 +1,5 @@
 use crate::config::OpenShellConfig;
+use crate::discovery_runtime::{discovery_health_ready, discovery_health_status_label};
 use crate::server::OsState;
 use axum::routing::{get, post};
 use axum::{Extension, Json};
@@ -67,8 +68,10 @@ async fn get_discovery_status(
     Extension(state): Extension<Arc<OsState>>,
 ) -> Json<serde_json::Value> {
     let status = state.discovery.status_snapshot().await;
+    let health = status.health;
     Json(serde_json::json!({
-        "status": "ok",
+        "status": discovery_health_status_label(health),
+        "ready": discovery_health_ready(health),
         "discovery": status,
     }))
 }

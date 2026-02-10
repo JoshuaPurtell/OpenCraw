@@ -134,21 +134,36 @@ fn required_scope_for_mutating_path(path: &str) -> &'static str {
 
 fn parse_bearer_token(headers: &HeaderMap) -> Option<String> {
     let raw = headers.get(AUTHORIZATION)?.to_str().ok()?;
-    let token = raw
-        .strip_prefix("Bearer ")
-        .or_else(|| raw.strip_prefix("bearer "))?
-        .trim();
+    let mut parts = raw.trim().splitn(2, char::is_whitespace);
+    let scheme = parts.next()?;
+    if !scheme.eq_ignore_ascii_case("bearer") {
+        return None;
+    }
+    let token = parts.next()?.trim();
     if token.is_empty() {
         return None;
     }
     Some(token.to_string())
 }
 
+fn path_matches_prefix(path: &str, prefix: &str) -> bool {
+    if path == prefix {
+        return true;
+    }
+    let Some(suffix) = path.strip_prefix(prefix) else {
+        return false;
+    };
+    if prefix.ends_with('/') {
+        return true;
+    }
+    suffix.starts_with('/')
+}
+
 fn is_mutating_path_exempt(path: &str, policy: &MutatingAuthPolicy) -> bool {
     policy
         .mutating_auth_exempt_prefixes
         .iter()
-        .any(|prefix| path.starts_with(prefix))
+        .any(|prefix| path_matches_prefix(path, prefix))
 }
 
 fn find_control_api_token<'a>(
@@ -172,10 +187,30 @@ fn valid_org_id_header(headers: &HeaderMap) -> bool {
 }
 
 fn unauthorized(message: impl Into<String>) -> Response {
+    unauthorized_with_context(None, None, message)
+}
+
+fn unauthorized_with_context(
+    code: Option<&str>,
+    required_scope: Option<&str>,
+    message: impl Into<String>,
+) -> Response {
     let message = message.into();
+    if let Some(code) = code {
+        tracing::warn!(error_code = code, ?required_scope, error = %message, "mutating auth rejected");
+    }
+    let mut body = serde_json::Map::new();
+    body.insert("status".to_string(), json!("error"));
+    body.insert("error".to_string(), json!(message));
+    if let Some(code) = code {
+        body.insert("error_code".to_string(), json!(code));
+    }
+    if let Some(required_scope) = required_scope {
+        body.insert("required_scope".to_string(), json!(required_scope));
+    }
     (
         StatusCode::UNAUTHORIZED,
-        Json(json!({ "status": "error", "error": message })),
+        Json(serde_json::Value::Object(body)),
     )
         .into_response()
 }
@@ -200,21 +235,35 @@ pub async fn require_mutating_auth(req: Request<Body>, next: Next) -> Response {
     }
 
     if policy.require_org_header_for_mutating && !valid_org_id_header(req.headers()) {
-        return unauthorized("missing or invalid x-org-id header");
+        return unauthorized_with_context(
+            Some("missing_or_invalid_org_id"),
+            None,
+            "missing or invalid x-org-id header",
+        );
     }
 
     if !policy.control_api_tokens.is_empty() {
         let Some(provided) = parse_bearer_token(req.headers()) else {
-            return unauthorized("missing bearer token");
+            return unauthorized_with_context(
+                Some("missing_bearer_token"),
+                Some(required_scope_for_mutating_path(req.uri().path())),
+                "missing bearer token",
+            );
         };
         let Some(token) = find_control_api_token(&provided, &policy) else {
-            return unauthorized("invalid bearer token");
+            return unauthorized_with_context(
+                Some("invalid_bearer_token"),
+                Some(required_scope_for_mutating_path(req.uri().path())),
+                "invalid bearer token",
+            );
         };
         let required_scope = required_scope_for_mutating_path(req.uri().path());
         if !token.grants_scope(required_scope) {
-            return unauthorized(format!(
-                "bearer token missing required scope: {required_scope}"
-            ));
+            return unauthorized_with_context(
+                Some("missing_required_scope"),
+                Some(required_scope),
+                format!("bearer token missing required scope: {required_scope}"),
+            );
         }
         return next.run(req).await;
     }
@@ -223,17 +272,51 @@ pub async fn require_mutating_auth(req: Request<Body>, next: Next) -> Response {
         return next.run(req).await;
     }
 
-    unauthorized("mutating requests require security.control_api_key or security.control_api_keys")
+    unauthorized_with_context(
+        Some("missing_control_api_auth_config"),
+        Some(required_scope_for_mutating_path(req.uri().path())),
+        "mutating requests require security.control_api_key or security.control_api_keys",
+    )
 }
 
 #[cfg(test)]
 mod tests {
     use super::{
-        MutatingAuthPolicy, ScopedControlApiToken, find_control_api_token, is_mutating_path_exempt,
-        required_scope_for_mutating_path, valid_org_id_header,
+        MutatingAuthPolicy, MutatingAuthPolicyExt, ScopedControlApiToken, find_control_api_token,
+        is_mutating_path_exempt, parse_bearer_token, require_mutating_auth,
+        required_scope_for_mutating_path, unauthorized, valid_org_id_header,
     };
-    use axum::http::HeaderMap;
+    use axum::Router;
+    use axum::body::{Body, to_bytes};
+    use axum::http::header::AUTHORIZATION;
+    use axum::http::{HeaderMap, Request, StatusCode};
+    use axum::middleware;
+    use axum::routing::post;
+    use axum::{Extension, Json};
+    use serde_json::json;
+    use tower::util::ServiceExt;
     use uuid::Uuid;
+
+    fn build_auth_test_router(policy: MutatingAuthPolicy) -> Router {
+        Router::new()
+            .route(
+                "/api/v1/os/config/apply",
+                post(|| async { Json(json!({ "status": "ok" })) }),
+            )
+            .route(
+                "/api/v1/os/automation/webhook/github",
+                post(|| async { Json(json!({ "status": "ok" })) }),
+            )
+            .layer(middleware::from_fn(require_mutating_auth))
+            .layer(Extension(MutatingAuthPolicyExt(policy)))
+    }
+
+    async fn response_body_json(response: axum::response::Response) -> serde_json::Value {
+        let body = to_bytes(response.into_body(), usize::MAX)
+            .await
+            .expect("response body");
+        serde_json::from_slice(&body).expect("response json")
+    }
 
     #[test]
     fn valid_org_id_header_accepts_uuid() {
@@ -265,6 +348,20 @@ mod tests {
         ));
         assert!(!is_mutating_path_exempt(
             "/api/v1/os/automation/jobs",
+            &policy
+        ));
+    }
+
+    #[test]
+    fn mutating_path_exempt_prefix_requires_segment_boundary() {
+        let policy = MutatingAuthPolicy {
+            mutating_auth_exempt_prefixes: vec!["/api/v1/os/config".to_string()],
+            ..MutatingAuthPolicy::default()
+        };
+        assert!(is_mutating_path_exempt("/api/v1/os/config", &policy));
+        assert!(is_mutating_path_exempt("/api/v1/os/config/apply", &policy));
+        assert!(!is_mutating_path_exempt(
+            "/api/v1/os/configuration",
             &policy
         ));
     }
@@ -347,5 +444,164 @@ mod tests {
         let token = find_control_api_token("beta", &policy).expect("token must be found");
         assert_eq!(token.token, "beta");
         assert!(find_control_api_token("missing", &policy).is_none());
+    }
+
+    #[test]
+    fn parse_bearer_token_accepts_case_insensitive_scheme() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            AUTHORIZATION,
+            "bEaReR      token-value".parse().expect("header value"),
+        );
+        assert_eq!(parse_bearer_token(&headers).as_deref(), Some("token-value"));
+    }
+
+    #[tokio::test]
+    async fn auth_middleware_rejects_missing_org_header() {
+        let router = build_auth_test_router(MutatingAuthPolicy {
+            require_auth_for_mutating: true,
+            allow_insecure_mutating_requests: false,
+            require_org_header_for_mutating: true,
+            control_api_tokens: vec![ScopedControlApiToken {
+                token: "token-alpha".to_string(),
+                scopes: vec!["config:write".to_string()],
+            }],
+            mutating_auth_exempt_prefixes: Vec::new(),
+        });
+
+        let response = router
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/api/v1/os/config/apply")
+                    .header(AUTHORIZATION, "Bearer token-alpha")
+                    .body(Body::empty())
+                    .expect("request"),
+            )
+            .await
+            .expect("response");
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        let body = response_body_json(response).await;
+        assert_eq!(
+            body.get("error_code").and_then(|v| v.as_str()),
+            Some("missing_or_invalid_org_id")
+        );
+    }
+
+    #[tokio::test]
+    async fn auth_middleware_rejects_missing_bearer_token() {
+        let router = build_auth_test_router(MutatingAuthPolicy {
+            require_auth_for_mutating: true,
+            allow_insecure_mutating_requests: false,
+            require_org_header_for_mutating: true,
+            control_api_tokens: vec![ScopedControlApiToken {
+                token: "token-alpha".to_string(),
+                scopes: vec!["config:write".to_string()],
+            }],
+            mutating_auth_exempt_prefixes: Vec::new(),
+        });
+        let org_id = Uuid::new_v4();
+
+        let response = router
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/api/v1/os/config/apply")
+                    .header("x-org-id", org_id.to_string())
+                    .body(Body::empty())
+                    .expect("request"),
+            )
+            .await
+            .expect("response");
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        let body = response_body_json(response).await;
+        assert_eq!(
+            body.get("error_code").and_then(|v| v.as_str()),
+            Some("missing_bearer_token")
+        );
+        assert_eq!(
+            body.get("required_scope").and_then(|v| v.as_str()),
+            Some("config:write")
+        );
+    }
+
+    #[tokio::test]
+    async fn auth_middleware_rejects_token_without_required_scope() {
+        let router = build_auth_test_router(MutatingAuthPolicy {
+            require_auth_for_mutating: true,
+            allow_insecure_mutating_requests: false,
+            require_org_header_for_mutating: true,
+            control_api_tokens: vec![ScopedControlApiToken {
+                token: "token-alpha".to_string(),
+                scopes: vec!["messages:write".to_string()],
+            }],
+            mutating_auth_exempt_prefixes: Vec::new(),
+        });
+        let org_id = Uuid::new_v4();
+
+        let response = router
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/api/v1/os/config/apply")
+                    .header("x-org-id", org_id.to_string())
+                    .header(AUTHORIZATION, "Bearer token-alpha")
+                    .body(Body::empty())
+                    .expect("request"),
+            )
+            .await
+            .expect("response");
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        let body = response_body_json(response).await;
+        assert_eq!(
+            body.get("error_code").and_then(|v| v.as_str()),
+            Some("missing_required_scope")
+        );
+        assert_eq!(
+            body.get("required_scope").and_then(|v| v.as_str()),
+            Some("config:write")
+        );
+    }
+
+    #[tokio::test]
+    async fn auth_middleware_allows_exempt_mutating_path() {
+        let router = build_auth_test_router(MutatingAuthPolicy {
+            require_auth_for_mutating: true,
+            allow_insecure_mutating_requests: false,
+            require_org_header_for_mutating: true,
+            control_api_tokens: vec![ScopedControlApiToken {
+                token: "token-alpha".to_string(),
+                scopes: vec!["config:write".to_string()],
+            }],
+            mutating_auth_exempt_prefixes: vec!["/api/v1/os/automation/webhook/".to_string()],
+        });
+
+        let response = router
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/api/v1/os/automation/webhook/github")
+                    .body(Body::empty())
+                    .expect("request"),
+            )
+            .await
+            .expect("response");
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = response_body_json(response).await;
+        assert_eq!(body.get("status").and_then(|v| v.as_str()), Some("ok"));
+    }
+
+    #[tokio::test]
+    async fn unauthorized_keeps_back_compat_error_shape() {
+        let response = unauthorized("missing bearer token");
+        let response = response_body_json(response).await;
+        assert_eq!(
+            response.get("status").and_then(|v| v.as_str()),
+            Some("error")
+        );
+        assert_eq!(
+            response.get("error").and_then(|v| v.as_str()),
+            Some("missing bearer token")
+        );
     }
 }
