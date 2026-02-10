@@ -114,18 +114,63 @@ cargo_check_gate() {
     )
 }
 
+cargo_test_exact() {
+    local package="$1"
+    local test_name="$2"
+    (
+        cd "$repo_root"
+        cargo test -p "$package" --locked "$test_name" -- --exact >/dev/null 2>&1
+    )
+}
+
+opencraw_help_has() {
+    local needle="$1"
+    (
+        cd "$repo_root"
+        cargo run -p os-app --quiet -- --help 2>/dev/null | rg -q --fixed-strings "$needle"
+    )
+}
+
+pairing_default_deny_behavior() {
+    cargo_test_exact os-app "pairing::tests::unknown_sender_creates_pending_pairing_request"
+}
+
+pairing_allowlist_behavior() {
+    cargo_test_exact os-app "pairing::tests::allowlist_matches_raw_sender_or_composite"
+}
+
+automation_dedupe_behavior() {
+    cargo_test_exact os-app "automation_runtime::tests::webhook_ingest_dedupes_replayed_event_id"
+}
+
+automation_uniqueness_controls_behavior() {
+    automation_dedupe_behavior &&
+        file_has "os-app/src/automation_runtime.rs" "ON opencraw_automation_ingest_events (ingest_kind, source, event_id)"
+}
+
+status_operator_command_present() {
+    opencraw_help_has "status"
+}
+
+channel_probe_endpoint_present() {
+    file_has "os-app/src/routes/channels.rs" "/api/v1/os/channels/:channel_id/probe" &&
+        file_has "os-app/src/routes/channels.rs" "async fn probe_channel("
+}
+
 tier_t1_channels_registered() {
     file_has "os-app/src/channel_plugins.rs" 'Self::Telegram => "telegram"'
 }
 
 tier_t1_delivery_controls_present() {
-    file_has "os-channels/src/telegram.rs" "offset = update.update_id + 1;"
+    cargo_test_exact os-channels "telegram::tests::retry_delay_grows_exponentially_and_caps" &&
+        file_has_re "os-channels/src/telegram.rs" "if update\\.update_id < offset" &&
+        file_has_re "os-channels/src/telegram.rs" "offset = update\\.update_id\\.saturating_add\\(1\\);"
 }
 
 tier_t1_session_routing_present() {
-    file_has_all "os-channels/src/telegram.rs" \
-        'let is_group = m.chat.r#type != "private";' \
-        "thread_id: Some(m.chat.id.to_string().into()),"
+    cargo_test_exact os-channels "telegram::tests::inbound_builders_handle_partial_payloads_without_panicking" &&
+        file_has_re "os-channels/src/telegram.rs" "thread_id:[[:space:]]+Some\\(chat\\.id\\.to_string\\(\\)\\.into\\(\\)\\)," &&
+        file_has_re "os-channels/src/telegram.rs" "is_group:[[:space:]]+chat\\.r#type != \"private\","
 }
 
 tier_t2_channels_registered() {
@@ -217,21 +262,21 @@ run_skip() {
     rows+=("| ${check_id} | ${criterion} | ${description} | SKIP | \`${reason}\` |")
 }
 
-run_check "C1.1" "C1" "default deny for external channels is present" \
-    "rg -q external_channels_denied_by_default os-app/src/pairing.rs" \
-    file_has "os-app/src/pairing.rs" "external_channels_denied_by_default"
+run_check "C1.1" "C1" "unknown external sender is denied with pending pairing request" \
+    "cargo test -p os-app --locked pairing::tests::unknown_sender_creates_pending_pairing_request -- --exact" \
+    pairing_default_deny_behavior
 
-run_check "C1.2" "C1" "allowlist requirement text is present" \
-    "rg -q 'require explicit allowlisting' os-app/src/pairing.rs" \
-    file_has "os-app/src/pairing.rs" "require explicit allowlisting"
+run_check "C1.2" "C1" "allowlisted sender bypasses pairing denial path" \
+    "cargo test -p os-app --locked pairing::tests::allowlist_matches_raw_sender_or_composite -- --exact" \
+    pairing_allowlist_behavior
 
-run_check "C2.1" "C2" "automation ingest dedupe counters are tracked" \
-    "rg -q webhook_duplicate_events os-app/src/automation_runtime.rs" \
-    file_has "os-app/src/automation_runtime.rs" "webhook_duplicate_events"
+run_check "C2.1" "C2" "automation ingest dedupes replayed webhook event IDs" \
+    "cargo test -p os-app --locked automation_runtime::tests::webhook_ingest_dedupes_replayed_event_id -- --exact" \
+    automation_dedupe_behavior
 
-run_check "C2.2" "C2" "automation ingest event-id uniqueness index exists" \
-    "rg -q 'ON opencraw_automation_ingest_events (ingest_kind, source, event_id)' os-app/src/automation_runtime.rs" \
-    file_has "os-app/src/automation_runtime.rs" "ON opencraw_automation_ingest_events (ingest_kind, source, event_id)"
+run_check "C2.2" "C2" "automation ingest stores uniqueness controls for event IDs" \
+    "cargo test -p os-app --locked automation_runtime::tests::webhook_ingest_dedupes_replayed_event_id -- --exact && rg -q 'ON opencraw_automation_ingest_events (ingest_kind, source, event_id)' os-app/src/automation_runtime.rs" \
+    automation_uniqueness_controls_behavior
 
 run_check "C3.1" "C3" "session storage key enforces channel_id + sender_id isolation" \
     "rg -q 'PRIMARY KEY (channel_id, sender_id)' os-app/src/session.rs" \
@@ -250,25 +295,28 @@ run_check "C4.3" "C4" "automation status endpoint exists" \
     file_has "os-app/src/routes/automation.rs" "/api/v1/os/automation/status"
 
 run_check "C4.4" "C4" "doctor CLI command exists" \
-    "rg -q 'Doctor {' os-app/src/main.rs" \
-    file_has "os-app/src/main.rs" "Doctor {"
+    "opencraw --help | rg -q doctor" \
+    opencraw_help_has "doctor"
 
 run_check "C4.5" "C4" "status CLI command exists" \
-    "rg -q '^[[:space:]]*Status[[:space:]]*\\{' os-app/src/main.rs" \
-    file_has_re "os-app/src/main.rs" "^[[:space:]]*Status[[:space:]]*\\{"
+    "opencraw --help | rg -q status" \
+    status_operator_command_present
 
 run_check "C4.6" "C4" "channel-specific probe endpoint exists" \
-    "rg -q '/api/v1/os/channels/{channel_id}/probe' os-app/src/routes/channels.rs" \
-    file_has "os-app/src/routes/channels.rs" "/api/v1/os/channels/{channel_id}/probe"
+    "rg -q '/api/v1/os/channels/:channel_id/probe' os-app/src/routes/channels.rs && rg -q 'async fn probe_channel' os-app/src/routes/channels.rs" \
+    channel_probe_endpoint_present
 
 case "$tier" in
     T1)
         run_check "T1-C1.3" "C1" "telegram channel is registered in plugin matrix" \
-            "tier_t1_channels_registered" tier_t1_channels_registered
+            "rg -q 'Self::Telegram => \"telegram\"' os-app/src/channel_plugins.rs" \
+            tier_t1_channels_registered
         run_check "T1-C2.3" "C2" "telegram poll offset progression exists" \
-            "tier_t1_delivery_controls_present" tier_t1_delivery_controls_present
+            "cargo test -p os-channels --locked telegram::tests::retry_delay_grows_exponentially_and_caps -- --exact && rg -q 'offset = update.update_id.saturating_add(1);' os-channels/src/telegram.rs" \
+            tier_t1_delivery_controls_present
         run_check "T1-C3.2" "C3" "telegram thread + group routing fields exist" \
-            "tier_t1_session_routing_present" tier_t1_session_routing_present
+            "cargo test -p os-channels --locked telegram::tests::inbound_builders_handle_partial_payloads_without_panicking -- --exact && rg -q 'thread_id: Some(chat.id.to_string().into()),' os-channels/src/telegram.rs" \
+            tier_t1_session_routing_present
         ;;
     T2)
         run_check "T2-C1.3" "C1" "email channel is registered in plugin matrix" \
@@ -324,7 +372,7 @@ fi
     echo "- Generated (UTC): ${timestamp}"
     echo "- Tier: ${tier}"
     echo "- Repository: ${repo_root}"
-    echo "- Criteria Source: plans/parallel-agents/certification/tier-criteria.md"
+    echo "- Criteria Source: scripts/parity/check-tier-certification.sh (inline criteria)"
     echo
     echo "## Exact Tier Criteria"
     echo
@@ -362,4 +410,3 @@ echo "$output"
 if (( fail_count > 0 )) && (( allow_fail == 0 )); then
     exit 1
 fi
-

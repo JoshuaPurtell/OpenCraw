@@ -23,6 +23,10 @@ for tier in t1 t4; do
     fi
     rg -q "^## Check Results" "$report_path"
     rg -q "^- Overall Decision:" "$report_path"
+    if [[ "$tier" == "t1" ]]; then
+        rg -q "cargo test -p os-app --locked pairing::tests::unknown_sender_creates_pending_pairing_request -- --exact" "$report_path"
+        rg -q "cargo test -p os-channels --locked telegram::tests::inbound_builders_handle_partial_payloads_without_panicking -- --exact" "$report_path"
+    fi
 done
 
 echo "certification smoke harness passed"
