@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - main
+  schedule:
+    - cron: "0 7 * * 1"
 
 concurrency:
   group: rust-ci-${{ github.workflow }}-${{ github.ref }}
@@ -36,3 +38,35 @@ jobs:
         env:
           CARGO_TERM_COLOR: always
         run: ./scripts/ci-rust.sh
+
+      - name: Install security gate tooling
+        run: cargo install --locked cargo-audit cargo-deny
+
+      - name: Run supply-chain security gates
+        env:
+          CARGO_TERM_COLOR: always
+        run: ./scripts/ci-rust-security.sh
+
+  rust-latest-deps:
+    name: Rust Latest Deps Verification
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: rust-latest-deps-v1
+
+      - name: Run latest dependency verification
+        env:
+          CARGO_TERM_COLOR: always
+        run: ./scripts/ci-rust-latest-deps.sh
