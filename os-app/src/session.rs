@@ -72,6 +72,16 @@ impl Session {
         self.last_user_message_id = None;
         self.last_active = Utc::now();
     }
+
+    fn enforce_invariants(&mut self) {
+        self.model_override = normalize_optional_string(self.model_override.take());
+        if self.model_override.is_none() {
+            self.model_pinning = ModelPinningMode::Prefer;
+        }
+        if self.last_active < self.created_at {
+            self.last_active = self.created_at;
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -136,12 +146,54 @@ SELECT channel_id, sender_id, session_json
             )
             .await?;
         for row in rows {
-            let channel_id = row_required_string(&row, "channel_id")?;
-            let sender_id = row_required_string(&row, "sender_id")?;
-            let session_json = row_required_string(&row, "session_json")?;
-            let session: Session = serde_json::from_str(&session_json)?;
-            self.sessions
-                .insert(SessionScope::new(channel_id, sender_id), session);
+            let channel_id = match row_required_string(&row, "channel_id") {
+                Ok(v) => v,
+                Err(error) => {
+                    tracing::warn!(
+                        error = %error,
+                        "skipping persisted session row missing channel_id"
+                    );
+                    continue;
+                }
+            };
+            let sender_id = match row_required_string(&row, "sender_id") {
+                Ok(v) => v,
+                Err(error) => {
+                    tracing::warn!(
+                        %channel_id,
+                        error = %error,
+                        "skipping persisted session row missing sender_id"
+                    );
+                    continue;
+                }
+            };
+            let session_json = match row_required_string(&row, "session_json") {
+                Ok(v) => v,
+                Err(error) => {
+                    tracing::warn!(
+                        %channel_id,
+                        %sender_id,
+                        error = %error,
+                        "skipping persisted session row missing session_json"
+                    );
+                    continue;
+                }
+            };
+            match serde_json::from_str::<Session>(&session_json) {
+                Ok(mut session) => {
+                    session.enforce_invariants();
+                    self.sessions
+                        .insert(SessionScope::new(channel_id, sender_id), session);
+                }
+                Err(error) => {
+                    tracing::warn!(
+                        %channel_id,
+                        %sender_id,
+                        error = %error,
+                        "skipping persisted session row with invalid session_json"
+                    );
+                }
+            }
         }
         Ok(())
     }
@@ -171,9 +223,12 @@ CREATE TABLE IF NOT EXISTS opencraw_sessions (
         channel_id: &str,
         sender_id: &str,
     ) -> dashmap::mapref::one::RefMut<'_, SessionScope, Session> {
-        self.sessions
+        let mut session = self
+            .sessions
             .entry(SessionScope::new(channel_id, sender_id))
-            .or_insert_with(Session::new)
+            .or_insert_with(Session::new);
+        session.enforce_invariants();
+        session
     }
 
     pub fn list(&self) -> Vec<SessionSummary> {
@@ -208,7 +263,6 @@ CREATE TABLE IF NOT EXISTS opencraw_sessions (
             }
         }
         if let Some(key) = to_remove {
-            self.sessions.remove(&key);
             self.project_db
                 .execute(
                     self.org_id,
@@ -224,34 +278,45 @@ DELETE FROM opencraw_sessions
                     ],
                 )
                 .await?;
+            self.sessions.remove(&key);
             return Ok(true);
         }
         Ok(false)
     }
 
     pub async fn persist(&self) -> Result<()> {
-        for entry in self.sessions.iter() {
-            let (scope, session) = entry.pair();
-            let session_json = serde_json::to_string(session)?;
-            self.project_db
-                .execute(
-                    self.org_id,
-                    &self.project_db_handle,
-                    r#"
+        let snapshots: Vec<(SessionScope, Session)> = self
+            .sessions
+            .iter()
+            .map(|entry| (entry.key().clone(), entry.value().clone()))
+            .collect();
+        for (scope, mut session) in snapshots {
+            session.enforce_invariants();
+            self.persist_scope(&scope, &session).await?;
+        }
+        Ok(())
+    }
+
+    async fn persist_scope(&self, scope: &SessionScope, session: &Session) -> Result<()> {
+        let session_json = serde_json::to_string(session)?;
+        self.project_db
+            .execute(
+                self.org_id,
+                &self.project_db_handle,
+                r#"
 INSERT INTO opencraw_sessions (channel_id, sender_id, session_json, updated_at)
 VALUES (?1, ?2, ?3, CURRENT_TIMESTAMP)
 ON CONFLICT(channel_id, sender_id) DO UPDATE
 SET session_json = excluded.session_json,
     updated_at = CURRENT_TIMESTAMP
 "#,
-                    &[
-                        ProjectDbParam::String(scope.channel_id().to_string()),
-                        ProjectDbParam::String(scope.sender_id().to_string()),
-                        ProjectDbParam::String(session_json),
-                    ],
-                )
-                .await?;
-        }
+                &[
+                    ProjectDbParam::String(scope.channel_id().to_string()),
+                    ProjectDbParam::String(scope.sender_id().to_string()),
+                    ProjectDbParam::String(session_json),
+                ],
+            )
+            .await?;
         Ok(())
     }
 
@@ -272,29 +337,28 @@ SET session_json = excluded.session_json,
             return Ok(None);
         };
 
-        let normalized_override = model_override.and_then(|value| {
-            let trimmed = value.trim().to_string();
-            if trimmed.is_empty() {
-                None
-            } else {
-                Some(trimmed)
-            }
-        });
+        let normalized_override = normalize_optional_string(model_override);
 
-        let updated = if let Some(mut session) = self.sessions.get_mut(&key) {
+        let (previous, updated) = if let Some(mut session) = self.sessions.get_mut(&key) {
+            let previous = session.clone();
             session.model_override = normalized_override;
-            if session.model_override.is_none() {
-                session.model_pinning = ModelPinningMode::Prefer;
-            } else if let Some(mode) = model_pinning {
+            if let Some(mode) = model_pinning {
                 session.model_pinning = mode;
             }
+            session.enforce_invariants();
             session.last_active = Utc::now();
-            session.clone()
+            (previous, session.clone())
         } else {
             return Ok(None);
         };
 
-        self.persist().await?;
+        if let Err(error) = self.persist_scope(&key, &updated).await {
+            if let Some(mut session) = self.sessions.get_mut(&key) {
+                *session = previous;
+            }
+            return Err(error);
+        }
+
         Ok(Some(updated))
     }
 }
@@ -318,6 +382,17 @@ fn default_usage() -> Usage {
     }
 }
 
+fn normalize_optional_string(value: Option<String>) -> Option<String> {
+    value.and_then(|raw| {
+        let trimmed = raw.trim();
+        if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed.to_string())
+        }
+    })
+}
+
 fn row_required_string(
     row: &std::collections::BTreeMap<String, ProjectDbValue>,
     key: &str,
@@ -336,13 +411,13 @@ fn row_required_string(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::Duration;
     use horizons_core::models::ProjectId;
     use horizons_rs::dev_backends::DevProjectDb;
     use os_llm::Role;
     use std::sync::Arc;
 
-    #[tokio::test]
-    async fn persists_and_reloads_sessions() {
+    async fn new_manager() -> (Arc<DevProjectDb>, OrgId, ProjectDbHandle, SessionManager) {
         let root = std::env::temp_dir().join(format!("opencraw-session-{}", Uuid::new_v4()));
         let project_db = Arc::new(
             DevProjectDb::new(root.join("project_dbs"))
@@ -358,6 +433,12 @@ mod tests {
         let manager = SessionManager::load_or_new(project_db.clone(), org_id, handle.clone())
             .await
             .expect("load manager");
+        (project_db, org_id, handle, manager)
+    }
+
+    #[tokio::test]
+    async fn persists_and_reloads_sessions() {
+        let (project_db, org_id, handle, manager) = new_manager().await;
         {
             let mut session = manager.get_or_create_mut("webchat", "user-1");
             session.history.push(ChatMessage {
@@ -378,5 +459,113 @@ mod tests {
         assert_eq!(sessions[0].channel_id, "webchat");
         assert_eq!(sessions[0].sender_id, "user-1");
         assert_eq!(sessions[0].messages, 1);
+    }
+
+    #[tokio::test]
+    async fn skips_invalid_rows_when_loading_from_store() {
+        let (project_db, org_id, handle, manager) = new_manager().await;
+        {
+            let mut session = manager.get_or_create_mut("webchat", "user-good");
+            session.history.push(ChatMessage {
+                role: Role::User,
+                content: "hello".to_string(),
+                tool_calls: vec![],
+                tool_call_id: None,
+            });
+        }
+        manager.persist().await.expect("persist valid session");
+
+        project_db
+            .execute(
+                org_id,
+                &handle,
+                r#"
+INSERT INTO opencraw_sessions (channel_id, sender_id, session_json, updated_at)
+VALUES (?1, ?2, ?3, CURRENT_TIMESTAMP)
+"#,
+                &[
+                    ProjectDbParam::String("webchat".to_string()),
+                    ProjectDbParam::String("user-corrupt".to_string()),
+                    ProjectDbParam::String("{\"id\":\"broken".to_string()),
+                ],
+            )
+            .await
+            .expect("insert corrupt row");
+
+        let reloaded = SessionManager::load_or_new(project_db.clone(), org_id, handle.clone())
+            .await
+            .expect("reload manager while corrupt row exists");
+        let sessions = reloaded.list();
+        assert_eq!(sessions.len(), 1);
+        assert_eq!(sessions[0].sender_id, "user-good");
+    }
+
+    #[tokio::test]
+    async fn set_model_override_enforces_invariants() {
+        let (project_db, org_id, handle, manager) = new_manager().await;
+        let session_id = {
+            let session = manager.get_or_create_mut("webchat", "operator");
+            session.id
+        };
+
+        let updated = manager
+            .set_model_override_by_id(
+                session_id,
+                Some(" gpt-4.1-mini ".to_string()),
+                Some(ModelPinningMode::Strict),
+            )
+            .await
+            .expect("set strict model override")
+            .expect("session should exist");
+        assert_eq!(updated.model_override.as_deref(), Some("gpt-4.1-mini"));
+        assert_eq!(updated.model_pinning, ModelPinningMode::Strict);
+
+        let updated = manager
+            .set_model_override_by_id(
+                session_id,
+                Some("    ".to_string()),
+                Some(ModelPinningMode::Strict),
+            )
+            .await
+            .expect("clear model override by blank")
+            .expect("session should exist");
+        assert_eq!(updated.model_override, None);
+        assert_eq!(updated.model_pinning, ModelPinningMode::Prefer);
+
+        let reloaded = SessionManager::load_or_new(project_db.clone(), org_id, handle.clone())
+            .await
+            .expect("reload manager");
+        let summary = reloaded
+            .list()
+            .into_iter()
+            .find(|session| session.id == session_id)
+            .expect("session should exist");
+        assert_eq!(summary.model_override, None);
+        assert_eq!(summary.model_pinning, ModelPinningMode::Prefer);
+    }
+
+    #[tokio::test]
+    async fn persist_normalizes_timestamp_and_pinning() {
+        let (project_db, org_id, handle, manager) = new_manager().await;
+        let session_id = {
+            let mut session = manager.get_or_create_mut("webchat", "invariant-user");
+            session.model_override = None;
+            session.model_pinning = ModelPinningMode::Strict;
+            session.last_active = session.created_at - Duration::seconds(30);
+            session.id
+        };
+
+        manager.persist().await.expect("persist normalized session");
+
+        let reloaded = SessionManager::load_or_new(project_db.clone(), org_id, handle.clone())
+            .await
+            .expect("reload manager");
+        let summary = reloaded
+            .list()
+            .into_iter()
+            .find(|session| session.id == session_id)
+            .expect("session should exist");
+        assert_eq!(summary.model_pinning, ModelPinningMode::Prefer);
+        assert!(summary.last_active >= summary.created_at);
     }
 }
