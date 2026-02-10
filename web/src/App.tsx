@@ -18,38 +18,6 @@ type ChatItem = {
   text: string
 }
 
-type AutomationStatusPayload = {
-  status?: string
-  automation?: {
-    enabled?: boolean
-    heartbeat_ticks?: number
-    scheduler_ticks?: number
-    scheduler_runs?: number
-    scheduler_failures?: number
-    job_count?: number
-    enabled_job_count?: number
-  }
-}
-
-type SkillsPayload = {
-  status?: string
-  skills?: Array<{ decision?: 'approve' | 'warn' | 'block' }>
-}
-
-type SessionsPayload = {
-  sessions?: Array<{
-    id: string
-    channel_id: string
-    sender_id: string
-    messages: number
-    model_override?: string | null
-  }>
-}
-
-type ChannelsPayload = {
-  channels?: string[]
-}
-
 const statusStyles: Record<
   ConnectionStatus,
   { label: string; tone: string }
