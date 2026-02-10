@@ -9,6 +9,6 @@ mod error;
 mod openai;
 mod types;
 
-pub use client::{validate_tool_name_all_providers, LlmClient, Provider};
+pub use client::{LlmClient, Provider, validate_tool_name_all_providers};
 pub use error::{LlmError, Result};
 pub use types::{ChatMessage, ChatResponse, Role, StreamChunk, ToolCall, ToolDefinition, Usage};

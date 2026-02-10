@@ -141,7 +141,7 @@ impl OpenAiClient {
                                                 "openai stream ended without usage".to_string(),
                                             )),
                                             (sse, state),
-                                        ))
+                                        ));
                                     }
                                 };
                                 return Some((Ok(StreamChunk::Done { usage }), (sse, state)));
@@ -169,7 +169,7 @@ impl OpenAiClient {
                                                 "openai usage missing prompt_tokens".to_string(),
                                             )),
                                             (sse, state),
-                                        ))
+                                        ));
                                     }
                                 };
                                 let completion_tokens = match u.completion_tokens {
@@ -181,7 +181,7 @@ impl OpenAiClient {
                                                     .to_string(),
                                             )),
                                             (sse, state),
-                                        ))
+                                        ));
                                     }
                                 };
                                 state.usage = Some(Usage {
@@ -221,7 +221,7 @@ impl OpenAiClient {
                                                         .to_string(),
                                                 )),
                                                 (sse, state),
-                                            ))
+                                            ));
                                         }
                                     };
                                     let entry = state.tool_calls.entry(idx).or_default();
@@ -472,7 +472,7 @@ impl TryFrom<OpenAiChatResponse> for ChatResponse {
             None => {
                 return Err(LlmError::ResponseFormat(
                     "openai response missing assistant content".to_string(),
-                ))
+                ));
             }
         };
 
@@ -531,7 +531,7 @@ where
                         continue;
                     }
                     Some(Err(e)) => {
-                        return Some((Err(LlmError::Http(e.to_string())), (stream, buffer)))
+                        return Some((Err(LlmError::Http(e.to_string())), (stream, buffer)));
                     }
                     None => return None,
                 }

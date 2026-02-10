@@ -7,10 +7,19 @@ use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use horizons_core::models::{OrgId, ProjectDbHandle};
 use horizons_core::onboard::traits::{ProjectDb, ProjectDbParam, ProjectDbValue};
+use os_channels::{ChannelId, SenderId};
 use os_llm::{ChatMessage, Usage};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum ModelPinningMode {
+    #[default]
+    Prefer,
+    Strict,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Session {
@@ -28,6 +37,10 @@ pub struct Session {
     pub last_assistant_message_id: Option<String>,
     #[serde(default)]
     pub last_user_message_id: Option<String>,
+    #[serde(default)]
+    pub model_override: Option<String>,
+    #[serde(default)]
+    pub model_pinning: ModelPinningMode,
 }
 
 impl Session {
@@ -46,6 +59,8 @@ impl Session {
             },
             last_assistant_message_id: None,
             last_user_message_id: None,
+            model_override: None,
+            model_pinning: ModelPinningMode::Prefer,
         }
     }
 
@@ -59,9 +74,32 @@ impl Session {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct SessionScope {
+    channel_id: ChannelId,
+    sender_id: SenderId,
+}
+
+impl SessionScope {
+    fn new(channel_id: impl Into<ChannelId>, sender_id: impl Into<SenderId>) -> Self {
+        Self {
+            channel_id: channel_id.into(),
+            sender_id: sender_id.into(),
+        }
+    }
+
+    fn channel_id(&self) -> &str {
+        self.channel_id.as_str()
+    }
+
+    fn sender_id(&self) -> &str {
+        self.sender_id.as_str()
+    }
+}
+
 #[derive(Clone)]
 pub struct SessionManager {
-    sessions: DashMap<(String, String), Session>,
+    sessions: DashMap<SessionScope, Session>,
     project_db: Arc<dyn ProjectDb>,
     org_id: OrgId,
     project_db_handle: ProjectDbHandle,
@@ -102,7 +140,8 @@ SELECT channel_id, sender_id, session_json
             let sender_id = row_required_string(&row, "sender_id")?;
             let session_json = row_required_string(&row, "session_json")?;
             let session: Session = serde_json::from_str(&session_json)?;
-            self.sessions.insert((channel_id, sender_id), session);
+            self.sessions
+                .insert(SessionScope::new(channel_id, sender_id), session);
         }
         Ok(())
     }
@@ -131,9 +170,9 @@ CREATE TABLE IF NOT EXISTS opencraw_sessions (
         &self,
         channel_id: &str,
         sender_id: &str,
-    ) -> dashmap::mapref::one::RefMut<'_, (String, String), Session> {
+    ) -> dashmap::mapref::one::RefMut<'_, SessionScope, Session> {
         self.sessions
-            .entry((channel_id.to_string(), sender_id.to_string()))
+            .entry(SessionScope::new(channel_id, sender_id))
             .or_insert_with(Session::new)
     }
 
@@ -142,14 +181,16 @@ CREATE TABLE IF NOT EXISTS opencraw_sessions (
             .sessions
             .iter()
             .map(|entry| {
-                let ((channel_id, sender_id), s) = entry.pair();
+                let (scope, s) = entry.pair();
                 SessionSummary {
                     id: s.id,
-                    channel_id: channel_id.clone(),
-                    sender_id: sender_id.clone(),
+                    channel_id: scope.channel_id().to_string(),
+                    sender_id: scope.sender_id().to_string(),
                     created_at: s.created_at,
                     last_active: s.last_active,
                     messages: s.history.len(),
+                    model_override: s.model_override.clone(),
+                    model_pinning: s.model_pinning,
                 }
             })
             .collect();
@@ -178,8 +219,8 @@ DELETE FROM opencraw_sessions
    AND sender_id = ?2
 "#,
                     &[
-                        ProjectDbParam::String(key.0.clone()),
-                        ProjectDbParam::String(key.1.clone()),
+                        ProjectDbParam::String(key.channel_id().to_string()),
+                        ProjectDbParam::String(key.sender_id().to_string()),
                     ],
                 )
                 .await?;
@@ -190,7 +231,7 @@ DELETE FROM opencraw_sessions
 
     pub async fn persist(&self) -> Result<()> {
         for entry in self.sessions.iter() {
-            let ((channel_id, sender_id), session) = entry.pair();
+            let (scope, session) = entry.pair();
             let session_json = serde_json::to_string(session)?;
             self.project_db
                 .execute(
@@ -204,14 +245,57 @@ SET session_json = excluded.session_json,
     updated_at = CURRENT_TIMESTAMP
 "#,
                     &[
-                        ProjectDbParam::String(channel_id.clone()),
-                        ProjectDbParam::String(sender_id.clone()),
+                        ProjectDbParam::String(scope.channel_id().to_string()),
+                        ProjectDbParam::String(scope.sender_id().to_string()),
                         ProjectDbParam::String(session_json),
                     ],
                 )
                 .await?;
         }
         Ok(())
+    }
+
+    pub async fn set_model_override_by_id(
+        &self,
+        id: Uuid,
+        model_override: Option<String>,
+        model_pinning: Option<ModelPinningMode>,
+    ) -> Result<Option<Session>> {
+        let mut key_to_update = None;
+        for entry in self.sessions.iter() {
+            if entry.value().id == id {
+                key_to_update = Some(entry.key().clone());
+                break;
+            }
+        }
+        let Some(key) = key_to_update else {
+            return Ok(None);
+        };
+
+        let normalized_override = model_override.and_then(|value| {
+            let trimmed = value.trim().to_string();
+            if trimmed.is_empty() {
+                None
+            } else {
+                Some(trimmed)
+            }
+        });
+
+        let updated = if let Some(mut session) = self.sessions.get_mut(&key) {
+            session.model_override = normalized_override;
+            if session.model_override.is_none() {
+                session.model_pinning = ModelPinningMode::Prefer;
+            } else if let Some(mode) = model_pinning {
+                session.model_pinning = mode;
+            }
+            session.last_active = Utc::now();
+            session.clone()
+        } else {
+            return Ok(None);
+        };
+
+        self.persist().await?;
+        Ok(Some(updated))
     }
 }
 
@@ -223,6 +307,8 @@ pub struct SessionSummary {
     pub created_at: DateTime<Utc>,
     pub last_active: DateTime<Utc>,
     pub messages: usize,
+    pub model_override: Option<String>,
+    pub model_pinning: ModelPinningMode,
 }
 
 fn default_usage() -> Usage {

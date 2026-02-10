@@ -12,7 +12,8 @@ use os_channels::{ChannelAdapter, InboundMessage, InboundMessageKind, OutboundMe
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tokio::sync::{mpsc, watch, Mutex, Semaphore};
+use tokio::sync::{Mutex, Semaphore, mpsc, watch};
+use tokio_util::sync::CancellationToken;
 
 #[derive(Clone)]
 struct LaneHandle {
@@ -60,7 +61,7 @@ impl Gateway {
         }
     }
 
-    pub fn start(self: Arc<Self>) {
+    pub fn start(self: Arc<Self>, shutdown: CancellationToken) -> tokio::task::JoinHandle<()> {
         tokio::spawn(async move {
             tracing::info!(
                 queue_mode = ?self.cfg.queue.mode,
@@ -69,22 +70,30 @@ impl Gateway {
                 debounce_ms = self.cfg.queue.debounce_ms,
                 "gateway task spawned"
             );
-            if let Err(e) = self.run_loop().await {
+            if let Err(e) = self.run_loop(shutdown).await {
                 tracing::error!(%e, "gateway loop exited");
             }
-        });
+        })
     }
 
     #[tracing::instrument(level = "info", skip_all)]
-    async fn run_loop(self: Arc<Self>) -> Result<()> {
+    async fn run_loop(self: Arc<Self>, shutdown: CancellationToken) -> Result<()> {
         tracing::info!("gateway loop started");
         loop {
             let msg = {
                 let mut rx = self.inbound_rx.lock().await;
-                rx.recv().await
+                tokio::select! {
+                    _ = shutdown.cancelled() => None,
+                    msg = rx.recv() => msg,
+                }
             };
             let Some(inbound) = msg else {
-                tracing::warn!("inbound queue closed; gateway loop stopping");
+                if shutdown.is_cancelled() {
+                    tracing::info!("gateway shutdown signal received; stopping run loop");
+                } else {
+                    tracing::warn!("inbound queue closed; gateway loop stopping");
+                }
+                self.lane_queues.lock().await.clear();
                 return Ok(());
             };
 
@@ -95,11 +104,15 @@ impl Gateway {
                 inbound_kind = ?inbound.kind,
                 "inbound message received"
             );
-            self.dispatch_inbound(inbound).await?;
+            self.dispatch_inbound(inbound, &shutdown).await?;
         }
     }
 
-    async fn dispatch_inbound(self: &Arc<Self>, inbound: InboundMessage) -> Result<()> {
+    async fn dispatch_inbound(
+        self: &Arc<Self>,
+        inbound: InboundMessage,
+        shutdown: &CancellationToken,
+    ) -> Result<()> {
         let lane_key = format!("{}::{}", inbound.channel_id, inbound.sender_id);
         let mut created_lane = false;
         let lane_handle = {
@@ -117,9 +130,10 @@ impl Gateway {
                 created_lane = true;
                 let gateway = self.clone();
                 let lane_key_for_worker = lane_key.clone();
+                let lane_shutdown = shutdown.child_token();
                 tokio::spawn(async move {
                     if let Err(e) = gateway
-                        .run_lane_loop(lane_key_for_worker.clone(), rx, interrupt_rx)
+                        .run_lane_loop(lane_key_for_worker.clone(), rx, interrupt_rx, lane_shutdown)
                         .await
                     {
                         tracing::error!(lane = %lane_key_for_worker, %e, "lane worker exited");
@@ -164,11 +178,16 @@ impl Gateway {
         lane_key: String,
         mut lane_rx: mpsc::Receiver<InboundMessage>,
         mut interrupt_rx: watch::Receiver<u64>,
+        shutdown: CancellationToken,
     ) -> Result<()> {
         tracing::info!(lane = %lane_key, queue_mode = ?self.cfg.queue.mode, "lane worker started");
         let mut pending = VecDeque::<InboundMessage>::new();
         loop {
-            let Some(first) = next_lane_message(&mut lane_rx, &mut pending).await else {
+            let next_message = tokio::select! {
+                _ = shutdown.cancelled() => None,
+                msg = next_lane_message(&mut lane_rx, &mut pending) => msg,
+            };
+            let Some(first) = next_message else {
                 break;
             };
             let (first, debounced_count) = debounce_lane_messages(
@@ -180,8 +199,12 @@ impl Gateway {
             .await;
             let (inbound, reshaped_count) =
                 prepare_lane_message(self.cfg.queue.mode, first, &mut lane_rx, &mut pending);
-            let Ok(_permit) = self.worker_budget.acquire().await else {
-                tracing::warn!(lane = %lane_key, "worker budget closed");
+            let permit = tokio::select! {
+                _ = shutdown.cancelled() => None,
+                permit = self.worker_budget.acquire() => permit.ok(),
+            };
+            let Some(_permit) = permit else {
+                tracing::warn!(lane = %lane_key, "worker budget closed or lane shutdown triggered");
                 break;
             };
             tracing::debug!(
@@ -196,6 +219,9 @@ impl Gateway {
             if outcome == HandleInboundOutcome::Interrupted {
                 tracing::warn!(lane = %lane_key, "assistant run interrupted by newer lane message");
             }
+        }
+        if shutdown.is_cancelled() {
+            tracing::info!(lane = %lane_key, "lane worker stopped by shutdown signal");
         }
         tracing::info!(lane = %lane_key, "lane worker exited");
         Ok(())
@@ -220,7 +246,11 @@ impl Gateway {
         inbound: InboundMessage,
         interrupt_rx: &mut watch::Receiver<u64>,
     ) -> Result<HandleInboundOutcome> {
-        if !pairing::is_allowed(&self.cfg, &inbound.channel_id, &inbound.sender_id) {
+        if !pairing::is_allowed(
+            &self.cfg,
+            inbound.channel_id.as_str(),
+            inbound.sender_id.as_str(),
+        ) {
             tracing::warn!("inbound rejected by pairing policy");
             return Ok(HandleInboundOutcome::Completed);
         }
@@ -233,7 +263,7 @@ impl Gateway {
 
         let channel = self
             .channels
-            .get(&inbound.channel_id)
+            .get(inbound.channel_id.as_str())
             .ok_or_else(|| anyhow::anyhow!("unknown channel: {}", inbound.channel_id))?
             .clone();
 
@@ -247,7 +277,7 @@ impl Gateway {
         let uptime = self.started_at.elapsed();
         let mut session = self
             .sessions
-            .get_or_create_mut(&inbound.channel_id, &inbound.sender_id);
+            .get_or_create_mut(inbound.channel_id.as_str(), inbound.sender_id.as_str());
         tracing::debug!(
             uptime_seconds = uptime.as_secs(),
             active_channels = ?active_channels,
@@ -269,10 +299,10 @@ impl Gateway {
             );
             channel
                 .send(
-                    &recipient,
+                    recipient.as_str(),
                     OutboundMessage {
                         content: reply,
-                        reply_to_message_id: Some(inbound.message_id),
+                        reply_to_message_id: Some(inbound.message_id.clone()),
                         attachments: vec![],
                     },
                 )
@@ -280,11 +310,11 @@ impl Gateway {
             return Ok(HandleInboundOutcome::Completed);
         }
 
-        session.last_user_message_id = Some(inbound.message_id.clone());
+        session.last_user_message_id = Some(inbound.message_id.to_string());
         session.last_active = chrono::Utc::now();
         if channel.supports_typing_events() {
             tracing::debug!("typing indicator enabled");
-            channel.send_typing(&recipient, true).await?;
+            channel.send_typing(recipient.as_str(), true).await?;
         }
 
         let supports_streaming = channel.supports_streaming_deltas();
@@ -295,7 +325,9 @@ impl Gateway {
             let recipient_stream = recipient.clone();
             let handle = tokio::spawn(async move {
                 while let Some(delta) = delta_rx.recv().await {
-                    channel_stream.send_delta(&recipient_stream, &delta).await?;
+                    channel_stream
+                        .send_delta(recipient_stream.as_str(), &delta)
+                        .await?;
                 }
                 Ok::<(), anyhow::Error>(())
             });
@@ -312,8 +344,8 @@ impl Gateway {
         let response = if self.is_interrupt_mode() {
             let observed_interrupt_seq = *interrupt_rx.borrow_and_update();
             let run_fut = self.assistant.run(
-                &inbound.channel_id,
-                &inbound.sender_id,
+                inbound.channel_id.as_str(),
+                inbound.sender_id.as_str(),
                 &mut session,
                 &inbound.content,
                 stream_tx,
@@ -330,8 +362,8 @@ impl Gateway {
             AssistantRunOutcome::Completed(
                 self.assistant
                     .run(
-                        &inbound.channel_id,
-                        &inbound.sender_id,
+                        inbound.channel_id.as_str(),
+                        inbound.sender_id.as_str(),
                         &mut session,
                         &inbound.content,
                         stream_tx,
@@ -354,7 +386,7 @@ impl Gateway {
         }
         if channel.supports_typing_events() {
             tracing::debug!("typing indicator disabled");
-            channel.send_typing(&recipient, false).await?;
+            channel.send_typing(recipient.as_str(), false).await?;
         }
         let response = match response {
             AssistantRunOutcome::Completed(response) => response?,
@@ -367,7 +399,7 @@ impl Gateway {
 
         channel
             .send(
-                &recipient,
+                recipient.as_str(),
                 OutboundMessage {
                     content: response,
                     reply_to_message_id: Some(inbound.message_id),
@@ -558,10 +590,10 @@ mod tests {
     fn inbound(kind: InboundMessageKind, message_id: &str, content: &str) -> InboundMessage {
         InboundMessage {
             kind,
-            message_id: message_id.to_string(),
-            channel_id: "webchat".to_string(),
-            sender_id: "user-1".to_string(),
-            thread_id: Some("thread-1".to_string()),
+            message_id: message_id.into(),
+            channel_id: "webchat".into(),
+            sender_id: "user-1".into(),
+            thread_id: Some("thread-1".into()),
             is_group: false,
             content: content.to_string(),
             metadata: serde_json::Value::Null,
@@ -580,7 +612,7 @@ mod tests {
         let (prepared, absorbed) = collect_lane_messages(first, &mut pending);
 
         assert_eq!(absorbed, 2);
-        assert_eq!(prepared.message_id, "m3");
+        assert_eq!(prepared.message_id.as_str(), "m3");
         assert_eq!(prepared.content, "first\nsecond\nthird");
         assert_eq!(pending.len(), 1);
         assert_eq!(pending[0].kind, InboundMessageKind::Reaction);
@@ -604,7 +636,7 @@ mod tests {
         let (prepared, dropped) = latest_message_wins(first, &mut pending);
 
         assert_eq!(dropped, 2);
-        assert_eq!(prepared.message_id, "m3");
+        assert_eq!(prepared.message_id.as_str(), "m3");
         assert_eq!(prepared.content, "third");
         assert_eq!(pending.len(), 1);
         assert_eq!(pending[0].kind, InboundMessageKind::Reaction);
@@ -663,7 +695,7 @@ mod tests {
         let (debounced, buffered) = debounce_lane_messages(50, first, &mut rx, &mut pending).await;
         assert_eq!(buffered, 1);
         assert_eq!(pending.len(), 1);
-        assert_eq!(pending[0].message_id, "m2");
+        assert_eq!(pending[0].message_id.as_str(), "m2");
         assert_eq!(
             debounced
                 .metadata

@@ -119,10 +119,10 @@ impl TelegramAdapter {
                     let metadata = serde_json::to_value(&m)?;
                     let inbound = InboundMessage {
                         kind: InboundMessageKind::Message,
-                        message_id: m.message_id.to_string(),
-                        channel_id: "telegram".to_string(),
-                        sender_id,
-                        thread_id: Some(m.chat.id.to_string()),
+                        message_id: m.message_id.to_string().into(),
+                        channel_id: "telegram".into(),
+                        sender_id: sender_id.into(),
+                        thread_id: Some(m.chat.id.to_string().into()),
                         is_group,
                         content: text.to_string(),
                         metadata,
@@ -146,10 +146,10 @@ impl TelegramAdapter {
                         .ok_or_else(|| anyhow::anyhow!("telegram reaction missing emoji"))?;
                     let inbound = InboundMessage {
                         kind: InboundMessageKind::Reaction,
-                        message_id: Uuid::new_v4().to_string(),
-                        channel_id: "telegram".to_string(),
-                        sender_id,
-                        thread_id: Some(r.chat.id.to_string()),
+                        message_id: Uuid::new_v4().to_string().into(),
+                        channel_id: "telegram".into(),
+                        sender_id: sender_id.into(),
+                        thread_id: Some(r.chat.id.to_string().into()),
                         is_group: r.chat.r#type != "private",
                         content: emoji,
                         metadata: serde_json::to_value(&r)?,

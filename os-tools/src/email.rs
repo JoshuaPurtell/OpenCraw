@@ -1,8 +1,8 @@
 use crate::error::{Result, ToolError};
-use crate::traits::{optional_string, require_string, Tool, ToolSpec};
+use crate::traits::{Tool, ToolSpec, optional_string, require_string};
 use async_trait::async_trait;
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use horizons_core::core_agents::models::RiskLevel;
 use reqwest::Url;
 use serde::Deserialize;

@@ -1,6 +1,6 @@
 use crate::traits::ChannelAdapter;
 use crate::types::{InboundMessage, InboundMessageKind, OutboundMessage};
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use std::collections::HashSet;
@@ -182,10 +182,10 @@ impl LinearAdapter {
 
                 let inbound = InboundMessage {
                     kind: InboundMessageKind::Message,
-                    message_id: comment.comment_id.clone(),
-                    channel_id: "linear".to_string(),
-                    sender_id: comment.sender_id,
-                    thread_id: Some(comment.issue_id),
+                    message_id: comment.comment_id.clone().into(),
+                    channel_id: "linear".into(),
+                    sender_id: comment.sender_id.into(),
+                    thread_id: Some(comment.issue_id.into()),
                     is_group: true,
                     content: comment.content,
                     metadata: comment.metadata,
@@ -439,7 +439,7 @@ struct LinearUser {
 
 #[cfg(test)]
 mod tests {
-    use super::{matches_team, parse_rfc3339, LinearIssueNode, LinearTeam};
+    use super::{LinearIssueNode, LinearTeam, matches_team, parse_rfc3339};
 
     #[test]
     fn parses_rfc3339_timestamp() {

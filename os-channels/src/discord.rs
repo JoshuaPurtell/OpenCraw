@@ -5,7 +5,7 @@ use chrono::Utc;
 use futures_util::{SinkExt, StreamExt};
 use serde::Deserialize;
 use std::sync::Arc;
-use tokio::sync::{mpsc, Mutex, RwLock};
+use tokio::sync::{Mutex, RwLock, mpsc};
 use tokio_tungstenite::tungstenite::Message;
 
 const DISCORD_GATEWAY_URL: &str = "wss://gateway.discord.gg/?v=10&encoding=json";
@@ -192,10 +192,10 @@ impl DiscordAdapter {
                     let metadata = serde_json::to_value(&event)?;
                     let inbound = InboundMessage {
                         kind: InboundMessageKind::Message,
-                        message_id: event.id,
-                        channel_id: "discord".to_string(),
-                        sender_id: event.author.id,
-                        thread_id: Some(event.channel_id),
+                        message_id: event.id.into(),
+                        channel_id: "discord".into(),
+                        sender_id: event.author.id.into(),
+                        thread_id: Some(event.channel_id.into()),
                         is_group,
                         content: event.content,
                         metadata,

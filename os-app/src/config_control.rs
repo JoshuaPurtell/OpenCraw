@@ -30,16 +30,16 @@ struct ConfigState {
 }
 
 impl ConfigControl {
-    pub fn new(path: PathBuf, config: OpenShellConfig) -> Self {
-        let base_hash = hash_config(&config);
-        Self {
+    pub fn new(path: PathBuf, config: OpenShellConfig) -> Result<Self> {
+        let base_hash = hash_config(&config)?;
+        Ok(Self {
             path,
             state: Arc::new(Mutex::new(ConfigState {
                 config,
                 base_hash,
                 updated_at: Utc::now(),
             })),
-        }
+        })
     }
 
     pub async fn snapshot(&self) -> ConfigSnapshot {
@@ -56,7 +56,7 @@ impl ConfigControl {
         config.validate()?;
         let mut state = self.state.lock().await;
         write_config_file(&self.path, &config).await?;
-        state.base_hash = hash_config(&config);
+        state.base_hash = hash_config(&config)?;
         state.updated_at = Utc::now();
         state.config = config;
 
@@ -86,7 +86,7 @@ impl ConfigControl {
         next.validate()?;
         write_config_file(&self.path, &next).await?;
 
-        state.base_hash = hash_config(&next);
+        state.base_hash = hash_config(&next)?;
         state.updated_at = Utc::now();
         state.config = next;
 
@@ -99,11 +99,11 @@ impl ConfigControl {
     }
 }
 
-fn hash_config(config: &OpenShellConfig) -> String {
-    let bytes = serde_json::to_vec(config).expect("config serialization must not fail");
+fn hash_config(config: &OpenShellConfig) -> Result<String> {
+    let bytes = serde_json::to_vec(config)?;
     let mut hasher = DefaultHasher::new();
     bytes.hash(&mut hasher);
-    format!("{:016x}", hasher.finish())
+    Ok(format!("{:016x}", hasher.finish()))
 }
 
 fn merge_json_value(target: &mut serde_json::Value, patch: serde_json::Value) {
@@ -163,7 +163,7 @@ port = 3000
     #[tokio::test]
     async fn patch_rejects_stale_base_hash() {
         let path = temp_path("cfg-stale");
-        let control = ConfigControl::new(path.clone(), test_config());
+        let control = ConfigControl::new(path.clone(), test_config()).expect("new config control");
 
         let snap = control.snapshot().await;
         let err = control
@@ -184,7 +184,7 @@ port = 3000
     #[tokio::test]
     async fn patch_updates_config_and_base_hash() {
         let path = temp_path("cfg-patch");
-        let control = ConfigControl::new(path.clone(), test_config());
+        let control = ConfigControl::new(path.clone(), test_config()).expect("new config control");
 
         let before = control.snapshot().await;
         let after = control

@@ -1,11 +1,11 @@
 use crate::traits::ChannelAdapter;
 use crate::types::{InboundMessage, InboundMessageKind, OutboundMessage};
 use anyhow::Result;
-use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
+use axum::Router;
 use axum::extract::State;
+use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::get;
-use axum::Router;
 use chrono::Utc;
 use dashmap::DashMap;
 use futures_util::{SinkExt, StreamExt};
@@ -37,6 +37,12 @@ impl WebChatAdapter {
     /// Router that serves the WebChat WebSocket at `/ws`.
     pub fn router(self: Arc<Self>) -> Router {
         Router::new().route("/ws", get(ws_upgrade)).with_state(self)
+    }
+}
+
+impl Default for WebChatAdapter {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -135,10 +141,10 @@ async fn handle_socket(adapter: Arc<WebChatAdapter>, socket: WebSocket) {
 
         let inbound = InboundMessage {
             kind,
-            message_id: Uuid::new_v4().to_string(),
-            channel_id: "webchat".to_string(),
-            sender_id: sender_id.clone(),
-            thread_id: Some(sender_id.clone()),
+            message_id: Uuid::new_v4().to_string().into(),
+            channel_id: "webchat".into(),
+            sender_id: sender_id.clone().into(),
+            thread_id: Some(sender_id.clone().into()),
             is_group: false,
             content,
             metadata: parsed,

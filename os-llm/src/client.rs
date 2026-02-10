@@ -280,9 +280,10 @@ mod tests {
 
         let err = validate_request_payload(&[], &tools)
             .expect_err("duplicate tool names should be rejected");
-        assert!(err
-            .to_string()
-            .contains("duplicate tool definition name 'shell_execute'"));
+        assert!(
+            err.to_string()
+                .contains("duplicate tool definition name 'shell_execute'")
+        );
     }
 
     #[test]
@@ -305,9 +306,10 @@ mod tests {
 
         let err = validate_request_payload(&messages, &tools)
             .expect_err("unknown tool call name should be rejected");
-        assert!(err
-            .to_string()
-            .contains("references unknown tool 'shell_execute'"));
+        assert!(
+            err.to_string()
+                .contains("references unknown tool 'shell_execute'")
+        );
     }
 
     #[test]

@@ -1,3 +1,4 @@
+pub mod automation;
 pub mod channels;
 pub mod config;
 pub mod health;
@@ -12,6 +13,7 @@ pub fn router() -> Router {
     Router::new()
         .merge(health::router())
         .merge(config::router())
+        .merge(automation::router())
         .merge(channels::router())
         .merge(memory::router())
         .merge(sessions::router())

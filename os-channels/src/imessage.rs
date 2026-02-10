@@ -1,8 +1,8 @@
 use crate::traits::ChannelAdapter;
 use crate::types::{InboundMessage, InboundMessageKind, OutboundMessage};
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use chrono::Utc;
-use rusqlite::{params, Connection, OpenFlags};
+use rusqlite::{Connection, OpenFlags, params};
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -128,10 +128,7 @@ impl ImessageAdapter {
         let source_db = self.source_db.clone();
         let start_from_latest = self.start_from_latest;
         let starting_empty = last_rowid.is_none();
-        let last_seen = match *last_rowid {
-            Some(v) => v,
-            None => 0,
-        };
+        let last_seen = (*last_rowid).unwrap_or_default();
         let max_per_poll = self.max_per_poll;
         let group_prefixes = self.group_prefixes.clone();
 
@@ -242,10 +239,10 @@ LIMIT ?2
 
             let inbound = InboundMessage {
                 kind: InboundMessageKind::Message,
-                message_id: raw.guid,
-                channel_id: "imessage".to_string(),
-                sender_id,
-                thread_id: Some(thread_id),
+                message_id: raw.guid.into(),
+                channel_id: "imessage".into(),
+                sender_id: sender_id.into(),
+                thread_id: Some(thread_id.into()),
                 is_group,
                 content,
                 metadata: meta,

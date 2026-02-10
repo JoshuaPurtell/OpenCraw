@@ -1,9 +1,9 @@
 use crate::error::{Result, ToolError};
-use crate::traits::{optional_string, require_string, Tool, ToolSpec};
+use crate::traits::{Tool, ToolSpec, optional_string, require_string};
 use async_trait::async_trait;
 use horizons_core::core_agents::models::RiskLevel;
 use os_channels::{ChannelAdapter, ImessageAdapter, OutboundMessage};
-use rusqlite::{params, Connection, OpenFlags};
+use rusqlite::{Connection, OpenFlags, params};
 use serde::Serialize;
 use serde_json::json;
 use std::path::{Path, PathBuf};

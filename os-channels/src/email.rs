@@ -1,8 +1,8 @@
 use crate::traits::ChannelAdapter;
 use crate::types::{InboundMessage, InboundMessageKind, OutboundMessage};
-use anyhow::{anyhow, Result};
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use anyhow::{Result, anyhow};
 use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use chrono::Utc;
 use reqwest::Url;
 use serde::Deserialize;
@@ -150,10 +150,10 @@ impl EmailAdapter {
 
                 let inbound = InboundMessage {
                     kind: InboundMessageKind::Message,
-                    message_id: message.message_id.clone(),
-                    channel_id: "email".to_string(),
-                    sender_id: message.sender_id,
-                    thread_id: Some(message.thread_id.clone()),
+                    message_id: message.message_id.clone().into(),
+                    channel_id: "email".into(),
+                    sender_id: message.sender_id.into(),
+                    thread_id: Some(message.thread_id.clone().into()),
                     is_group: false,
                     content: message.content,
                     metadata: message.metadata,

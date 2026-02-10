@@ -1,5 +1,5 @@
-use axum::routing::get;
 use axum::Json;
+use axum::routing::get;
 
 pub fn router() -> axum::Router {
     axum::Router::new().route("/api/v1/os/health", get(get_health))

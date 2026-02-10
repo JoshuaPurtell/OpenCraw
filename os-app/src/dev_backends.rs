@@ -8,8 +8,8 @@
 
 use crate::config::{OpenShellConfig, RuntimeMode};
 use crate::setup;
-use anyhow::anyhow;
 use anyhow::Result;
+use anyhow::anyhow;
 use chrono::Utc;
 use horizons_core::context_refresh::engine::ContextRefreshEngine;
 use horizons_core::context_refresh::traits::ContextRefresh;
@@ -24,7 +24,7 @@ use horizons_core::events::bus::RedisEventBus;
 use horizons_core::events::config::EventSyncConfig;
 use horizons_core::events::traits::EventBus;
 use horizons_core::memory::traits::{HorizonsMemory, VoyagerMemory};
-use horizons_core::memory::wiring::{build_voyager_memory, VoyagerBackedHorizonsMemory};
+use horizons_core::memory::wiring::{VoyagerBackedHorizonsMemory, build_voyager_memory};
 use horizons_core::models::{AgentIdentity, OrgId, ProjectDbHandle, ProjectId};
 use horizons_core::onboard::config::{
     HelixConfig, PostgresConfig, ProjectDbConfig, RedisConfig, S3Config,
@@ -47,9 +47,9 @@ use horizons_core::optimization::traits::{
 use horizons_core::optimization::wiring::build_mipro_continual_learning;
 use horizons_core::pipelines::engine::{CoreAgentsSubagent, DefaultPipelineRunner};
 use horizons_core::pipelines::traits::{PipelineRunner, Subagent};
+use horizons_graph::GraphEngine;
 use horizons_graph::llm::LlmClient as GraphLlmClient;
 use horizons_graph::tools::DefaultToolExecutor as GraphToolExecutor;
-use horizons_graph::GraphEngine;
 use horizons_integrations::vector::pgvector::PgVectorStore;
 use horizons_rs::dev_backends::{
     DevCache, DevCentralDb, DevEventBus, DevFilestore, DevGraphStore, DevProjectDb, DevVectorStore,
@@ -68,6 +68,7 @@ pub struct DevRuntime {
     pub project_id: ProjectId,
     pub project_db_handle: ProjectDbHandle,
     pub project_db: Arc<dyn ProjectDb>,
+    pub event_bus: Arc<dyn EventBus>,
     pub core_agents: Arc<CoreAgentsExecutor>,
     pub memory: Option<Arc<dyn HorizonsMemory>>,
     pub evaluation: Option<Arc<EvaluationEngine>>,
@@ -242,6 +243,7 @@ pub async fn build_dev_runtime(
         project_id,
         project_db_handle: handle,
         project_db,
+        event_bus,
         core_agents,
         memory,
         evaluation,
@@ -396,9 +398,11 @@ pub async fn build_prod_runtime(
         env.vector_dim,
     ));
 
-    let mut event_cfg = EventSyncConfig::default();
-    event_cfg.postgres_url = env.central_db_url.clone();
-    event_cfg.redis_url = env.redis_url.clone();
+    let event_cfg = EventSyncConfig {
+        postgres_url: env.central_db_url.clone(),
+        redis_url: env.redis_url.clone(),
+        ..EventSyncConfig::default()
+    };
     let event_bus: Arc<dyn EventBus> = Arc::new(RedisEventBus::connect(event_cfg).await?);
 
     let context_refresh: Arc<dyn ContextRefresh> = Arc::new(ContextRefreshEngine::new(
@@ -523,6 +527,7 @@ pub async fn build_prod_runtime(
         project_id: env.project_id,
         project_db_handle: handle,
         project_db,
+        event_bus,
         core_agents,
         memory,
         evaluation,
@@ -588,9 +593,7 @@ impl ActionApprover for LlmSafetyApprover {
     ) -> horizons_core::Result<ReviewDecision> {
         let prompt = format!(
             "You are a safety reviewer for tool calls.\n\nAction type: {}\nRisk: {:?}\n\nPayload:\n{}\n\nDecide approve or deny. Respond with JSON: {{\"decision\":\"approve\"|\"deny\",\"reason\":\"...\"}}.",
-            proposal.action_type,
-            proposal.risk_level,
-            proposal.payload
+            proposal.action_type, proposal.risk_level, proposal.payload
         );
 
         let resp = self

@@ -3,22 +3,27 @@
 //! See: specifications/openshell/implementation_v0_1_0.md
 
 mod assistant;
+mod automation_runtime;
+mod channel_plugins;
 mod commands;
 mod config;
 mod config_control;
 mod dev_backends;
+mod discovery_runtime;
 mod gateway;
+mod http_auth;
 mod pairing;
 mod routes;
 mod server;
 mod session;
 mod setup;
+mod skills_runtime;
 
 use anyhow::Context;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
-use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::EnvFilter;
+use tracing_subscriber::fmt::format::FmtSpan;
 
 #[derive(Debug, Parser)]
 #[command(name = "opencraw", version, about = "OpenCraw personal AI assistant")]

@@ -5,6 +5,11 @@
 # Model name — auto-detects provider from prefix.
 # "claude-*" → Anthropic, anything else → OpenAI-compatible.
 model = "claude-sonnet-4-5-20250929"
+# Optional failover chain. On LLM call failure, OpenCraw tries each model in order.
+# fallback_models = ["gpt-4.1-mini"]
+# Cooldown ladder for failed model/auth profiles.
+failover_cooldown_base_seconds = 5
+failover_cooldown_max_seconds = 300
 
 # System prompt for the assistant.
 system_prompt = """
@@ -22,10 +27,43 @@ mode = "dev"
 # Data directory for local runtime state (sessions, dev project db/files, etc).
 data_dir = "data"
 
+# HTTP bind policy for OpenCraw server:
+# - "loopback": bind to 127.0.0.1 (recommended default)
+# - "lan": bind to 0.0.0.0 for LAN access
+# - "tailnet": keep loopback binding and expect tailnet proxy/serve ingress
+# - "auto": conservative auto policy (currently resolves to loopback)
+# - "custom": use runtime.bind_addr exactly
+bind_mode = "loopback"
+
+# Required when bind_mode = "custom" (example: "0.0.0.0:3000", "127.0.0.1:4000")
+# bind_addr = "127.0.0.1:3000"
+
+# Discovery/advertising mode:
+# - "disabled": no discovery integration
+# - "mdns": active mDNS probe loop for `_opencraw._tcp.local` (requires public bind target)
+# - "tailnet_serve": active tailnet status probe loop (requires bind_mode tailnet/auto)
+# - "tailnet_funnel": public tailnet funnel ingress + tailnet probe (requires control-plane auth)
+discovery_mode = "disabled"
+
+# Optional externally-advertised base URL for callbacks/operator surfaces.
+# advertised_base_url = "https://agent.example.com"
+
+# Safety override for dev-only LAN/custom-public binding without control API auth.
+allow_public_bind_without_auth = false
+
+# HTTP request timeout for all routes.
+http_timeout_seconds = 30
+
+# Global maximum in-flight HTTP requests (backpressure guard).
+http_max_in_flight = 256
+
 [keys]
 # Set these here or as environment variables (OPENAI_API_KEY, ANTHROPIC_API_KEY).
 # openai_api_key = ""       # Or set OPENAI_API_KEY
 # anthropic_api_key = ""    # Or set ANTHROPIC_API_KEY
+# Optional auth-profile rotation (tried in-order for each provider).
+# openai_api_keys = ["key-1", "key-2"]          # Or set OPENAI_API_KEYS=key-1,key-2
+# anthropic_api_keys = ["key-1", "key-2"]       # Or set ANTHROPIC_API_KEYS=key-1,key-2
 
 [channels.webchat]
 enabled = true
@@ -38,6 +76,40 @@ enabled = false
 [channels.discord]
 enabled = false
 # bot_token = ""  # Or set DISCORD_BOT_TOKEN env var.
+
+[channels.slack]
+enabled = false
+# bot_token = ""  # Or set SLACK_BOT_TOKEN env var.
+poll_interval_ms = 3000
+# Required Slack channel IDs to poll (e.g. ["C0123456789"]).
+channel_ids = []
+start_from_latest = true
+
+[channels.matrix]
+enabled = false
+# homeserver_url = "https://matrix-client.matrix.org" # Or set MATRIX_HOMESERVER_URL env var.
+# access_token = ""  # Or set MATRIX_ACCESS_TOKEN env var.
+# user_id = "@opencraw:matrix.org" # Or set MATRIX_USER_ID env var.
+poll_interval_ms = 3000
+# Required Matrix room IDs to poll (e.g. ["!abc123:matrix.org"]).
+room_ids = []
+start_from_latest = true
+
+[channels.signal]
+enabled = false
+# api_base_url = "http://127.0.0.1:8080" # Or set SIGNAL_API_BASE_URL env var.
+# account = "+15551234567" # Or set SIGNAL_ACCOUNT env var.
+# api_token = "" # Optional bearer token (SIGNAL_API_TOKEN).
+poll_interval_ms = 3000
+start_from_latest = true
+receive_timeout_seconds = 5
+
+[channels.whatsapp]
+enabled = false
+# access_token = ""       # Or set WHATSAPP_ACCESS_TOKEN env var.
+# phone_number_id = ""    # Or set WHATSAPP_PHONE_NUMBER_ID env var.
+# webhook_verify_token = "" # Or set WHATSAPP_WEBHOOK_VERIFY_TOKEN env var.
+# app_secret = ""         # Optional signature validation secret (WHATSAPP_APP_SECRET).
 
 [channels.imessage]
 enabled = false
@@ -64,11 +136,60 @@ poll_interval_ms = 3000
 team_ids = []
 start_from_latest = true
 
+# External HTTP channel plugins (dynamic channel onboarding without core code changes).
+# Each entry maps OpenCraw send/poll contracts to an external gateway service.
+# [[channels.external_plugins]]
+# id = "custom_ops"
+# enabled = true
+# send_url = "https://plugins.example.com/custom_ops/send"
+# poll_url = "https://plugins.example.com/custom_ops/poll"
+# auth_token = "" # Optional bearer token for send/poll requests.
+# poll_interval_ms = 3000
+# start_from_latest = true
+# supports_streaming_deltas = false
+# supports_typing_events = false
+# supports_reactions = true
+
 [tools]
+# Baseline tool profile:
+# - "minimal": filesystem
+# - "coding": shell/filesystem/browser/apply_patch
+# - "messaging": email/imessage
+# - "full": all tools
+profile = "minimal"
+
+# Explicit per-tool enables (useful to override profile defaults).
 shell = true
 filesystem = true
-browser = false      # Stub in v0.1.0
-clipboard = false    # Stub in v0.1.0
+browser = false
+clipboard = false
+apply_patch = true
+
+# Optional explicit tool allow/deny controls (case-insensitive).
+# Supported names: shell_execute (or shell), filesystem, browser, clipboard,
+# apply_patch (or patch), email, imessage
+allow = []
+deny = []
+
+[tools.shell_policy]
+# Shell runtime policy:
+# - default_mode = "sandbox" (recommended)
+# - default_mode = "elevated" requires allow_elevated=true
+default_mode = "sandbox"
+allow_elevated = false
+
+# Sandbox backend:
+# - "host_constrained": host shell with path confinement to sandbox_root
+# - "horizons_docker": isolated Docker sandbox via Horizons local adapter
+sandbox_backend = "host_constrained"
+
+# Optional sandbox root for shell tool. Relative working directories are resolved under this root.
+# sandbox_root = "."
+
+# Optional Docker image when sandbox_backend="horizons_docker".
+# sandbox_image = "ubuntu:24.04"
+
+max_background_processes = 8
 
 [security]
 # Approval modes: "human" (always ask), "ai" (LLM decides), "auto" (always allow).
@@ -78,8 +199,38 @@ filesystem_write_approval = "ai"
 
 # Allowlist: for external channels (iMessage/Telegram/Discord), OpenCraw will not respond
 # unless the sender is allowlisted. WebChat is always allowed for local dev.
-# allowed_users = ["imessage:+14155551212", "telegram:12345", "discord:67890", "email:user@example.com", "linear:user_id"]
+# allowed_users = ["imessage:+14155551212", "telegram:12345", "discord:67890", "slack:U0123456789", "matrix:@alice:matrix.org", "whatsapp:15551234567", "email:user@example.com", "linear:user_id"]
 allow_all_senders = false
+
+# Bearer token for mutating control-plane routes (`POST|PUT|PATCH|DELETE /api/v1/os/*`).
+# In runtime.mode = "prod", either `control_api_key` or `[[security.control_api_keys]]` is required.
+# control_api_key = ""
+
+# Optional rotating scoped tokens for mutating control-plane routes.
+# Empty scopes imply full mutating control-plane access.
+# Scope values:
+# - "*"
+# - "control:write"
+# - "config:write"
+# - "sessions:write"
+# - "automation:write"
+# - "skills:write"
+# - "messages:write"
+# - "channels:write"
+# [[security.control_api_keys]]
+# token = "rotate-me-1"
+# scopes = ["config:write", "sessions:write"]
+# description = "operator token"
+#
+# Environment shortcut for full-scope rotating tokens:
+# OPENSHELL_CONTROL_API_KEYS=token-a,token-b
+
+# Mutating route prefixes that bypass bearer-token middleware (machine-ingest paths).
+# These routes still enforce their own route-level shared secrets.
+mutating_auth_exempt_prefixes = [
+  "/api/v1/os/automation/webhook/",
+  "/api/v1/os/automation/poll/",
+]
 
 [queue]
 # Lane behavior mode:
@@ -131,3 +282,28 @@ enabled = false
 [optimization]
 enabled = false
 schedule = "0 0 * * 0"  # Weekly cron
+
+[automation]
+enabled = false
+# App-level heartbeat scheduler interval.
+heartbeat_interval_seconds = 300
+# Optional shared secret required by POST /api/v1/os/automation/webhook/{source}
+# via x-opencraw-webhook-secret header.
+# webhook_secret = ""
+
+[skills]
+# If true, installs without source provenance are policy-blocked.
+require_source_provenance = false
+
+# If true, provided source URLs must use https://.
+require_https_source = true
+
+# If true, source URL must match one of trusted_source_prefixes.
+require_trusted_source = false
+
+# Trusted source prefixes for skill provenance matching.
+# trusted_source_prefixes = ["https://docs.openclaw.ai/", "https://github.com/your-org/"]
+trusted_source_prefixes = []
+
+# If true, signature must be present and in format sha256:<digest>.
+require_sha256_signature = false

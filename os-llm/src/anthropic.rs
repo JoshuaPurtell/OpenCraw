@@ -160,11 +160,11 @@ impl AnthropicClient {
                                 Ok(v) => v,
                                 Err(e) => {
                                     return Some((
-                                            Err(LlmError::StreamParse(format!(
-                                                "anthropic content_block_start json error={e} data={data}"
-                                            ))),
-                                            (sse, state),
-                                        ));
+                                        Err(LlmError::StreamParse(format!(
+                                            "anthropic content_block_start json error={e} data={data}"
+                                        ))),
+                                        (sse, state),
+                                    ));
                                 }
                             };
                             if let AnthropicContentBlock::ToolUse { id, name, .. } = v.content_block
@@ -266,7 +266,7 @@ impl AnthropicRequest {
             match m.role {
                 Role::System => {
                     if !system.is_empty() {
-                        system.push_str("\n");
+                        system.push('\n');
                     }
                     system.push_str(m.content.trim());
                 }
@@ -467,7 +467,7 @@ where
                         continue;
                     }
                     Some(Err(e)) => {
-                        return Some((Err(LlmError::Http(e.to_string())), (stream, buffer)))
+                        return Some((Err(LlmError::Http(e.to_string())), (stream, buffer)));
                     }
                     None => return None,
                 }

@@ -21,13 +21,35 @@ async fn send_message(
     Extension(state): Extension<Arc<OsState>>,
     Json(req): Json<SendRequest>,
 ) -> Json<serde_json::Value> {
-    let Some(adapter) = state.channels.get(&req.channel) else {
+    let channel = req.channel.trim().to_ascii_lowercase();
+    if channel.is_empty() {
+        return Json(serde_json::json!({
+            "status": "error",
+            "error": "channel is required"
+        }));
+    }
+    let recipient = req.recipient.trim();
+    if recipient.is_empty() {
+        return Json(serde_json::json!({
+            "status": "error",
+            "error": "recipient is required"
+        }));
+    }
+    let message_empty = req.message.trim().is_empty();
+    if message_empty {
+        return Json(serde_json::json!({
+            "status": "error",
+            "error": "message is required"
+        }));
+    }
+
+    let Some(adapter) = state.channels.get(channel.as_str()) else {
         return Json(serde_json::json!({ "status": "error", "error": "unknown channel" }));
     };
 
     if let Err(e) = adapter
         .send(
-            &req.recipient,
+            recipient,
             os_channels::OutboundMessage {
                 content: req.message,
                 reply_to_message_id: None,

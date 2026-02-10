@@ -1,5 +1,5 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = [
     "os-llm",
     "os-tools",
@@ -8,8 +8,9 @@ members = [
 ]
 
 [workspace.package]
-edition = "2021"
+edition = "2024"
 license = "MIT"
+rust-version = "1.85"
 version = "0.1.0"
 
 [workspace.dependencies]
@@ -32,14 +33,18 @@ futures-util = "0.3"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+sha2 = "0.10"
 thiserror = "2"
 tokio = { version = "1", features = ["full"] }
 tokio-tungstenite = { version = "0.26", features = ["rustls-tls-webpki-roots"] }
 toml = "0.8"
-tower-http = { version = "0.6", features = ["cors", "request-id", "trace"] }
+tower = { version = "0.5", features = ["limit"] }
+tower-http = { version = "0.6", features = ["cors", "request-id", "timeout", "trace"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tokio-util = "0.7"
 uuid = { version = "1.15", features = ["v4", "serde"] }
 ulid = { version = "1", features = ["serde"] }
 dotenvy = "0.15"
 rusqlite = "0.32"
+cron = "0.15"

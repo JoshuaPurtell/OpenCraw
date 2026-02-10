@@ -3,7 +3,7 @@
 //! See: specifications/openshell/implementation_v0_1_0.md
 
 use crate::config::{ApprovalMode, OpenShellConfig};
-use crate::session::Session;
+use crate::session::{ModelPinningMode, Session};
 use anyhow::Result;
 use futures_util::StreamExt;
 use horizons_core::core_agents::models::{
@@ -19,24 +19,23 @@ use horizons_core::models::{AgentIdentity, OrgId, ProjectDbHandle, ProjectId};
 use horizons_core::onboard::traits::{ProjectDb, ProjectDbParam, ProjectDbValue};
 use os_channels::{InboundMessage, InboundMessageKind};
 use os_llm::{ChatMessage, ChatResponse, Role, StreamChunk, ToolCall, Usage};
-use os_tools::{to_llm_tool_def, Tool};
+use os_tools::{Tool, to_llm_tool_def};
 use serde_json::json;
-use std::sync::Arc;
-use std::time::Instant;
-use tokio::sync::mpsc::{self, UnboundedSender};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
+use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
 
-/// Sent by the assistant when a tool call requires human approval.
-/// The gateway handles the channel I/O and responds on `response_tx`.
-pub struct ApprovalRequest {
-    pub tool_name: String,
-    pub arguments: serde_json::Value,
-    pub response_tx: tokio::sync::oneshot::Sender<bool>,
+#[derive(Debug, Clone, Default)]
+struct LlmProfileState {
+    consecutive_failures: u32,
+    cooldown_until: Option<Instant>,
 }
 
 pub struct AssistantAgent {
     cfg: OpenShellConfig,
-    llm: Option<os_llm::LlmClient>,
+    llm_clients: Vec<os_llm::LlmClient>,
+    llm_profile_state: Mutex<Vec<LlmProfileState>>,
     tools: Vec<Arc<dyn Tool>>,
     memory: Option<Arc<dyn HorizonsMemory>>,
     project_db: Arc<dyn ProjectDb>,
@@ -51,7 +50,7 @@ impl AssistantAgent {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         cfg: OpenShellConfig,
-        llm: Option<os_llm::LlmClient>,
+        llm_clients: Vec<os_llm::LlmClient>,
         tools: Vec<Arc<dyn Tool>>,
         memory: Option<Arc<dyn HorizonsMemory>>,
         project_db: Arc<dyn ProjectDb>,
@@ -61,9 +60,11 @@ impl AssistantAgent {
         project_db_handle: ProjectDbHandle,
         evaluation: Option<Arc<EvaluationEngine>>,
     ) -> Self {
+        let llm_profile_state = vec![LlmProfileState::default(); llm_clients.len()];
         Self {
             cfg,
-            llm,
+            llm_clients,
+            llm_profile_state: Mutex::new(llm_profile_state),
             tools,
             memory,
             project_db,
@@ -122,10 +123,10 @@ impl AssistantAgent {
         session: &mut Session,
         user_message: &str,
         stream_tx: Option<UnboundedSender<String>>,
-        approval_tx: Option<mpsc::Sender<ApprovalRequest>>,
     ) -> Result<String> {
         tracing::info!(
             model = %self.cfg.general.model,
+            session_model_override = ?session.model_override,
             prior_history_messages = session.history.len(),
             tools_registered = self.tools.len(),
             memory_enabled = self.memory.is_some(),
@@ -139,20 +140,20 @@ impl AssistantAgent {
             tool_call_id: None,
         });
 
-        let Some(llm) = self.llm.as_ref() else {
+        if self.llm_clients.is_empty() {
             return Err(anyhow::anyhow!(
                 "LLM client is not configured; cannot process user messages"
             ));
-        };
+        }
 
         let tool_defs: Vec<os_llm::ToolDefinition> = self
             .tools
             .iter()
             .map(|t| to_llm_tool_def(t.as_ref()))
-            .collect();
+            .collect::<std::result::Result<Vec<_>, _>>()?;
         let mut tool_defs = tool_defs;
         if self.memory.is_some() {
-            tool_defs.extend(memory_tool_definitions());
+            tool_defs.extend(memory_tool_definitions()?);
         }
 
         let mut tool_loops = 0usize;
@@ -191,7 +192,13 @@ impl AssistantAgent {
 
             let llm_started = Instant::now();
             let response = self
-                .chat_with_stream(llm, &messages, &tool_defs, stream_tx.as_ref())
+                .chat_with_failover(
+                    &messages,
+                    &tool_defs,
+                    stream_tx.as_ref(),
+                    session.model_override.as_deref(),
+                    session.model_pinning,
+                )
                 .await?;
             tracing::info!(
                 tool_loop = tool_loops,
@@ -256,7 +263,7 @@ impl AssistantAgent {
                     .await?
                 {
                     let risk = RiskLevel::Low;
-                    let approved = match self.gate_tool_call(&tool_call, risk, &args, approval_tx.as_ref()).await {
+                    let approved = match self.gate_tool_call(&tool_call, risk, &args).await {
                         Ok(v) => v,
                         Err(e) => {
                             tracing::warn!(
@@ -267,7 +274,8 @@ impl AssistantAgent {
                             );
                             session.history.push(ChatMessage {
                                 role: Role::Tool,
-                                content: json!({ "error": format!("tool approval failed: {e}") }).to_string(),
+                                content: json!({ "error": format!("tool approval failed: {e}") })
+                                    .to_string(),
                                 tool_calls: vec![],
                                 tool_call_id: Some(tool_call.id.clone()),
                             });
@@ -326,7 +334,7 @@ impl AssistantAgent {
                     continue;
                 };
                 let risk = effective_risk_level(tool.as_ref(), &args)?;
-                let approved = match self.gate_tool_call(&tool_call, risk, &args, approval_tx.as_ref()).await {
+                let approved = match self.gate_tool_call(&tool_call, risk, &args).await {
                     Ok(v) => v,
                     Err(e) => {
                         tracing::warn!(
@@ -337,7 +345,8 @@ impl AssistantAgent {
                         );
                         session.history.push(ChatMessage {
                             role: Role::Tool,
-                            content: json!({ "error": format!("tool approval failed: {e}") }).to_string(),
+                            content: json!({ "error": format!("tool approval failed: {e}") })
+                                .to_string(),
                             tool_calls: vec![],
                             tool_call_id: Some(tool_call.id.clone()),
                         });
@@ -575,6 +584,150 @@ impl AssistantAgent {
         })
     }
 
+    async fn chat_with_failover(
+        &self,
+        messages: &[ChatMessage],
+        tool_defs: &[os_llm::ToolDefinition],
+        stream_tx: Option<&UnboundedSender<String>>,
+        model_override: Option<&str>,
+        model_pinning: ModelPinningMode,
+    ) -> Result<ChatResponse> {
+        let mut errors = Vec::new();
+        let attempt_order = self.profile_attempt_order(model_override, model_pinning);
+        if attempt_order.is_empty() {
+            let requested = model_override.unwrap_or("<none>");
+            return Err(anyhow::anyhow!(
+                "session model pinning is strict and requested model {requested:?} is unavailable"
+            ));
+        }
+        for idx in attempt_order {
+            let llm = &self.llm_clients[idx];
+            let now = Instant::now();
+            if let Some(remaining) = self.profile_cooldown_remaining(idx, now) {
+                tracing::warn!(
+                    profile_index = idx,
+                    provider = ?llm.provider(),
+                    model = %llm.model(),
+                    cooldown_ms = remaining.as_millis() as u64,
+                    "llm profile is cooling down; skipping attempt"
+                );
+                errors.push(format!(
+                    "profile[{idx}] provider={:?} model={} cooldown_ms={}",
+                    llm.provider(),
+                    llm.model(),
+                    remaining.as_millis()
+                ));
+                continue;
+            }
+
+            match self
+                .chat_with_stream(llm, messages, tool_defs, stream_tx)
+                .await
+            {
+                Ok(response) => {
+                    self.mark_profile_success(idx);
+                    if idx > 0 {
+                        tracing::warn!(
+                            profile_index = idx,
+                            provider = ?llm.provider(),
+                            model = %llm.model(),
+                            "llm fallback profile succeeded"
+                        );
+                    }
+                    return Ok(response);
+                }
+                Err(e) => {
+                    let cooldown = self.mark_profile_failure(idx, Instant::now());
+                    tracing::warn!(
+                        profile_index = idx,
+                        provider = ?llm.provider(),
+                        model = %llm.model(),
+                        cooldown_seconds = cooldown.as_secs(),
+                        error = %e,
+                        "llm profile attempt failed; trying next profile"
+                    );
+                    errors.push(format!(
+                        "profile[{idx}] provider={:?} model={} error={e} cooldown_seconds={}",
+                        llm.provider(),
+                        llm.model(),
+                        cooldown.as_secs()
+                    ));
+                }
+            }
+        }
+        Err(anyhow::anyhow!(
+            "all llm profiles failed: {}",
+            errors.join(" | ")
+        ))
+    }
+
+    fn profile_attempt_order(
+        &self,
+        model_override: Option<&str>,
+        model_pinning: ModelPinningMode,
+    ) -> Vec<usize> {
+        let available_models: Vec<&str> = self.llm_clients.iter().map(|c| c.model()).collect();
+        let order = compute_profile_attempt_order(&available_models, model_override, model_pinning);
+        if order.is_empty() && model_pinning == ModelPinningMode::Strict {
+            tracing::warn!(
+                requested_model = model_override.map(str::trim).unwrap_or(""),
+                available_models = ?available_models,
+                "session strict model pinning requested unavailable model"
+            );
+        } else if model_pinning == ModelPinningMode::Prefer
+            && model_override
+                .map(str::trim)
+                .filter(|v| !v.is_empty())
+                .is_some()
+            && order.iter().copied().eq(0..self.llm_clients.len())
+        {
+            tracing::warn!(
+                requested_model = model_override.map(str::trim).unwrap_or(""),
+                available_models = ?available_models,
+                "session model override did not match configured LLM profiles; using default failover order"
+            );
+        }
+        order
+    }
+
+    fn profile_cooldown_remaining(&self, profile_index: usize, now: Instant) -> Option<Duration> {
+        let state = self.llm_profile_state.lock().ok()?;
+        let profile = state.get(profile_index)?;
+        let until = profile.cooldown_until?;
+        if until > now {
+            Some(until.duration_since(now))
+        } else {
+            None
+        }
+    }
+
+    fn mark_profile_success(&self, profile_index: usize) {
+        if let Ok(mut state) = self.llm_profile_state.lock() {
+            if let Some(profile) = state.get_mut(profile_index) {
+                profile.consecutive_failures = 0;
+                profile.cooldown_until = None;
+            }
+        }
+    }
+
+    fn mark_profile_failure(&self, profile_index: usize, now: Instant) -> Duration {
+        let base = self.cfg.general.failover_cooldown_base_seconds.max(1);
+        let max = self.cfg.general.failover_cooldown_max_seconds.max(base);
+
+        let mut cooldown = Duration::from_secs(base);
+        if let Ok(mut state) = self.llm_profile_state.lock() {
+            if let Some(profile) = state.get_mut(profile_index) {
+                profile.consecutive_failures = profile.consecutive_failures.saturating_add(1);
+                let exponent = profile.consecutive_failures.saturating_sub(1).min(12);
+                let multiplier = 1u64 << exponent;
+                let seconds = base.saturating_mul(multiplier).min(max);
+                cooldown = Duration::from_secs(seconds);
+                profile.cooldown_until = Some(now + cooldown);
+            }
+        }
+        cooldown
+    }
+
     fn build_context_window(
         &self,
         system_message: &ChatMessage,
@@ -658,7 +811,7 @@ impl AssistantAgent {
         for item in items {
             system.push_str("- ");
             system.push_str(&item.content_as_text());
-            system.push_str("\n");
+            system.push('\n');
         }
         Ok(system)
     }
@@ -880,8 +1033,8 @@ fn render_compaction_transcript(history: &[ChatMessage], max_chars: usize) -> St
     out
 }
 
-fn memory_tool_definitions() -> Vec<os_llm::ToolDefinition> {
-    vec![
+fn memory_tool_definitions() -> Result<Vec<os_llm::ToolDefinition>> {
+    Ok(vec![
         os_llm::ToolDefinition::validated(
             "memory_search",
             "Search Horizons memory for this conversation scope.",
@@ -894,8 +1047,7 @@ fn memory_tool_definitions() -> Vec<os_llm::ToolDefinition> {
                 },
                 "required": ["query"]
             }),
-        )
-        .expect("memory_search tool name must be valid"),
+        )?,
         os_llm::ToolDefinition::validated(
             "memory_summarize",
             "Summarize Horizons memory for this conversation scope and time horizon.",
@@ -907,9 +1059,8 @@ fn memory_tool_definitions() -> Vec<os_llm::ToolDefinition> {
                 },
                 "required": ["horizon"]
             }),
-        )
-        .expect("memory_summarize tool name must be valid"),
-    ]
+        )?,
+    ])
 }
 
 fn parse_memory_search_arguments(arguments: &serde_json::Value) -> Result<(String, usize)> {
@@ -957,9 +1108,53 @@ fn parse_memory_summarize_arguments(arguments: &serde_json::Value) -> Result<Str
     Ok(horizon)
 }
 
+fn compute_profile_attempt_order(
+    available_models: &[&str],
+    model_override: Option<&str>,
+    model_pinning: ModelPinningMode,
+) -> Vec<usize> {
+    let total = available_models.len();
+    let default_order: Vec<usize> = (0..total).collect();
+    let Some(requested) = model_override.map(str::trim).filter(|v| !v.is_empty()) else {
+        return default_order;
+    };
+
+    let mut preferred = Vec::new();
+    let mut fallback = Vec::new();
+    for (idx, model) in available_models.iter().enumerate() {
+        if model.eq_ignore_ascii_case(requested) {
+            preferred.push(idx);
+        } else {
+            fallback.push(idx);
+        }
+    }
+    if preferred.is_empty() {
+        return match model_pinning {
+            ModelPinningMode::Prefer => default_order,
+            ModelPinningMode::Strict => Vec::new(),
+        };
+    }
+    if model_pinning == ModelPinningMode::Strict {
+        return preferred;
+    }
+    preferred.extend(fallback);
+    preferred
+}
+
 fn action_type_for_tool(tool_name: &str, arguments: &serde_json::Value) -> Result<String> {
     match tool_name {
-        "shell_execute" => Ok("tool.shell.execute".to_string()),
+        "shell_execute" => {
+            let action = shell_action(arguments);
+            let elevated = shell_requires_elevated(arguments)?;
+            let mode = if elevated { "elevated" } else { "sandbox" };
+            match action {
+                "start_background" => Ok(format!("tool.shell.background.{mode}.start")),
+                "poll_background" => Ok("tool.shell.background.inspect".to_string()),
+                "list_background" => Ok("tool.shell.background.inspect".to_string()),
+                "stop_background" => Ok("tool.shell.background.stop".to_string()),
+                _ => Ok(format!("tool.shell.execute.{mode}")),
+            }
+        }
         "filesystem" => {
             let action = filesystem_action(arguments)?;
             if action == "write_file" {
@@ -986,6 +1181,7 @@ fn action_type_for_tool(tool_name: &str, arguments: &serde_json::Value) -> Resul
         }
         "clipboard" => Ok("tool.clipboard".to_string()),
         "browser" => Ok("tool.browser".to_string()),
+        "apply_patch" => Ok("tool.apply_patch".to_string()),
         other => Ok(format!("tool.{other}")),
     }
 }
@@ -997,8 +1193,24 @@ fn approval_mode_for_tool(
     arguments: &serde_json::Value,
 ) -> Result<ApprovalMode> {
     match tool_name {
-        "shell_execute" => Ok(cfg.security.shell_approval),
+        "shell_execute" => {
+            let action = shell_action(arguments);
+            let elevated = shell_requires_elevated(arguments)?;
+            match action {
+                "list_background" | "poll_background" => Ok(ApprovalMode::Auto),
+                "start_background" => Ok(ApprovalMode::Human),
+                "stop_background" => Ok(cfg.security.shell_approval),
+                _ => {
+                    if elevated {
+                        Ok(ApprovalMode::Human)
+                    } else {
+                        Ok(cfg.security.shell_approval)
+                    }
+                }
+            }
+        }
         "browser" => Ok(cfg.security.browser_approval),
+        "apply_patch" => Ok(cfg.security.filesystem_write_approval),
         "filesystem" => {
             let action = filesystem_action(arguments)?;
             if action == "write_file" {
@@ -1034,6 +1246,29 @@ fn approval_mode_for_tool(
 fn effective_risk_level(tool: &dyn Tool, arguments: &serde_json::Value) -> Result<RiskLevel> {
     let base = tool.spec().risk_level;
     match tool.spec().name.as_str() {
+        "shell_execute" => {
+            let action = shell_action(arguments);
+            let elevated = shell_requires_elevated(arguments)?;
+            match action {
+                "list_background" | "poll_background" => Ok(RiskLevel::Low),
+                "stop_background" => Ok(RiskLevel::Medium),
+                "start_background" => {
+                    if elevated {
+                        Ok(RiskLevel::High)
+                    } else {
+                        Ok(RiskLevel::Medium)
+                    }
+                }
+                _ => {
+                    if elevated {
+                        Ok(RiskLevel::High)
+                    } else {
+                        Ok(RiskLevel::Medium)
+                    }
+                }
+            }
+        }
+        "apply_patch" => Ok(RiskLevel::Medium),
         "filesystem" => {
             let action = filesystem_action(arguments)?;
             match action {
@@ -1059,6 +1294,29 @@ fn effective_risk_level(tool: &dyn Tool, arguments: &serde_json::Value) -> Resul
             }
         }
         _ => Ok(base),
+    }
+}
+
+fn shell_action(arguments: &serde_json::Value) -> &str {
+    arguments
+        .get("action")
+        .and_then(|v| v.as_str())
+        .unwrap_or("exec")
+}
+
+fn shell_requires_elevated(arguments: &serde_json::Value) -> Result<bool> {
+    let Some(raw) = arguments.get("sandbox_permissions") else {
+        return Ok(false);
+    };
+    let as_str = raw
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("shell tool sandbox_permissions must be a string"))?;
+    match as_str.trim().to_ascii_lowercase().as_str() {
+        "sandbox" => Ok(false),
+        "require_elevated" | "elevated" => Ok(true),
+        other => Err(anyhow::anyhow!(
+            "shell tool sandbox_permissions must be 'sandbox' or 'require_elevated', got {other:?}"
+        )),
     }
 }
 
@@ -1169,9 +1427,10 @@ SELECT status
 #[cfg(test)]
 mod tests {
     use super::{
-        estimate_history_tokens, parse_memory_search_arguments, parse_memory_summarize_arguments,
-        render_compaction_transcript,
+        compute_profile_attempt_order, estimate_history_tokens, parse_memory_search_arguments,
+        parse_memory_summarize_arguments, render_compaction_transcript,
     };
+    use crate::session::ModelPinningMode;
     use os_llm::{ChatMessage, Role};
 
     #[test]
@@ -1236,5 +1495,21 @@ mod tests {
         ];
         let out = render_compaction_transcript(&history, 80);
         assert!(out.contains("pre-compaction transcript truncated"));
+    }
+
+    #[test]
+    fn strict_model_pinning_only_uses_matching_profiles() {
+        let models = vec!["gpt-4o-mini", "claude-sonnet-4-5-20250929", "gpt-4o-mini"];
+        let order =
+            compute_profile_attempt_order(&models, Some("gpt-4o-mini"), ModelPinningMode::Strict);
+        assert_eq!(order, vec![0, 2]);
+    }
+
+    #[test]
+    fn strict_model_pinning_returns_empty_when_model_missing() {
+        let models = vec!["gpt-4o-mini", "claude-sonnet-4-5-20250929"];
+        let order =
+            compute_profile_attempt_order(&models, Some("o3-mini"), ModelPinningMode::Strict);
+        assert!(order.is_empty());
     }
 }

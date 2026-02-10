@@ -27,15 +27,20 @@ pub fn is_allowed(cfg: &OpenShellConfig, channel_id: &str, sender_id: &str) -> b
 mod tests {
     use super::*;
     use crate::config::{
-        ApprovalMode, ChannelsConfig, ContextConfig, DiscordConfig, GeneralConfig, ImessageConfig,
-        KeysConfig, MemoryConfig, OpenShellConfig, OptimizationConfig, QueueConfig, RuntimeConfig,
-        SecurityConfig, TelegramConfig, ToolsConfig, WebChatConfig,
+        ApprovalMode, AutomationConfig, ChannelsConfig, ContextConfig, DiscordConfig, EmailConfig,
+        GeneralConfig, ImessageConfig, KeysConfig, LinearConfig, MatrixConfig, MemoryConfig,
+        OpenShellConfig, OptimizationConfig, QueueConfig, RuntimeConfig, SecurityConfig,
+        SignalConfig, SkillsConfig, SlackConfig, TelegramConfig, ToolsConfig, WebChatConfig,
+        WhatsAppConfig,
     };
 
     fn base_cfg() -> OpenShellConfig {
         OpenShellConfig {
             general: GeneralConfig {
                 model: "gpt-4o-mini".to_string(),
+                fallback_models: Vec::new(),
+                failover_cooldown_base_seconds: 5,
+                failover_cooldown_max_seconds: 300,
                 system_prompt: "x".to_string(),
             },
             keys: KeysConfig::default(),
@@ -46,7 +51,14 @@ mod tests {
                 },
                 telegram: TelegramConfig::default(),
                 discord: DiscordConfig::default(),
+                slack: SlackConfig::default(),
+                matrix: MatrixConfig::default(),
+                signal: SignalConfig::default(),
+                whatsapp: WhatsAppConfig::default(),
                 imessage: ImessageConfig::default(),
+                email: EmailConfig::default(),
+                linear: LinearConfig::default(),
+                external_plugins: Vec::new(),
             },
             tools: ToolsConfig::default(),
             security: SecurityConfig {
@@ -55,12 +67,20 @@ mod tests {
                 filesystem_write_approval: ApprovalMode::Ai,
                 allowed_users: vec![],
                 allow_all_senders: false,
+                control_api_key: None,
+                control_api_keys: vec![],
+                mutating_auth_exempt_prefixes: vec![
+                    "/api/v1/os/automation/webhook/".to_string(),
+                    "/api/v1/os/automation/poll/".to_string(),
+                ],
             },
             runtime: RuntimeConfig::default(),
             queue: QueueConfig::default(),
             context: ContextConfig::default(),
             memory: MemoryConfig::default(),
             optimization: OptimizationConfig::default(),
+            automation: AutomationConfig::default(),
+            skills: SkillsConfig::default(),
         }
     }
 
