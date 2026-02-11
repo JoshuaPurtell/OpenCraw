@@ -43,14 +43,16 @@ Prereqs:
 Run with Docker (recommended):
 
 ```bash
-mkdir -p ~/.opencraw
-cp config.example.toml ~/.opencraw/config.toml
-# Set OPENAI_API_KEY or ANTHROPIC_API_KEY (or edit ~/.opencraw/config.toml)
+cargo run -p os-app -- init
+# Fill local config in ~/.opencraw/config.toml and ~/.opencraw/configs/*.toml
+# (at minimum: ~/.opencraw/configs/keys.toml)
 
 scripts/compose.sh up
 ```
 
 This builds the image and starts OpenCraw + Postgres + Redis.
+
+`opencraw init` is idempotent and never overwrites existing files in `~/.opencraw/`.
 
 Run the Rust binary directly (for faster dev iteration):
 
@@ -62,13 +64,100 @@ scripts/compose.sh up postgres redis
 cargo run -p os-app -- serve
 ```
 
+Init templates live under:
+
+- `config-templates/`
+
+OpenCraw supports modular local config loading:
+
+1. Load `~/.opencraw/config.toml` (base config)
+2. Load `~/.opencraw/configs/*.toml` (provider/component fragments)
+
+Valid fragment filenames are fixed (fail-fast on unknown names), including:
+
+- `llm.toml`, `general.toml`, `runtime.toml`, `keys.toml`, `tools.toml`, `security.toml`, `queue.toml`, `context.toml`, `memory.toml`, `optimization.toml`, `automation.toml`, `skills.toml`
+- `channel-webchat.toml`, `channel-telegram.toml`, `channel-discord.toml`, `channel-slack.toml`, `channel-matrix.toml`, `channel-signal.toml`, `channel-whatsapp.toml`, `channel-imessage.toml`, `channel-email.toml`, `channel-linear.toml`, `channel-external-plugins.toml`
+
+Sender ACL is provider-local in channel fragments under `[channels.<provider>.access]` with:
+
+- `mode = "pairing" | "allowlist" | "open"`
+- `allowed_senders = [...]` (required when `mode = "allowlist"` and channel is enabled)
+
+Keep secrets and personal IDs local under `~/.opencraw/` (never in repository-tracked files).
+
+### Refresh Gmail Access Token
+
+OpenCraw email currently expects a live Gmail access token in
+`~/.opencraw/configs/channel-email.toml` (`channels.email.gmail_access_token`).
+
+Set these in your repo-local `.env`:
+
+```bash
+OPENCRAW_GMAIL_OAUTH_CLIENT_ID="..."
+OPENCRAW_GMAIL_OAUTH_CLIENT_SECRET="..."
+OPENCRAW_GMAIL_OAUTH_REFRESH_TOKEN="..."
+```
+
+Then refresh + write token automatically:
+
+```bash
+scripts/refresh-gmail-access-token.sh
+```
+
+The script writes a config backup under `~/.opencraw/backups/`.
+
+### Populate Linear Config
+
+OpenCraw Linear expects a local channel config at
+`~/.opencraw/configs/channel-linear.toml`.
+
+Set at minimum in your repo-local `.env`:
+
+```bash
+OPENCRAW_LINEAR_API_KEY="lin_api_..."
+# Preferred when you know human name/key but not UUID.
+# Examples: "Synth", "SYNTH"
+OPENCRAW_LINEAR_TEAM="your_team_name_or_key"
+# Optional explicit override:
+# OPENCRAW_LINEAR_DEFAULT_TEAM_ID="team_uuid_for_issue_create"
+```
+
+Then populate/update the Linear config automatically:
+
+```bash
+scripts/populate-linear-config.sh
+```
+
+Contract-check the live Linear GraphQL schema against OpenCraw expectations:
+
+```bash
+scripts/check-linear-contracts.sh
+```
+
+This validates Query/Mutation signatures and input object fields used by the
+Linear tool (`issueCreate`, `projectCreate`, `issueUpdate`, `commentCreate`)
+before you run provider workflows.
+
+The populate script:
+
+- Validates the Linear API key by querying teams.
+- Resolves `default_team_id` from `OPENCRAW_LINEAR_TEAM` (name/key/id) when provided.
+- Auto-selects `default_team_id` only when exactly one team is visible.
+- Writes `[channels.linear.actions]` toggles into local config (all enabled by default), including:
+  - `whoami`, `list_assigned`, `list_users`, `list_teams`, `list_projects`
+  - `create_issue`, `create_project`, `update_issue`, `assign_issue`, `comment_issue`
+- Writes `~/.opencraw/configs/channel-linear.toml`.
+- Backs up any existing file to `~/.opencraw/backups/`.
+
 OpenCraw runtime config now includes:
 
+- `[llm] active_profile`, `fallback_profiles`, `failover_cooldown_*`, and `[llm.profiles.<name>]` (`provider`, `model`, optional `fallback_models`)
 - `[runtime] mode = "dev" | "prod"` (`prod` is strict and fails fast on missing/invalid required env)
 - `[runtime] data_dir = "data"` for local runtime state
 - `[queue] mode = "followup" | "collect" | "steer" | "interrupt"` for lane behavior policy
 - `[queue] max_concurrency`, `[queue] lane_buffer`, and `[queue] debounce_ms` for lane-aware dispatch tuning
-- `[context] max_prompt_tokens`, `min_recent_messages`, `max_tool_chars` for token-aware history trimming
+- `[security] human_approval_timeout_seconds` for approval wait behavior (`0` waits indefinitely)
+- `[context] max_prompt_tokens`, `min_recent_messages`, `max_tool_chars`, `tool_loops_max`, `tool_max_runtime_seconds`, `tool_no_progress_limit` for token-aware history trimming and loop/runtime safety bounds
 - `[context] compaction_*` for Horizons-backed pre-compaction flush + summary rewrite (requires memory enabled)
 
 Control-plane config APIs:
@@ -158,7 +247,7 @@ To enable:
    - Automation permission for the terminal to control “Messages” (for sending)
 
 Safety note: in group chats, OpenCraw only responds to messages prefixed with one of
-`channels.imessage.group_prefixes` (defaults in `config.example.toml`).
+`channels.imessage.group_prefixes` (defaults in `config-templates/config.toml`).
 
 ## License
 
