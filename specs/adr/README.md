@@ -17,4 +17,4 @@ Use ADRs for any change with non-trivial blast radius or non-obvious tradeoffs.
 
 ## Template
 
-Copy `docs/adr/0000-template.md` and fill every section.
+Copy `specs/adr/0000-template.md` and fill every section.

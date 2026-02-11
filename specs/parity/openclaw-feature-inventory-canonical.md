@@ -1,4 +1,4 @@
-# OpenClaw Complete Feature Inventory
+# OpenClaw Feature Inventory (Canonical)
 
 Generated: 2026-02-09
 

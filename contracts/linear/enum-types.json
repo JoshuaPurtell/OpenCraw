@@ -1,0 +1,2984 @@
+[
+  {
+    "name": "AgentActivitySignal",
+    "description": "A modifier that provides additional instructions on how the activity should be interpreted.",
+    "values": [
+      {
+        "name": "stop",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "continue",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "auth",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "select",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "AgentActivityType",
+    "description": "The type of an agent activity.",
+    "values": [
+      {
+        "name": "thought",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "action",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "response",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "elicitation",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "error",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "prompt",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "AgentSessionStatus",
+    "description": "The status of an agent session.",
+    "values": [
+      {
+        "name": "pending",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "active",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "complete",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "awaitingInput",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "error",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "stale",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "AgentSessionType",
+    "description": "[DEPRECATED] The type of an agent session.",
+    "values": [
+      {
+        "name": "commentThread",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "AuthenticationSessionType",
+    "description": null,
+    "values": [
+      {
+        "name": "web",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "desktop",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "ios",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "android",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ContextViewType",
+    "description": null,
+    "values": [
+      {
+        "name": "activeIssues",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "activeCycle",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "upcomingCycle",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "backlog",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "triage",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "CustomerStatusType",
+    "description": "[DEPRECATED] A type of customer status.",
+    "values": [
+      {
+        "name": "active",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "inactive",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "CustomerVisibilityMode",
+    "description": "Mode that controls who can see and set Customers in Slack Asks.",
+    "values": [
+      {
+        "name": "LinearOnly",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "SlackMembers",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "SlackMembersAndGuests",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "CyclePeriod",
+    "description": null,
+    "values": [
+      {
+        "name": "before",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "during",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "after",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "DateResolutionType",
+    "description": "By which resolution is a date defined.",
+    "values": [
+      {
+        "name": "month",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "quarter",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "halfYear",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "year",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "Day",
+    "description": "The day of the week.",
+    "values": [
+      {
+        "name": "Sunday",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Monday",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Tuesday",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Wednesday",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Thursday",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Friday",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Saturday",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "EmailIntakeAddressType",
+    "description": "The type of the email address.",
+    "values": [
+      {
+        "name": "team",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "template",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "asks",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "asksWeb",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ExternalSyncService",
+    "description": "The service that syncs an external entity to Linear.",
+    "values": [
+      {
+        "name": "jira",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "github",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slack",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "FacetPageSource",
+    "description": null,
+    "values": [
+      {
+        "name": "projects",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "teamIssues",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "feed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "FeedSummarySchedule",
+    "description": "Cadence to generate feed summary",
+    "values": [
+      {
+        "name": "daily",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "weekly",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "never",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "FrequencyResolutionType",
+    "description": "By which resolution is frequency defined.",
+    "values": [
+      {
+        "name": "daily",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "weekly",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "GitAutomationStates",
+    "description": "The various states of a pull/merge request.",
+    "values": [
+      {
+        "name": "draft",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "start",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "review",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "mergeable",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "merge",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "GitLinkKind",
+    "description": "[Internal] The kind of link between an issue and a pull request.",
+    "values": [
+      {
+        "name": "closes",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "contributes",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "links",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "GithubOrgType",
+    "description": null,
+    "values": [
+      {
+        "name": "user",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "organization",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "IdentityProviderType",
+    "description": "The type of identity provider.",
+    "values": [
+      {
+        "name": "general",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "webForms",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "InitiativeStatus",
+    "description": null,
+    "values": [
+      {
+        "name": "Planned",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Active",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Completed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "InitiativeTab",
+    "description": "Different tabs available inside an initiative.",
+    "values": [
+      {
+        "name": "overview",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "projects",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "updates",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "InitiativeUpdateHealthType",
+    "description": "The health type when the update is created.",
+    "values": [
+      {
+        "name": "onTrack",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "atRisk",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "offTrack",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "IntegrationService",
+    "description": "Linear supported integration services.",
+    "values": [
+      {
+        "name": "airbyte",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "discord",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "figma",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "figmaPlugin",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "front",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "github",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "gong",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "githubEnterpriseServer",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "githubCommit",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "githubImport",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "githubPersonal",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "githubCodeAccessPersonal",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "gitlab",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "googleCalendarPersonal",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "googleSheets",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "intercom",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "jira",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "jiraPersonal",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "launchDarkly",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "launchDarklyPersonal",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "loom",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "notion",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "opsgenie",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "pagerDuty",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "salesforce",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slack",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slackAsks",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slackCustomViewNotifications",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slackOrgProjectUpdatesPost",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slackOrgInitiativeUpdatesPost",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slackPersonal",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slackPost",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slackProjectPost",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slackProjectUpdatesPost",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slackInitiativePost",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "sentry",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "zendesk",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "email",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "mcpServerPersonal",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "mcpServer",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "microsoftTeams",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "IssueRelationType",
+    "description": "The type of the issue relation.",
+    "values": [
+      {
+        "name": "blocks",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "duplicate",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "related",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "similar",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "IssueSuggestionState",
+    "description": null,
+    "values": [
+      {
+        "name": "active",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "stale",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "accepted",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "dismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "IssueSuggestionType",
+    "description": null,
+    "values": [
+      {
+        "name": "team",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "project",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "assignee",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "label",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "similarIssue",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "relatedIssue",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "NotificationCategory",
+    "description": "The categories of notifications a user can subscribe to.",
+    "values": [
+      {
+        "name": "assignments",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "statusChanges",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "commentsAndReplies",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "mentions",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "reactions",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "subscriptions",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "documentChanges",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "postsAndUpdates",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "reminders",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "reviews",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "appsAndIntegrations",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "triage",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "customers",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "feed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "system",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "NotificationChannel",
+    "description": "The delivery channels a user can receive notifications in.",
+    "values": [
+      {
+        "name": "desktop",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "mobile",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "email",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slack",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "OAuthClientApprovalStatus",
+    "description": "The different requests statuses possible for an OAuth client approval request.",
+    "values": [
+      {
+        "name": "requested",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "approved",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "denied",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "OrganizationDomainAuthType",
+    "description": "What type of auth is the domain used for.",
+    "values": [
+      {
+        "name": "saml",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "general",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "OrganizationInviteStatus",
+    "description": "The different statuses possible for an organization invite.",
+    "values": [
+      {
+        "name": "pending",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "accepted",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "expired",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "PaginationNulls",
+    "description": "How to treat NULL values, whether they should appear first or last",
+    "values": [
+      {
+        "name": "first",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "last",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "PaginationOrderBy",
+    "description": "By which field should the pagination order by",
+    "values": [
+      {
+        "name": "createdAt",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "updatedAt",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "PaginationSortOrder",
+    "description": "Whether to sort in ascending or descending order",
+    "values": [
+      {
+        "name": "Ascending",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Descending",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "PostType",
+    "description": "Type of Post",
+    "values": [
+      {
+        "name": "summary",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "update",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ProductIntelligenceScope",
+    "description": "[Internal] The scope of product intelligence suggestion data for a team.",
+    "values": [
+      {
+        "name": "workspace",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "teamHierarchy",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "team",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "none",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ProjectMilestoneStatus",
+    "description": "The status of a project milestone.",
+    "values": [
+      {
+        "name": "unstarted",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "next",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "overdue",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "done",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ProjectStatusType",
+    "description": "A type of project status.",
+    "values": [
+      {
+        "name": "backlog",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "planned",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "started",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "paused",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "completed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "canceled",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ProjectTab",
+    "description": "Different tabs available inside a project.",
+    "values": [
+      {
+        "name": "customers",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "documents",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "issues",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "updates",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ProjectUpdateHealthType",
+    "description": "The health type when the project update is created.",
+    "values": [
+      {
+        "name": "onTrack",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "atRisk",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "offTrack",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ProjectUpdateReminderFrequency",
+    "description": "The frequency at which to send project update reminders.",
+    "values": [
+      {
+        "name": "week",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "twoWeeks",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "month",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "never",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "PullRequestMergeMethod",
+    "description": "The method used to merge a pull request.",
+    "values": [
+      {
+        "name": "MERGE",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "REBASE",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "SQUASH",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "PullRequestReviewTool",
+    "description": null,
+    "values": [
+      {
+        "name": "source",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "graphite",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "PullRequestStatus",
+    "description": "The status of a pull request.",
+    "values": [
+      {
+        "name": "draft",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "open",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "inReview",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "approved",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "merged",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "closed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "PushSubscriptionType",
+    "description": "The different push subscription types.",
+    "values": [
+      {
+        "name": "web",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "apple",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "appleDevelopment",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "firebase",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ReleaseChannel",
+    "description": "Features release channel.",
+    "values": [
+      {
+        "name": "development",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "internal",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "privateBeta",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "beta",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "preRelease",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "public",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ReleasePipelineType",
+    "description": "A type of release pipeline.",
+    "values": [
+      {
+        "name": "continuous",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "scheduled",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ReleaseStageType",
+    "description": "A type of release stage.",
+    "values": [
+      {
+        "name": "planned",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "started",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "completed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "canceled",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "SLADayCountType",
+    "description": null,
+    "values": [
+      {
+        "name": "all",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "onlyBusinessDays",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "SemanticSearchResultType",
+    "description": "The type of the semantic search result.",
+    "values": [
+      {
+        "name": "issue",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "project",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "initiative",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "document",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "SendStrategy",
+    "description": null,
+    "values": [
+      {
+        "name": "desktopThenPush",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "desktopAndPush",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "desktop",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "push",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "SlaStatus",
+    "description": null,
+    "values": [
+      {
+        "name": "Breached",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "HighRisk",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "MediumRisk",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "LowRisk",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Completed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Failed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "SlackChannelType",
+    "description": null,
+    "values": [
+      {
+        "name": "DirectMessage",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "MultiPersonDirectMessage",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Private",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "PrivateGroup",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Public",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "SummaryGenerationStatus",
+    "description": "The generation status of a summary.",
+    "values": [
+      {
+        "name": "pending",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "completed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "failed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "TeamRetirementSubTeamHandling",
+    "description": "[Internal] How to handle sub-teams when retiring a parent team.",
+    "values": [
+      {
+        "name": "unnest",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "retire",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "TeamRoleType",
+    "description": "All possible roles within a team in terms of access to team settings and operations.",
+    "values": [
+      {
+        "name": "owner",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "member",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "TriageResponsibilityAction",
+    "description": "Which action should be taken after an issue is added to triage.",
+    "values": [
+      {
+        "name": "assign",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "notify",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "TriageRuleErrorType",
+    "description": "The type of error that occurred during triage rule execution.",
+    "values": [
+      {
+        "name": "cycle",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "default",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "labelGroupConflict",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "UserContextViewType",
+    "description": null,
+    "values": [
+      {
+        "name": "assigned",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "UserFlagType",
+    "description": "The types of flags that the user can have.",
+    "values": [
+      {
+        "name": "updatedSlackThreadSyncIntegration",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "completedOnboarding",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "desktopInstalled",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "teamsPageIntroductionDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "joinTeamIntroductionDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "desktopDownloadToastDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "emptyBacklogDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "emptyCustomViewsDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "emptyActiveIssuesDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "emptyMyIssuesDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "triageWelcomeDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "cycleWelcomeDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "projectWelcomeDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "projectBacklogWelcomeDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "projectUpdatesWelcomeDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "pulseWelcomeDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "analyticsWelcomeDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "insightsWelcomeDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "insightsHelpDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "figmaPromptDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "issueMovePromptCompleted",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "migrateThemePreference",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "listSelectionTip",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "emptyParagraphSlashCommandTip",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "editorSlashCommandUsed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "canPlaySnake",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "canPlayTetris",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "importBannerDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "tryInvitePeopleDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "tryRoadmapsDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "tryCyclesDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "tryTriageDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "tryGithubDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "rewindBannerDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "helpIslandFeatureInsightsDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "dueDateShortcutMigration",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slackCommentReactionTipShown",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "issueLabelSuggestionUsed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "threadedCommentsNudgeIsSeen",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "desktopTabsOnboardingDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "milestoneOnboardingIsSeenAndDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "projectBoardOnboardingIsSeenAndDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "figmaPluginBannerDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "initiativesBannerDismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "commandMenuClearShortcutTip",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slackBotWelcomeMessageShown",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "slackAgentPromoFromCreateNewIssueShown",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "all",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "UserFlagUpdateOperation",
+    "description": "Operations that can be applied to UserFlagType.",
+    "values": [
+      {
+        "name": "incr",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "decr",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "clear",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "lock",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "UserRoleType",
+    "description": "The different permission roles available to users on an organization.",
+    "values": [
+      {
+        "name": "owner",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "admin",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "guest",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "user",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "app",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "UserSettingsThemeDeviceType",
+    "description": "Device type for theme",
+    "values": [
+      {
+        "name": "desktop",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "mobileWeb",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "UserSettingsThemeMode",
+    "description": "Theme color mode",
+    "values": [
+      {
+        "name": "light",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "dark",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "UserSettingsThemePreset",
+    "description": "Theme preset options",
+    "values": [
+      {
+        "name": "system",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "light",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "pureLight",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "dark",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "magicBlue",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "classicDark",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "custom",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ViewPreferencesType",
+    "description": "The type of view preferences (either user or organization level preferences).",
+    "values": [
+      {
+        "name": "organization",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "user",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ViewType",
+    "description": "The client view this custom view is targeting.",
+    "values": [
+      {
+        "name": "inbox",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "myIssues",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "myIssuesCreatedByMe",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "myIssuesSubscribedTo",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "myIssuesActivity",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "myIssuesSharedWithMe",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "userProfile",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "userProfileCreatedByUser",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "board",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "completedCycle",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "cycle",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "release",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "project",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "projectDocuments",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "label",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "triage",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "activeIssues",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "backlog",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "subIssues",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "allIssues",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "dashboards",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "customView",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "customViews",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "initiative",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "initiativeOverview",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "initiativeOverviewSubInitiatives",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "initiatives",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "initiativesPlanned",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "initiativesCompleted",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "projects",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "projectsAll",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "projectsBacklog",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "projectsClosed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "projectLabel",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "search",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "splitSearch",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "teams",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "archive",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "quickView",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "issueIdentifiers",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "customers",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "customer",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "embeddedCustomerNeeds",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "projectCustomerNeeds",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "reviews",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "myReviews",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "createdReviews",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "agents",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "feedAll",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "feedCreated",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "feedFollowing",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "feedPopular",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "workspaceMembers",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "releasePipelines",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "roadmapAll",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "roadmap",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "roadmaps",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "roadmapClosed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "roadmapBacklog",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "WorkflowTrigger",
+    "description": null,
+    "values": [
+      {
+        "name": "entityCreated",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "entityUpdated",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "entityCreatedOrUpdated",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "entityRemoved",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "entityUnarchived",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "WorkflowTriggerType",
+    "description": null,
+    "values": [
+      {
+        "name": "issue",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "project",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "WorkflowType",
+    "description": null,
+    "values": [
+      {
+        "name": "sla",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "custom",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "viewSubscription",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "triage",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "__DirectiveLocation",
+    "description": "A Directive can be adjacent to many parts of the GraphQL language, a __DirectiveLocation describes one such possible adjacencies.",
+    "values": [
+      {
+        "name": "QUERY",
+        "description": "Location adjacent to a query operation.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "MUTATION",
+        "description": "Location adjacent to a mutation operation.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "SUBSCRIPTION",
+        "description": "Location adjacent to a subscription operation.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "FIELD",
+        "description": "Location adjacent to a field.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "FRAGMENT_DEFINITION",
+        "description": "Location adjacent to a fragment definition.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "FRAGMENT_SPREAD",
+        "description": "Location adjacent to a fragment spread.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "INLINE_FRAGMENT",
+        "description": "Location adjacent to an inline fragment.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "VARIABLE_DEFINITION",
+        "description": "Location adjacent to a variable definition.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "SCHEMA",
+        "description": "Location adjacent to a schema definition.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "SCALAR",
+        "description": "Location adjacent to a scalar definition.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "OBJECT",
+        "description": "Location adjacent to an object type definition.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "FIELD_DEFINITION",
+        "description": "Location adjacent to a field definition.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "ARGUMENT_DEFINITION",
+        "description": "Location adjacent to an argument definition.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "INTERFACE",
+        "description": "Location adjacent to an interface definition.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "UNION",
+        "description": "Location adjacent to a union definition.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "ENUM",
+        "description": "Location adjacent to an enum definition.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "ENUM_VALUE",
+        "description": "Location adjacent to an enum value definition.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "INPUT_OBJECT",
+        "description": "Location adjacent to an input object type definition.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "INPUT_FIELD_DEFINITION",
+        "description": "Location adjacent to an input object field definition.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "__TypeKind",
+    "description": "An enum describing what kind of type a given `__Type` is.",
+    "values": [
+      {
+        "name": "SCALAR",
+        "description": "Indicates this type is a scalar.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "OBJECT",
+        "description": "Indicates this type is an object. `fields` and `interfaces` are valid fields.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "INTERFACE",
+        "description": "Indicates this type is an interface. `fields`, `interfaces`, and `possibleTypes` are valid fields.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "UNION",
+        "description": "Indicates this type is a union. `possibleTypes` is a valid field.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "ENUM",
+        "description": "Indicates this type is an enum. `enumValues` is a valid field.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "INPUT_OBJECT",
+        "description": "Indicates this type is an input object. `inputFields` is a valid field.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "LIST",
+        "description": "Indicates this type is a list. `ofType` is a valid field.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "NON_NULL",
+        "description": "Indicates this type is a non-null. `ofType` is a valid field.",
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  }
+]

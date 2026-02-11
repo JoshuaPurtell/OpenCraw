@@ -1,0 +1,5979 @@
+[
+  {
+    "name": "agentActivityCreate",
+    "description": "Creates an agent activity.",
+    "returns": "AgentActivityPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The agent activity object to create.",
+        "type": "AgentActivityCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "agentActivityCreatePrompt",
+    "description": "[Internal] Creates a prompt agent activity from Linear user input.",
+    "returns": "AgentActivityPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The prompt agent activity object to create.",
+        "type": "AgentActivityCreatePromptInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "agentSessionCreate",
+    "description": "[Internal] Creates a new agent session on behalf of the current user",
+    "returns": "AgentSessionPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The agent session object to create.",
+        "type": "AgentSessionCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "agentSessionCreateOnComment",
+    "description": "Creates a new agent session on a rootcomment.",
+    "returns": "AgentSessionPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The agent session object to create.",
+        "type": "AgentSessionCreateOnComment!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "agentSessionCreateOnIssue",
+    "description": "Creates a new agent session on an issue.",
+    "returns": "AgentSessionPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The agent session object to create.",
+        "type": "AgentSessionCreateOnIssue!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "agentSessionUpdate",
+    "description": "Updates an agent session.",
+    "returns": "AgentSessionPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial agent session object to update the agent session with.",
+        "type": "AgentSessionUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the agent session to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "agentSessionUpdateExternalUrl",
+    "description": "Updates the externalUrl of an agent session, which is an agent-hosted page associated with this session.",
+    "returns": "AgentSessionPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The agent session object to update.",
+        "type": "AgentSessionUpdateExternalUrlInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the agent session to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "airbyteIntegrationConnect",
+    "description": "Creates an integration api key for Airbyte to connect with Linear.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "Airbyte integration settings.",
+        "type": "AirbyteConfigurationInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "asksWebPageCreate",
+    "description": "Creates a new Asks web page.",
+    "returns": "AsksWebPagePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The Asks web page object to create.",
+        "type": "AsksWebPageCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "asksWebPageDelete",
+    "description": "Deletes an Asks web page.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the Asks web page to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "asksWebPageUpdate",
+    "description": "Updates an Asks web page.",
+    "returns": "AsksWebPagePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The fields to update.",
+        "type": "AsksWebPageUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the Asks web page to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "asksWebSettingsCreate",
+    "description": "Creates a new Asks web form settings.",
+    "returns": "AsksWebSettingsPayload!",
+    "args": [
+      {
+        "name": "emailIntakeAddress",
+        "description": "Optional email intake address settings.",
+        "type": "AsksWebSettingsEmailIntakeAddressInput",
+        "defaultValue": null
+      },
+      {
+        "name": "input",
+        "description": "The Asks web settings object to create.",
+        "type": "AsksWebSettingsCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "asksWebSettingsUpdate",
+    "description": "Updates Asks web form settings.",
+    "returns": "AsksWebSettingsPayload!",
+    "args": [
+      {
+        "name": "emailIntakeAddress",
+        "description": "Optional email intake address settings.",
+        "type": "AsksWebSettingsEmailIntakeAddressInput",
+        "defaultValue": null
+      },
+      {
+        "name": "input",
+        "description": "The fields to update.",
+        "type": "AsksWebSettingsUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the Asks web settings to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentCreate",
+    "description": "Creates a new attachment, or updates existing if the same `url` and `issueId` is used.",
+    "returns": "AttachmentPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The attachment object to create.",
+        "type": "AttachmentCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentDelete",
+    "description": "Deletes an issue attachment.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the attachment to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentLinkDiscord",
+    "description": "Link an existing Discord message to an issue.",
+    "returns": "AttachmentPayload!",
+    "args": [
+      {
+        "name": "createAsUser",
+        "description": "Create attachment as a user with the provided name. This option is only available to OAuth applications creating attachments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "displayIconUrl",
+        "description": "Provide an external user avatar URL. Can only be used in conjunction with the `createAsUser` options. This option is only available to OAuth applications creating comments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "title",
+        "description": "The title to use for the attachment.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "issueId",
+        "description": "The issue for which to link the Discord message. Can be a UUID or issue identifier (e.g., 'LIN-123').",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "Optional attachment ID that may be provided through the API.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "channelId",
+        "description": "The Discord channel ID for the message to link.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "messageId",
+        "description": "The Discord message ID for the message to link.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "url",
+        "description": "The Discord message URL for the message to link.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentLinkFront",
+    "description": "Link an existing Front conversation to an issue.",
+    "returns": "FrontAttachmentPayload!",
+    "args": [
+      {
+        "name": "createAsUser",
+        "description": "Create attachment as a user with the provided name. This option is only available to OAuth applications creating attachments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "displayIconUrl",
+        "description": "Provide an external user avatar URL. Can only be used in conjunction with the `createAsUser` options. This option is only available to OAuth applications creating comments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "title",
+        "description": "The title to use for the attachment.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "conversationId",
+        "description": "The Front conversation ID to link.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "issueId",
+        "description": "The issue for which to link the Front conversation. Can be a UUID or issue identifier (e.g., 'LIN-123').",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "Optional attachment ID that may be provided through the API.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentLinkGitHubIssue",
+    "description": "Link a GitHub issue to a Linear issue.",
+    "returns": "AttachmentPayload!",
+    "args": [
+      {
+        "name": "createAsUser",
+        "description": "Create attachment as a user with the provided name. This option is only available to OAuth applications creating attachments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "displayIconUrl",
+        "description": "Provide an external user avatar URL. Can only be used in conjunction with the `createAsUser` options. This option is only available to OAuth applications creating comments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "title",
+        "description": "The title to use for the attachment.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "issueId",
+        "description": "The Linear issue for which to link the GitHub issue. Can be a UUID or issue identifier (e.g., 'LIN-123').",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "Optional attachment ID that may be provided through the API.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "url",
+        "description": "The URL of the GitHub issue to link.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentLinkGitHubPR",
+    "description": "Link a GitHub pull request to an issue.",
+    "returns": "AttachmentPayload!",
+    "args": [
+      {
+        "name": "createAsUser",
+        "description": "Create attachment as a user with the provided name. This option is only available to OAuth applications creating attachments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "displayIconUrl",
+        "description": "Provide an external user avatar URL. Can only be used in conjunction with the `createAsUser` options. This option is only available to OAuth applications creating comments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "title",
+        "description": "The title to use for the attachment.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "issueId",
+        "description": "The issue for which to link the GitHub pull request. Can be a UUID or issue identifier (e.g., 'LIN-123').",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "Optional attachment ID that may be provided through the API.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "url",
+        "description": "The URL of the GitHub pull request to link.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "linkKind",
+        "description": "[Internal] The kind of link between the issue and the pull request.",
+        "type": "GitLinkKind",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentLinkGitLabMR",
+    "description": "Link an existing GitLab MR to an issue.",
+    "returns": "AttachmentPayload!",
+    "args": [
+      {
+        "name": "createAsUser",
+        "description": "Create attachment as a user with the provided name. This option is only available to OAuth applications creating attachments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "displayIconUrl",
+        "description": "Provide an external user avatar URL. Can only be used in conjunction with the `createAsUser` options. This option is only available to OAuth applications creating comments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "title",
+        "description": "The title to use for the attachment.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "issueId",
+        "description": "The issue for which to link the GitLab merge request. Can be a UUID or issue identifier (e.g., 'LIN-123').",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "Optional attachment ID that may be provided through the API.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "url",
+        "description": "The URL of the GitLab merge request to link.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "projectPathWithNamespace",
+        "description": "The path name to the project including any (sub)groups. E.g. linear/main/client.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "number",
+        "description": "The GitLab merge request number to link.",
+        "type": "Float!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentLinkIntercom",
+    "description": "Link an existing Intercom conversation to an issue.",
+    "returns": "AttachmentPayload!",
+    "args": [
+      {
+        "name": "createAsUser",
+        "description": "Create attachment as a user with the provided name. This option is only available to OAuth applications creating attachments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "displayIconUrl",
+        "description": "Provide an external user avatar URL. Can only be used in conjunction with the `createAsUser` options. This option is only available to OAuth applications creating comments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "title",
+        "description": "The title to use for the attachment.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "conversationId",
+        "description": "The Intercom conversation ID to link.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "partId",
+        "description": "An optional Intercom conversation part ID to link to",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "Optional attachment ID that may be provided through the API.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "issueId",
+        "description": "The issue for which to link the Intercom conversation. Can be a UUID or issue identifier (e.g., 'LIN-123').",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentLinkJiraIssue",
+    "description": "Link an existing Jira issue to an issue.",
+    "returns": "AttachmentPayload!",
+    "args": [
+      {
+        "name": "createAsUser",
+        "description": "Create attachment as a user with the provided name. This option is only available to OAuth applications creating attachments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "displayIconUrl",
+        "description": "Provide an external user avatar URL. Can only be used in conjunction with the `createAsUser` options. This option is only available to OAuth applications creating comments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "title",
+        "description": "The title to use for the attachment.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "issueId",
+        "description": "The issue for which to link the Jira issue. Can be a UUID or issue identifier (e.g., 'LIN-123').",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "jiraIssueId",
+        "description": "The Jira issue key or ID to link.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "Optional attachment ID that may be provided through the API.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "url",
+        "description": "Optional fallback URL to use if the Jira issue cannot be found.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentLinkSalesforce",
+    "description": "Link an existing Salesforce case to an issue.",
+    "returns": "AttachmentPayload!",
+    "args": [
+      {
+        "name": "createAsUser",
+        "description": "Create attachment as a user with the provided name. This option is only available to OAuth applications creating attachments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "displayIconUrl",
+        "description": "Provide an external user avatar URL. Can only be used in conjunction with the `createAsUser` options. This option is only available to OAuth applications creating comments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "title",
+        "description": "The title to use for the attachment.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "issueId",
+        "description": "The issue for which to link the Salesforce case. Can be a UUID or issue identifier (e.g., 'LIN-123').",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "Optional attachment ID that may be provided through the API.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "url",
+        "description": "The URL of the Salesforce case to link.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentLinkSlack",
+    "description": "Link an existing Slack message to an issue.",
+    "returns": "AttachmentPayload!",
+    "args": [
+      {
+        "name": "createAsUser",
+        "description": "Create attachment as a user with the provided name. This option is only available to OAuth applications creating attachments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "displayIconUrl",
+        "description": "Provide an external user avatar URL. Can only be used in conjunction with the `createAsUser` options. This option is only available to OAuth applications creating comments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "title",
+        "description": "The title to use for the attachment.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "issueId",
+        "description": "The issue to which to link the Slack message. Can be a UUID or issue identifier (e.g., 'LIN-123').",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "url",
+        "description": "The Slack message URL for the message to link.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "Optional attachment ID that may be provided through the API.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "syncToCommentThread",
+        "description": "Whether to begin syncing the message's Slack thread with a comment thread on the issue.",
+        "type": "Boolean",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentLinkURL",
+    "description": "Link any url to an issue.",
+    "returns": "AttachmentPayload!",
+    "args": [
+      {
+        "name": "createAsUser",
+        "description": "Create attachment as a user with the provided name. This option is only available to OAuth applications creating attachments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "displayIconUrl",
+        "description": "Provide an external user avatar URL. Can only be used in conjunction with the `createAsUser` options. This option is only available to OAuth applications creating comments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "title",
+        "description": "The title to use for the attachment.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "url",
+        "description": "The url to link.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "issueId",
+        "description": "The issue for which to link the url. Can be a UUID or issue identifier (e.g., 'LIN-123').",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The id for the attachment.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentLinkZendesk",
+    "description": "Link an existing Zendesk ticket to an issue.",
+    "returns": "AttachmentPayload!",
+    "args": [
+      {
+        "name": "createAsUser",
+        "description": "Create attachment as a user with the provided name. This option is only available to OAuth applications creating attachments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "displayIconUrl",
+        "description": "Provide an external user avatar URL. Can only be used in conjunction with the `createAsUser` options. This option is only available to OAuth applications creating comments in `actor=app` mode.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "title",
+        "description": "The title to use for the attachment.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "ticketId",
+        "description": "The Zendesk ticket ID to link.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "issueId",
+        "description": "The issue for which to link the Zendesk ticket. Can be a UUID or issue identifier (e.g., 'LIN-123').",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "Optional attachment ID that may be provided through the API.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "url",
+        "description": "The URL of the Zendesk ticket to link.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentSyncToSlack",
+    "description": "Begin syncing the thread for an existing Slack message attachment with a comment thread on its issue.",
+    "returns": "AttachmentPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The ID of the Slack attachment to begin syncing.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentUpdate",
+    "description": "Updates an existing issue attachment.",
+    "returns": "AttachmentPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial attachment object to update the attachment with.",
+        "type": "AttachmentUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the attachment to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "commentCreate",
+    "description": "Creates a new comment.",
+    "returns": "CommentPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The comment object to create.",
+        "type": "CommentCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "commentDelete",
+    "description": "Deletes a comment.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the comment to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "commentResolve",
+    "description": "Resolves a comment.",
+    "returns": "CommentPayload!",
+    "args": [
+      {
+        "name": "resolvingCommentId",
+        "description": null,
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the comment to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "commentUnresolve",
+    "description": "Unresolves a comment.",
+    "returns": "CommentPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the comment to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "commentUpdate",
+    "description": "Updates a comment.",
+    "returns": "CommentPayload!",
+    "args": [
+      {
+        "name": "skipEditedAt",
+        "description": "[INTERNAL] Flag to prevent setting editedAt when updating bodyData (used for background uploads).",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "input",
+        "description": "A partial comment object to update the comment with.",
+        "type": "CommentUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the comment to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "contactCreate",
+    "description": "Saves user message.",
+    "returns": "ContactPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The contact entry to create.",
+        "type": "ContactCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "contactSalesCreate",
+    "description": "[INTERNAL] Saves sales pricing inquiry to Front.",
+    "returns": "ContactPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The contact entry to create.",
+        "type": "ContactSalesCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "createCsvExportReport",
+    "description": "Create CSV export report for the organization.",
+    "returns": "CreateCsvExportReportPayload!",
+    "args": [
+      {
+        "name": "includePrivateTeamIds",
+        "description": null,
+        "type": "[String!]",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "createInitiativeUpdateReminder",
+    "description": "Create a notification to remind a user about an initiative update.",
+    "returns": "InitiativeUpdateReminderPayload!",
+    "args": [
+      {
+        "name": "userId",
+        "description": "The user identifier to whom the notification will be sent. By default, it is set to the initiative owner.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "initiativeId",
+        "description": "The identifier of the initiative to remind about.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "createOrganizationFromOnboarding",
+    "description": "Creates an organization from onboarding.",
+    "returns": "CreateOrJoinOrganizationResponse!",
+    "args": [
+      {
+        "name": "sessionId",
+        "description": "PostHog session ID for attribution tracking.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "survey",
+        "description": "Onboarding survey.",
+        "type": "OnboardingCustomerSurvey",
+        "defaultValue": null
+      },
+      {
+        "name": "input",
+        "description": "Organization details for the new organization.",
+        "type": "CreateOrganizationInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "createProjectUpdateReminder",
+    "description": "Create a notification to remind a user about a project update.",
+    "returns": "ProjectUpdateReminderPayload!",
+    "args": [
+      {
+        "name": "userId",
+        "description": "The user identifier to whom the notification will be sent. By default, it is set to the project lead.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "projectId",
+        "description": "The identifier of the project to remind about.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customViewCreate",
+    "description": "Creates a new custom view.",
+    "returns": "CustomViewPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the custom view to create.",
+        "type": "CustomViewCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customViewDelete",
+    "description": "Deletes a custom view.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the custom view to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customViewUpdate",
+    "description": "Updates a custom view.",
+    "returns": "CustomViewPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the custom view to update.",
+        "type": "CustomViewUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the custom view to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerCreate",
+    "description": "Creates a new customer.",
+    "returns": "CustomerPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The customer to create.",
+        "type": "CustomerCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerDelete",
+    "description": "Deletes a customer.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the customer to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerMerge",
+    "description": "Merges two customers.",
+    "returns": "CustomerPayload!",
+    "args": [
+      {
+        "name": "sourceCustomerId",
+        "description": "The ID of the customer to merge. The needs of this customer will be transferred before it gets deleted.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "targetCustomerId",
+        "description": "The ID of the target customer to merge into. The needs of this customer will be retained",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerNeedArchive",
+    "description": "Archives a customer need.",
+    "returns": "CustomerNeedArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the customer need to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerNeedCreate",
+    "description": "Creates a new customer need.",
+    "returns": "CustomerNeedPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The customer need to create.",
+        "type": "CustomerNeedCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerNeedCreateFromAttachment",
+    "description": "Creates a new customer need out of an attachment",
+    "returns": "CustomerNeedPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The customer need to create.",
+        "type": "CustomerNeedCreateFromAttachmentInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerNeedDelete",
+    "description": "Deletes a customer need.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "keepAttachment",
+        "description": "Whether to keep the attachment associated with the customer need.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the customer need to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerNeedUnarchive",
+    "description": "Unarchives a customer need.",
+    "returns": "CustomerNeedArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the customer need to unarchive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerNeedUpdate",
+    "description": "Updates a customer need",
+    "returns": "CustomerNeedUpdatePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the customer need to update.",
+        "type": "CustomerNeedUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the customer need to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerStatusCreate",
+    "description": "Creates a new customer status.",
+    "returns": "CustomerStatusPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The CustomerStatus object to create.",
+        "type": "CustomerStatusCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerStatusDelete",
+    "description": "Deletes a customer status.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the customer status to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerStatusUpdate",
+    "description": "Updates a customer status.",
+    "returns": "CustomerStatusPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial CustomerStatus object to update the CustomerStatus with.",
+        "type": "CustomerStatusUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the customer status to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerTierCreate",
+    "description": "Creates a new customer tier.",
+    "returns": "CustomerTierPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The CustomerTier object to create.",
+        "type": "CustomerTierCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerTierDelete",
+    "description": "Deletes a customer tier.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the customer tier to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerTierUpdate",
+    "description": "Updates a customer tier.",
+    "returns": "CustomerTierPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial CustomerTier object to update the CustomerTier with.",
+        "type": "CustomerTierUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the customer tier to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerUnsync",
+    "description": "Unsyncs a managed customer from the its current data source. External IDs mapping to the external source will be cleared.",
+    "returns": "CustomerPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the customer to unsync.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerUpdate",
+    "description": "Updates a customer",
+    "returns": "CustomerPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the customer to update.",
+        "type": "CustomerUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the customer to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerUpsert",
+    "description": "Upserts a customer, creating it if it doesn't exists, updating it otherwise. Matches against an existing customer with `id` or `externalId`",
+    "returns": "CustomerPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The customer to create.",
+        "type": "CustomerUpsertInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "cycleArchive",
+    "description": "Archives a cycle.",
+    "returns": "CycleArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the cycle to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "cycleCreate",
+    "description": "Creates a new cycle.",
+    "returns": "CyclePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The cycle object to create.",
+        "type": "CycleCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "cycleShiftAll",
+    "description": "Shifts all cycles starts and ends by a certain number of days, starting from the provided cycle onwards.",
+    "returns": "CyclePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial cycle object to update the cycle with.",
+        "type": "CycleShiftAllInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "cycleStartUpcomingCycleToday",
+    "description": "Shifts all cycles starts and ends by a certain number of days, starting from the provided cycle onwards.",
+    "returns": "CyclePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the cycle to start as of midnight today. Must be the upcoming cycle.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "cycleUpdate",
+    "description": "Updates a cycle.",
+    "returns": "CyclePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial cycle object to update the cycle with.",
+        "type": "CycleUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the cycle to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "documentCreate",
+    "description": "Creates a new document.",
+    "returns": "DocumentPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The document to create.",
+        "type": "DocumentCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "documentDelete",
+    "description": "Deletes (trashes) a document.",
+    "returns": "DocumentArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the document to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "documentUnarchive",
+    "description": "Restores a document.",
+    "returns": "DocumentArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the document to restore.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "documentUpdate",
+    "description": "Updates a document.",
+    "returns": "DocumentPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial document object to update the document with.",
+        "type": "DocumentUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the document to update. Also the identifier from the URL is accepted.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "emailIntakeAddressCreate",
+    "description": "Creates a new email intake address.",
+    "returns": "EmailIntakeAddressPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The email intake address object to create.",
+        "type": "EmailIntakeAddressCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "emailIntakeAddressDelete",
+    "description": "Deletes an email intake address object.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the email intake address to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "emailIntakeAddressRotate",
+    "description": "Rotates an existing email intake address.",
+    "returns": "EmailIntakeAddressPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the email intake address.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "emailIntakeAddressUpdate",
+    "description": "Updates an existing email intake address.",
+    "returns": "EmailIntakeAddressPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the email intake address to update.",
+        "type": "EmailIntakeAddressUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the email intake address.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "emailTokenUserAccountAuth",
+    "description": "Authenticates a user account via email and authentication token.",
+    "returns": "AuthResolverResponse!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The data used for token authentication.",
+        "type": "TokenUserAccountAuthInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "emailUnsubscribe",
+    "description": "Unsubscribes the user from one type of email.",
+    "returns": "EmailUnsubscribePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "Unsubscription details.",
+        "type": "EmailUnsubscribeInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "emailUserAccountAuthChallenge",
+    "description": "Finds or creates a new user account by email and sends an email with token.",
+    "returns": "EmailUserAccountAuthChallengeResponse!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The data used for email authentication.",
+        "type": "EmailUserAccountAuthChallengeInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "emojiCreate",
+    "description": "Creates a custom emoji.",
+    "returns": "EmojiPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The emoji object to create.",
+        "type": "EmojiCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "emojiDelete",
+    "description": "Deletes an emoji.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the emoji to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "entityExternalLinkCreate",
+    "description": "Creates a new entity link.",
+    "returns": "EntityExternalLinkPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The entity link object to create.",
+        "type": "EntityExternalLinkCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "entityExternalLinkDelete",
+    "description": "Deletes an entity link.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the entity link to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "entityExternalLinkUpdate",
+    "description": "Updates an entity link.",
+    "returns": "EntityExternalLinkPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The entity link object to update.",
+        "type": "EntityExternalLinkUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the entity link to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "favoriteCreate",
+    "description": "Creates a new favorite (project, cycle etc).",
+    "returns": "FavoritePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The favorite object to create.",
+        "type": "FavoriteCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "favoriteDelete",
+    "description": "Deletes a favorite reference.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the favorite reference to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "favoriteUpdate",
+    "description": "Updates a favorite.",
+    "returns": "FavoritePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial favorite object to update the favorite with.",
+        "type": "FavoriteUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the favorite to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "fileUpload",
+    "description": "XHR request payload to upload an images, video and other attachments directly to Linear's cloud storage.",
+    "returns": "UploadPayload!",
+    "args": [
+      {
+        "name": "metaData",
+        "description": "Optional metadata.",
+        "type": "JSON",
+        "defaultValue": null
+      },
+      {
+        "name": "makePublic",
+        "description": "Should the file be made publicly accessible (default: false).",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "size",
+        "description": "File size of the uploaded file.",
+        "type": "Int!",
+        "defaultValue": null
+      },
+      {
+        "name": "contentType",
+        "description": "MIME type of the uploaded file.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "filename",
+        "description": "Filename of the uploaded file.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "fileUploadDangerouslyDelete",
+    "description": "[INTERNAL] Permanently delete an uploaded file by asset URL. This should be used as a last resort and will break comments and documents that reference the asset.",
+    "returns": "FileUploadDeletePayload!",
+    "args": [
+      {
+        "name": "assetUrl",
+        "description": "The asset URL of the uploaded file to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "gitAutomationStateCreate",
+    "description": "Creates a new automation state.",
+    "returns": "GitAutomationStatePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The automation state to create.",
+        "type": "GitAutomationStateCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "gitAutomationStateDelete",
+    "description": "Archives an automation state.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the automation state to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "gitAutomationStateUpdate",
+    "description": "Updates an existing state.",
+    "returns": "GitAutomationStatePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The state to update.",
+        "type": "GitAutomationStateUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the state to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "gitAutomationTargetBranchCreate",
+    "description": "Creates a Git target branch automation.",
+    "returns": "GitAutomationTargetBranchPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The Git target branch automation to create.",
+        "type": "GitAutomationTargetBranchCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "gitAutomationTargetBranchDelete",
+    "description": "Archives a Git target branch automation.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the Git target branch automation to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "gitAutomationTargetBranchUpdate",
+    "description": "Updates an existing Git target branch automation.",
+    "returns": "GitAutomationTargetBranchPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The updates.",
+        "type": "GitAutomationTargetBranchUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the Git target branch automation to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "googleUserAccountAuth",
+    "description": "Authenticate user account through Google OAuth. This is the 2nd step of OAuth flow.",
+    "returns": "AuthResolverResponse!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The data used for Google authentication.",
+        "type": "GoogleUserAccountAuthInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "imageUploadFromUrl",
+    "description": "Upload an image from an URL to Linear.",
+    "returns": "ImageUploadFromUrlPayload!",
+    "args": [
+      {
+        "name": "url",
+        "description": "URL of the file to be uploaded to Linear.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "importFileUpload",
+    "description": "XHR request payload to upload a file for import, directly to Linear's cloud storage.",
+    "returns": "UploadPayload!",
+    "args": [
+      {
+        "name": "metaData",
+        "description": "Optional metadata.",
+        "type": "JSON",
+        "defaultValue": null
+      },
+      {
+        "name": "size",
+        "description": "File size of the uploaded file.",
+        "type": "Int!",
+        "defaultValue": null
+      },
+      {
+        "name": "contentType",
+        "description": "MIME type of the uploaded file.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "filename",
+        "description": "Filename of the uploaded file.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeArchive",
+    "description": "Archives a initiative.",
+    "returns": "InitiativeArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the initiative to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeCreate",
+    "description": "Creates a new initiative.",
+    "returns": "InitiativePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the initiative to create.",
+        "type": "InitiativeCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeDelete",
+    "description": "Deletes (trashes) an initiative.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the initiative to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeRelationCreate",
+    "description": "Creates a new initiative relation.",
+    "returns": "InitiativeRelationPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The initiative relation to create.",
+        "type": "InitiativeRelationCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeRelationDelete",
+    "description": "Deletes an initiative relation.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the initiative relation to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeRelationUpdate",
+    "description": "Updates an initiative relation.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the initiative relation to update.",
+        "type": "InitiativeRelationUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the initiative relation to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeToProjectCreate",
+    "description": "Creates a new initiativeToProject join.",
+    "returns": "InitiativeToProjectPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the initiativeToProject to create.",
+        "type": "InitiativeToProjectCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeToProjectDelete",
+    "description": "Deletes a initiativeToProject.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the initiativeToProject to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeToProjectUpdate",
+    "description": "Updates a initiativeToProject.",
+    "returns": "InitiativeToProjectPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the initiativeToProject to update.",
+        "type": "InitiativeToProjectUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the initiativeToProject to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeUnarchive",
+    "description": "Unarchives a initiative.",
+    "returns": "InitiativeArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the initiative to unarchive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeUpdate",
+    "description": "Updates a initiative.",
+    "returns": "InitiativePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the initiative to update.",
+        "type": "InitiativeUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the initiative to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeUpdateArchive",
+    "description": "Archives an initiative update.",
+    "returns": "InitiativeUpdateArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the initiative update to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeUpdateCreate",
+    "description": "Creates a initiative update.",
+    "returns": "InitiativeUpdatePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The initiative update object to create.",
+        "type": "InitiativeUpdateCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeUpdateUnarchive",
+    "description": "Unarchives an initiative update.",
+    "returns": "InitiativeUpdateArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the initiative update to unarchive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeUpdateUpdate",
+    "description": "Updates an update.",
+    "returns": "InitiativeUpdatePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A data to update the update with.",
+        "type": "InitiativeUpdateUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the update to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationArchive",
+    "description": "Archives an integration.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the integration to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationAsksConnectChannel",
+    "description": "Connect a Slack channel to Asks.",
+    "returns": "AsksChannelConnectPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Slack OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Slack OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationCustomerDataAttributesRefresh",
+    "description": "[INTERNAL] Refreshes the customer data attributes from the specified integration service.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The integration service to refresh customer data attributes from.",
+        "type": "IntegrationCustomerDataAttributesRefreshInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationDelete",
+    "description": "Deletes an integration.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "skipInstallationDeletion",
+        "description": "Whether to skip deleting the installation on the external service side.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the integration to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationDiscord",
+    "description": "Integrates the organization with Discord.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Discord OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Discord OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationFigma",
+    "description": "Integrates the organization with Figma.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Figma OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Figma OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationFront",
+    "description": "Integrates the organization with Front.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Front OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Front OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationGitHubEnterpriseServerConnect",
+    "description": "Connects the organization with a GitHub Enterprise Server.",
+    "returns": "GitHubEnterpriseServerPayload!",
+    "args": [
+      {
+        "name": "organizationName",
+        "description": "The name of GitHub organization.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "githubUrl",
+        "description": "The base URL of the GitHub Enterprise Server installation.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationGitHubPersonal",
+    "description": "Connect your GitHub account to Linear.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "codeAccess",
+        "description": "Whether to connect with code access.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The GitHub OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationGithubCommitCreate",
+    "description": "Generates a webhook for the GitHub commit integration.",
+    "returns": "GitHubCommitIntegrationPayload!",
+    "args": []
+  },
+  {
+    "name": "integrationGithubConnect",
+    "description": "Connects the organization with the GitHub App.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "githubHost",
+        "description": "The GitHub Enterprise Cloud host (e.g., 'linear-development.ghe.com'). When provided, this creates a GEC integration.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "codeAccess",
+        "description": "Whether the integration should have code access",
+        "type": "Boolean",
+        "defaultValue": "false"
+      },
+      {
+        "name": "code",
+        "description": "The GitHub grant code that's exchanged for OAuth tokens.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "installationId",
+        "description": "The GitHub data to connect with.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationGithubImportConnect",
+    "description": "Connects the organization with the GitHub Import App.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "code",
+        "description": "The GitHub grant code that's exchanged for OAuth tokens.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "installationId",
+        "description": "The GitHub data to connect with.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationGithubImportRefresh",
+    "description": "Refreshes the data for a GitHub import integration.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The id of the integration to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationGitlabConnect",
+    "description": "Connects the organization with a GitLab Access Token.",
+    "returns": "GitLabIntegrationCreatePayload!",
+    "args": [
+      {
+        "name": "gitlabUrl",
+        "description": "The URL of the GitLab installation.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "accessToken",
+        "description": "The GitLab Access Token to connect with.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationGitlabTestConnection",
+    "description": "Tests connectivity to a self-hosted GitLab instance and clears auth errors if successful.",
+    "returns": "GitLabTestConnectionPayload!",
+    "args": [
+      {
+        "name": "integrationId",
+        "description": "The ID of the GitLab integration to test.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationGong",
+    "description": "Integrates the organization with Gong.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Gong OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Gong OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationGoogleCalendarPersonalConnect",
+    "description": "[Internal] Connects the Google Calendar to the user to this Linear account via OAuth2.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "code",
+        "description": "[Internal] The Google OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationGoogleSheets",
+    "description": "Integrates the organization with Google Sheets.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "code",
+        "description": "The Google OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationIntercom",
+    "description": "Integrates the organization with Intercom.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "domainUrl",
+        "description": "The Intercom domain URL to use for the integration. Defaults to app.intercom.com if not provided.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "redirectUri",
+        "description": "The Intercom OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Intercom OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationIntercomDelete",
+    "description": "Disconnects the organization from Intercom.",
+    "returns": "IntegrationPayload!",
+    "args": []
+  },
+  {
+    "name": "integrationIntercomSettingsUpdate",
+    "description": "[DEPRECATED] Updates settings on the Intercom integration.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial Intercom integration settings object to update the integration settings with.",
+        "type": "IntercomSettingsInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationJiraPersonal",
+    "description": "Connect your Jira account to Linear.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "code",
+        "description": "The Jira OAuth code, when connecting using OAuth.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "accessToken",
+        "description": "The Jira personal access token, when connecting using a PAT.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationJiraUpdate",
+    "description": "[INTERNAL] Updates a Jira Integration.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "Jira integration update input.",
+        "type": "JiraUpdateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationLaunchDarklyConnect",
+    "description": "[INTERNAL] Integrates the organization with LaunchDarkly.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "code",
+        "description": "The LaunchDarkly OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "projectKey",
+        "description": "The LaunchDarkly project key.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "environment",
+        "description": "The LaunchDarkly environment.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationLaunchDarklyPersonalConnect",
+    "description": "[INTERNAL] Integrates your personal account with LaunchDarkly.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "code",
+        "description": "The LaunchDarkly OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationLoom",
+    "description": "Enables Loom integration for the organization.",
+    "returns": "IntegrationPayload!",
+    "args": []
+  },
+  {
+    "name": "integrationMcpServerConnect",
+    "description": "[INTERNAL] Connects the workspace with an MCP server.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "teamId",
+        "description": "The ID of the team to connect the MCP server to.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "serverUrl",
+        "description": "The URL of the MCP server to connect with.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationMcpServerPersonalConnect",
+    "description": "[INTERNAL] Connects the user's personal account with an MCP server.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "serverUrl",
+        "description": "The URL of the MCP server to connect with.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationMicrosoftTeams",
+    "description": "[ALPHA] Integrates the organization with Microsoft Teams.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Microsoft OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Microsoft OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationOpsgenieConnect",
+    "description": "[INTERNAL] Integrates the organization with Opsgenie.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "apiKey",
+        "description": "The Opsgenie API key.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationOpsgenieRefreshScheduleMappings",
+    "description": "[INTERNAL] Refresh Opsgenie schedule mappings.",
+    "returns": "IntegrationPayload!",
+    "args": []
+  },
+  {
+    "name": "integrationPagerDutyConnect",
+    "description": "[INTERNAL] Integrates the organization with PagerDuty.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "code",
+        "description": "The PagerDuty OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "redirectUri",
+        "description": "The PagerDuty OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationPagerDutyRefreshScheduleMappings",
+    "description": "[INTERNAL] Refresh PagerDuty schedule mappings.",
+    "returns": "IntegrationPayload!",
+    "args": []
+  },
+  {
+    "name": "integrationRequest",
+    "description": "Requests a currently unavailable integration.",
+    "returns": "IntegrationRequestPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "Integration request details.",
+        "type": "IntegrationRequestInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSalesforce",
+    "description": "Integrates the organization with Salesforce.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "code",
+        "description": "The Salesforce OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "subdomain",
+        "description": "The Salesforce installation subdomain.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "redirectUri",
+        "description": "The Salesforce OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSalesforceMetadataRefresh",
+    "description": "[INTERNAL] Refreshes the Salesforce integration metadata.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The ID of the integration to refresh metadata for.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSentryConnect",
+    "description": "Integrates the organization with Sentry.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "organizationSlug",
+        "description": "The slug of the Sentry organization being connected.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Sentry grant code that's exchanged for OAuth tokens.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "installationId",
+        "description": "The Sentry installationId to connect with.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSettingsUpdate",
+    "description": "[INTERNAL] Updates the integration settings.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "An integration settings object.",
+        "type": "IntegrationSettingsInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the integration to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSlack",
+    "description": "Integrates the organization with Slack.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "shouldUseV2Auth",
+        "description": "[DEPRECATED] Whether or not v2 of Slack OAuth should be used. No longer used.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "redirectUri",
+        "description": "The Slack OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Slack OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSlackAsks",
+    "description": "Integrates the organization with the Slack Asks app.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Slack OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Slack OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSlackCustomViewNotifications",
+    "description": "Slack integration for custom view notifications.",
+    "returns": "SlackChannelConnectPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Slack OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "customViewId",
+        "description": "Integration's associated custom view.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Slack OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSlackCustomerChannelLink",
+    "description": "Integrates a Slack Asks channel with a Customer.",
+    "returns": "SuccessPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Slack OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "customerId",
+        "description": "The customer to link the Slack channel with",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Slack OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSlackImportEmojis",
+    "description": "Imports custom emojis from your Slack workspace.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Slack OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Slack OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSlackInitiativePost",
+    "description": "[Internal] Slack integration for initiative notifications.",
+    "returns": "SlackChannelConnectPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Slack OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "initiativeId",
+        "description": "Integration's associated initiative.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Slack OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSlackOrAsksUpdateSlackTeamName",
+    "description": "Updates the Slack team's name in Linear for an existing Slack or Asks integration.",
+    "returns": "IntegrationSlackWorkspaceNamePayload!",
+    "args": [
+      {
+        "name": "integrationId",
+        "description": "The integration ID.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSlackOrgInitiativeUpdatesPost",
+    "description": "[Internal] Slack integration for organization level initiative update notifications.",
+    "returns": "SlackChannelConnectPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Slack OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Slack OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSlackOrgProjectUpdatesPost",
+    "description": "Slack integration for organization level project update notifications.",
+    "returns": "SlackChannelConnectPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Slack OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Slack OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSlackPersonal",
+    "description": "Integrates your personal notifications with Slack.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Slack OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Slack OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSlackPost",
+    "description": "Slack integration for team notifications.",
+    "returns": "SlackChannelConnectPayload!",
+    "args": [
+      {
+        "name": "shouldUseV2Auth",
+        "description": "[DEPRECATED] Whether or not v2 of Slack OAuth should be used. No longer used.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "redirectUri",
+        "description": "The Slack OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "teamId",
+        "description": "Integration's associated team.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Slack OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSlackProjectPost",
+    "description": "Slack integration for project notifications.",
+    "returns": "SlackChannelConnectPayload!",
+    "args": [
+      {
+        "name": "service",
+        "description": "The service to enable once connected, either 'notifications' or 'updates'.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "redirectUri",
+        "description": "The Slack OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "projectId",
+        "description": "Integration's associated project.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Slack OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationSlackWorkflowAccessUpdate",
+    "description": "[Internal] Enables Linear Agent Slack workflow access for a Slack or Slack Asks integration.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "enabled",
+        "description": "Whether to enable workflow access.",
+        "type": "Boolean!",
+        "defaultValue": null
+      },
+      {
+        "name": "integrationId",
+        "description": "The ID of the integration to toggle workflow access for.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationTemplateCreate",
+    "description": "Creates a new integrationTemplate join.",
+    "returns": "IntegrationTemplatePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the integrationTemplate to create.",
+        "type": "IntegrationTemplateCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationTemplateDelete",
+    "description": "Deletes a integrationTemplate.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the integrationTemplate to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationUpdate",
+    "description": "[INTERNAL] Updates the integration.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial integration object to update the integration with.",
+        "type": "IntegrationUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the integration to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationZendesk",
+    "description": "Integrates the organization with Zendesk.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "subdomain",
+        "description": "The Zendesk installation subdomain.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Zendesk OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "scope",
+        "description": "The Zendesk OAuth scopes.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "redirectUri",
+        "description": "The Zendesk OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationsSettingsCreate",
+    "description": "Creates new settings for one or more integrations.",
+    "returns": "IntegrationsSettingsPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The settings to create.",
+        "type": "IntegrationsSettingsCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationsSettingsUpdate",
+    "description": "Updates settings related to integrations for a project or a team.",
+    "returns": "IntegrationsSettingsPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A settings object to update the settings with.",
+        "type": "IntegrationsSettingsUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the settings to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueAddLabel",
+    "description": "Adds a label to an issue.",
+    "returns": "IssuePayload!",
+    "args": [
+      {
+        "name": "labelId",
+        "description": "The identifier of the label to add.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the issue to add the label to.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueArchive",
+    "description": "Archives an issue.",
+    "returns": "IssueArchivePayload!",
+    "args": [
+      {
+        "name": "trash",
+        "description": "Whether to trash the issue.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the issue to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueBatchCreate",
+    "description": "Creates a list of issues in one transaction.",
+    "returns": "IssueBatchPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A list of issue objects to create.",
+        "type": "IssueBatchCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueBatchUpdate",
+    "description": "Updates multiple issues at once.",
+    "returns": "IssueBatchPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial issue object to update the issues with.",
+        "type": "IssueUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "ids",
+        "description": "The id's of the issues to update. Can't be more than 50 at a time.",
+        "type": "[UUID!]!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueCreate",
+    "description": "Creates a new issue.",
+    "returns": "IssuePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The issue object to create.",
+        "type": "IssueCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueDelete",
+    "description": "Deletes (trashes) an issue.",
+    "returns": "IssueArchivePayload!",
+    "args": [
+      {
+        "name": "permanentlyDelete",
+        "description": "Whether to permanently delete the issue and skip the grace period of 30 days. Available only to admins!",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the issue to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueDescriptionUpdateFromFront",
+    "description": "[INTERNAL] Updates an issue description from the Front app to handle Front attachments correctly.",
+    "returns": "IssuePayload!",
+    "args": [
+      {
+        "name": "description",
+        "description": "Description to update the issue with. ",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the issue to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueExternalSyncDisable",
+    "description": "Disables external sync on an issue.",
+    "returns": "IssuePayload!",
+    "args": [
+      {
+        "name": "attachmentId",
+        "description": "The ID of the sync attachment to disable.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueImportCreateAsana",
+    "description": "Kicks off an Asana import job.",
+    "returns": "IssueImportPayload!",
+    "args": [
+      {
+        "name": "teamId",
+        "description": "ID of the team into which to import data.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "teamName",
+        "description": "Name of new team. When teamId is not set.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "asanaToken",
+        "description": "Asana token to fetch information from the Asana API.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "asanaTeamName",
+        "description": "Asana team name to choose which issues we should import.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "instantProcess",
+        "description": "Whether to instantly process the import with the default configuration mapping.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "includeClosedIssues",
+        "description": "Whether or not we should collect the data for closed issues.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "ID of issue import. If not provided it will be generated.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueImportCreateCSVJira",
+    "description": "Kicks off a Jira import job from a CSV.",
+    "returns": "IssueImportPayload!",
+    "args": [
+      {
+        "name": "teamId",
+        "description": "ID of the team into which to import data. Empty to create new team.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "teamName",
+        "description": "Name of new team. When teamId is not set.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "csvUrl",
+        "description": "URL for the CSV.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "jiraHostname",
+        "description": "Jira installation or cloud hostname.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "jiraToken",
+        "description": "Jira personal access token to access Jira REST API.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "jiraEmail",
+        "description": "Jira user account email.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueImportCreateClubhouse",
+    "description": "Kicks off a Shortcut (formerly Clubhouse) import job.",
+    "returns": "IssueImportPayload!",
+    "args": [
+      {
+        "name": "teamId",
+        "description": "ID of the team into which to import data.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "teamName",
+        "description": "Name of new team. When teamId is not set.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "clubhouseToken",
+        "description": "Shortcut (formerly Clubhouse) token to fetch information from the Clubhouse API.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "clubhouseGroupName",
+        "description": "Shortcut (formerly Clubhouse) group name to choose which issues we should import.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "instantProcess",
+        "description": "Whether to instantly process the import with the default configuration mapping.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "includeClosedIssues",
+        "description": "Whether or not we should collect the data for closed issues.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "ID of issue import. If not provided it will be generated.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueImportCreateGithub",
+    "description": "Kicks off a GitHub import job.",
+    "returns": "IssueImportPayload!",
+    "args": [
+      {
+        "name": "teamId",
+        "description": "ID of the team into which to import data.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "teamName",
+        "description": "Name of new team. When teamId is not set.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "githubRepoIds",
+        "description": "IDs of the Github repositories from which we will import data.",
+        "type": "[Int!]",
+        "defaultValue": null
+      },
+      {
+        "name": "githubLabels",
+        "description": "Labels to use to filter the import data. Only issues matching any of these filters will be imported.",
+        "type": "[String!]",
+        "defaultValue": null
+      },
+      {
+        "name": "instantProcess",
+        "description": "Whether to instantly process the import with the default configuration mapping.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "includeClosedIssues",
+        "description": "Whether or not we should collect the data for closed issues.",
+        "type": "Boolean",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueImportCreateJira",
+    "description": "Kicks off a Jira import job.",
+    "returns": "IssueImportPayload!",
+    "args": [
+      {
+        "name": "teamId",
+        "description": "ID of the team into which to import data. Empty to create new team.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "teamName",
+        "description": "Name of new team. When teamId is not set.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "jiraToken",
+        "description": "Jira personal access token to access Jira REST API.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "jiraProject",
+        "description": "Jira project key from which we will import data.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "jiraEmail",
+        "description": "Jira user account email.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "jiraHostname",
+        "description": "Jira installation or cloud hostname.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "jql",
+        "description": "A custom JQL query to filter issues being imported",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "instantProcess",
+        "description": "Whether to instantly process the import with the default configuration mapping.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "includeClosedIssues",
+        "description": "Whether or not we should collect the data for closed issues.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "ID of issue import. If not provided it will be generated.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueImportCreateLinearV2",
+    "description": "[INTERNAL] Kicks off a Linear to Linear import job.",
+    "returns": "IssueImportPayload!",
+    "args": [
+      {
+        "name": "linearSourceOrganizationId",
+        "description": "The source organization to import from.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "ID of issue import. If not provided it will be generated.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueImportDelete",
+    "description": "Deletes an import job.",
+    "returns": "IssueImportDeletePayload!",
+    "args": [
+      {
+        "name": "issueImportId",
+        "description": "ID of the issue import to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueImportProcess",
+    "description": "Kicks off import processing.",
+    "returns": "IssueImportPayload!",
+    "args": [
+      {
+        "name": "mapping",
+        "description": "The mapping configuration to use for processing the import.",
+        "type": "JSONObject!",
+        "defaultValue": null
+      },
+      {
+        "name": "issueImportId",
+        "description": "ID of the issue import which we're going to process.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueImportUpdate",
+    "description": "Updates the mapping for the issue import.",
+    "returns": "IssueImportPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the issue import to update.",
+        "type": "IssueImportUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the issue import.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueLabelCreate",
+    "description": "Creates a new label.",
+    "returns": "IssueLabelPayload!",
+    "args": [
+      {
+        "name": "replaceTeamLabels",
+        "description": "Whether to replace all team-specific labels with the same name with this newly created workspace label (default: false).",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "input",
+        "description": "The issue label to create.",
+        "type": "IssueLabelCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueLabelDelete",
+    "description": "Deletes an issue label.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the label to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueLabelRestore",
+    "description": "Restores a label.",
+    "returns": "IssueLabelPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the label to restore.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueLabelRetire",
+    "description": "Retires a label.",
+    "returns": "IssueLabelPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the label to retire.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueLabelUpdate",
+    "description": "Updates a label.",
+    "returns": "IssueLabelPayload!",
+    "args": [
+      {
+        "name": "replaceTeamLabels",
+        "description": "Whether to replace all team-specific labels with the same name with this updated workspace label (default: false).",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "input",
+        "description": "A partial label object to update.",
+        "type": "IssueLabelUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the label to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueRelationCreate",
+    "description": "Creates a new issue relation.",
+    "returns": "IssueRelationPayload!",
+    "args": [
+      {
+        "name": "overrideCreatedAt",
+        "description": "Used by client undo operations. Should not be set directly.",
+        "type": "DateTime",
+        "defaultValue": null
+      },
+      {
+        "name": "input",
+        "description": "The issue relation to create.",
+        "type": "IssueRelationCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueRelationDelete",
+    "description": "Deletes an issue relation.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the issue relation to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueRelationUpdate",
+    "description": "Updates an issue relation.",
+    "returns": "IssueRelationPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the issue relation to update.",
+        "type": "IssueRelationUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the issue relation to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueReminder",
+    "description": "Adds an issue reminder. Will cause a notification to be sent when the issue reminder time is reached.",
+    "returns": "IssuePayload!",
+    "args": [
+      {
+        "name": "reminderAt",
+        "description": "The time when a reminder notification will be sent.",
+        "type": "DateTime!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the issue to add a reminder for.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueRemoveLabel",
+    "description": "Removes a label from an issue.",
+    "returns": "IssuePayload!",
+    "args": [
+      {
+        "name": "labelId",
+        "description": "The identifier of the label to remove.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the issue to remove the label from.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueSubscribe",
+    "description": "Subscribes a user to an issue.",
+    "returns": "IssuePayload!",
+    "args": [
+      {
+        "name": "userEmail",
+        "description": "The email of the user to subscribe, default is the current user.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "userId",
+        "description": "The identifier of the user to subscribe, default is the current user.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the issue to subscribe to.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueToReleaseCreate",
+    "description": "[ALPHA] Creates a new issueToRelease join, adding an issue to a release.",
+    "returns": "IssueToReleasePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the issueToRelease to create.",
+        "type": "IssueToReleaseCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueToReleaseDelete",
+    "description": "[ALPHA] Deletes an issueToRelease by its identifier, removing an issue from a release.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the issueToRelease to delete",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueToReleaseDeleteByIssueAndRelease",
+    "description": "[ALPHA] Deletes an issueToRelease by issue and release identifiers",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "releaseId",
+        "description": "The identifier of the release",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "issueId",
+        "description": "The identifier of the issue. Can be a UUID or issue identifier (e.g., 'LIN-123').",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueUnarchive",
+    "description": "Unarchives an issue.",
+    "returns": "IssueArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the issue to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueUnsubscribe",
+    "description": "Unsubscribes a user from an issue.",
+    "returns": "IssuePayload!",
+    "args": [
+      {
+        "name": "userEmail",
+        "description": "The email of the user to unsubscribe, default is the current user.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "userId",
+        "description": "The identifier of the user to unsubscribe, default is the current user.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the issue to unsubscribe from.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueUpdate",
+    "description": "Updates an issue.",
+    "returns": "IssuePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial issue object to update the issue with.",
+        "type": "IssueUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the issue to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "jiraIntegrationConnect",
+    "description": "[INTERNAL] Connects the organization with a Jira Personal Access Token.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "Jira integration settings.",
+        "type": "JiraConfigurationInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "joinOrganizationFromOnboarding",
+    "description": "Join an organization from onboarding.",
+    "returns": "CreateOrJoinOrganizationResponse!",
+    "args": [
+      {
+        "name": "input",
+        "description": "Organization details for the organization to join.",
+        "type": "JoinOrganizationInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "leaveOrganization",
+    "description": "Leave an organization.",
+    "returns": "CreateOrJoinOrganizationResponse!",
+    "args": [
+      {
+        "name": "organizationId",
+        "description": "ID of the organization to leave.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "logout",
+    "description": "Logout the client.",
+    "returns": "LogoutResponse!",
+    "args": [
+      {
+        "name": "reason",
+        "description": "The reason for logging out.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "logoutAllSessions",
+    "description": "Logout all of user's sessions including the active one.",
+    "returns": "LogoutResponse!",
+    "args": [
+      {
+        "name": "reason",
+        "description": "The reason for logging out.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "logoutOtherSessions",
+    "description": "Logout all of user's sessions excluding the current one.",
+    "returns": "LogoutResponse!",
+    "args": [
+      {
+        "name": "reason",
+        "description": "The reason for logging out.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "logoutSession",
+    "description": "Logout an individual session with its ID.",
+    "returns": "LogoutResponse!",
+    "args": [
+      {
+        "name": "sessionId",
+        "description": "ID of the session to logout.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationArchive",
+    "description": "Archives a notification.",
+    "returns": "NotificationArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The id of the notification to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationArchiveAll",
+    "description": "Archives a notification and all related notifications.",
+    "returns": "NotificationBatchActionPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The type and id of the entity to archive notifications for.",
+        "type": "NotificationEntityInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationCategoryChannelSubscriptionUpdate",
+    "description": "Subscribes to or unsubscribes from a notification category for a given notification channel for the user",
+    "returns": "UserSettingsPayload!",
+    "args": [
+      {
+        "name": "channel",
+        "description": "The notification channel in which to subscribe to or unsubscribe from the category",
+        "type": "NotificationChannel!",
+        "defaultValue": null
+      },
+      {
+        "name": "category",
+        "description": "The notification category to subscribe to or unsubscribe from",
+        "type": "NotificationCategory!",
+        "defaultValue": null
+      },
+      {
+        "name": "subscribe",
+        "description": "True if the user wants to subscribe, false if the user wants to unsubscribe",
+        "type": "Boolean!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationMarkReadAll",
+    "description": "Marks notification and all related notifications as read.",
+    "returns": "NotificationBatchActionPayload!",
+    "args": [
+      {
+        "name": "readAt",
+        "description": "The time when notification was marked as read.",
+        "type": "DateTime!",
+        "defaultValue": null
+      },
+      {
+        "name": "input",
+        "description": "The type and id of the entity to archive notifications for.",
+        "type": "NotificationEntityInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationMarkUnreadAll",
+    "description": "Marks notification and all related notifications as unread.",
+    "returns": "NotificationBatchActionPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The type and id of the entity to archive notifications for.",
+        "type": "NotificationEntityInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationSnoozeAll",
+    "description": "Snoozes a notification and all related notifications.",
+    "returns": "NotificationBatchActionPayload!",
+    "args": [
+      {
+        "name": "snoozedUntilAt",
+        "description": "The time until a notification will be snoozed. After that it will appear in the inbox again.",
+        "type": "DateTime!",
+        "defaultValue": null
+      },
+      {
+        "name": "input",
+        "description": "The type and id of the entity to archive notifications for.",
+        "type": "NotificationEntityInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationSubscriptionCreate",
+    "description": "Creates a new notification subscription for a cycle, custom view, label, project or team.",
+    "returns": "NotificationSubscriptionPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The subscription object to create.",
+        "type": "NotificationSubscriptionCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationSubscriptionDelete",
+    "description": "Deletes a notification subscription reference.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the notification subscription reference to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationSubscriptionUpdate",
+    "description": "Updates a notification subscription.",
+    "returns": "NotificationSubscriptionPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial notification subscription object to update the notification subscription with.",
+        "type": "NotificationSubscriptionUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the notification subscription to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationUnarchive",
+    "description": "Unarchives a notification.",
+    "returns": "NotificationArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The id of the notification to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationUnsnoozeAll",
+    "description": "Unsnoozes a notification and all related notifications.",
+    "returns": "NotificationBatchActionPayload!",
+    "args": [
+      {
+        "name": "unsnoozedAt",
+        "description": "The time when the notification was unsnoozed.",
+        "type": "DateTime!",
+        "defaultValue": null
+      },
+      {
+        "name": "input",
+        "description": "The type and id of the entity to archive notifications for.",
+        "type": "NotificationEntityInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationUpdate",
+    "description": "Updates a notification.",
+    "returns": "NotificationPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial notification object to update the notification with.",
+        "type": "NotificationUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the notification to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationCancelDelete",
+    "description": "Cancels the deletion of an organization.",
+    "returns": "OrganizationCancelDeletePayload!",
+    "args": []
+  },
+  {
+    "name": "organizationDelete",
+    "description": "Deletes an organization.",
+    "returns": "OrganizationDeletePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "Information required to delete an organization.",
+        "type": "DeleteOrganizationInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationDeleteChallenge",
+    "description": "Get an organization's delete confirmation token.",
+    "returns": "OrganizationDeletePayload!",
+    "args": []
+  },
+  {
+    "name": "organizationDomainClaim",
+    "description": "[INTERNAL] Verifies a domain claim.",
+    "returns": "OrganizationDomainSimplePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The ID of the organization domain to claim.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationDomainCreate",
+    "description": "[INTERNAL] Adds a domain to be allowed for an organization.",
+    "returns": "OrganizationDomainPayload!",
+    "args": [
+      {
+        "name": "triggerEmailVerification",
+        "description": "Whether to trigger an email verification flow during domain creation.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "input",
+        "description": "The organization domain entry to create.",
+        "type": "OrganizationDomainCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationDomainDelete",
+    "description": "Deletes a domain.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the domain to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationDomainUpdate",
+    "description": "[INTERNAL] Updates an organization domain settings.",
+    "returns": "OrganizationDomainPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The organization domain entry to update.",
+        "type": "OrganizationDomainUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the domain to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationDomainVerify",
+    "description": "[INTERNAL] Verifies a domain to be added to an organization.",
+    "returns": "OrganizationDomainPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The organization domain to verify.",
+        "type": "OrganizationDomainVerificationInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationInviteCreate",
+    "description": "Creates a new organization invite.",
+    "returns": "OrganizationInvitePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The organization invite object to create.",
+        "type": "OrganizationInviteCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationInviteDelete",
+    "description": "Deletes an organization invite.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the organization invite to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationInviteUpdate",
+    "description": "Updates an organization invite.",
+    "returns": "OrganizationInvitePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The updates to make to the organization invite object.",
+        "type": "OrganizationInviteUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the organization invite to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationStartTrial",
+    "description": "[DEPRECATED] Starts a trial for the organization.",
+    "returns": "OrganizationStartTrialPayload!",
+    "args": []
+  },
+  {
+    "name": "organizationStartTrialForPlan",
+    "description": "Starts a trial for the organization on the specified plan type.",
+    "returns": "OrganizationStartTrialPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "Plan details for trial",
+        "type": "OrganizationStartTrialInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationUpdate",
+    "description": "Updates the user's organization.",
+    "returns": "OrganizationPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial organization object to update the organization with.",
+        "type": "OrganizationUpdateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "passkeyLoginFinish",
+    "description": "[INTERNAL] Finish passkey login process.",
+    "returns": "AuthResolverResponse!",
+    "args": [
+      {
+        "name": "response",
+        "description": null,
+        "type": "JSONObject!",
+        "defaultValue": null
+      },
+      {
+        "name": "authId",
+        "description": "Random ID to start passkey login with.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "passkeyLoginStart",
+    "description": "[INTERNAL] Starts passkey login process.",
+    "returns": "PasskeyLoginStartResponse!",
+    "args": [
+      {
+        "name": "authId",
+        "description": "Random ID to start passkey login with.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectAddLabel",
+    "description": "Adds a label to a project.",
+    "returns": "ProjectPayload!",
+    "args": [
+      {
+        "name": "labelId",
+        "description": "The identifier of the label to add.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the project to add the label to.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectArchive",
+    "description": "Archives a project.",
+    "returns": "ProjectArchivePayload!",
+    "args": [
+      {
+        "name": "trash",
+        "description": "Whether to trash the project.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the project to archive. Also the identifier from the URL is accepted.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectCreate",
+    "description": "Creates a new project.",
+    "returns": "ProjectPayload!",
+    "args": [
+      {
+        "name": "slackChannelName",
+        "description": "The full name for the Slack channel to create (including prefix). When provided, a Slack channel will be created and connected to the project.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "input",
+        "description": "The issue object to create.",
+        "type": "ProjectCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectDelete",
+    "description": "Deletes (trashes) a project.",
+    "returns": "ProjectArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the project to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectExternalSyncDisable",
+    "description": "Disables external sync on a project.",
+    "returns": "ProjectPayload!",
+    "args": [
+      {
+        "name": "syncSource",
+        "description": "The source of the external sync to disable.",
+        "type": "ExternalSyncService!",
+        "defaultValue": null
+      },
+      {
+        "name": "projectId",
+        "description": "The ID of the project to disable external sync for.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectLabelCreate",
+    "description": "Creates a new project label.",
+    "returns": "ProjectLabelPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The project label to create.",
+        "type": "ProjectLabelCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectLabelDelete",
+    "description": "Deletes a project label.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the label to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectLabelRestore",
+    "description": "Restores a project label.",
+    "returns": "ProjectLabelPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the label to restore.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectLabelRetire",
+    "description": "Retires a project label.",
+    "returns": "ProjectLabelPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the label to retire.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectLabelUpdate",
+    "description": "Updates a project label.",
+    "returns": "ProjectLabelPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial label object to update.",
+        "type": "ProjectLabelUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the label to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectMilestoneCreate",
+    "description": "Creates a new project milestone.",
+    "returns": "ProjectMilestonePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The project milestone to create.",
+        "type": "ProjectMilestoneCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectMilestoneDelete",
+    "description": "Deletes a project milestone.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the project milestone to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectMilestoneMove",
+    "description": "[Internal] Moves a project milestone to another project, can be called to undo a prior move.",
+    "returns": "ProjectMilestoneMovePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The project to move the milestone to, as well as any additional options need to make a successful move, or undo a previous move.",
+        "type": "ProjectMilestoneMoveInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the project milestone to move.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectMilestoneUpdate",
+    "description": "Updates a project milestone.",
+    "returns": "ProjectMilestonePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial object to update the project milestone with.",
+        "type": "ProjectMilestoneUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the project milestone to update. Also the identifier from the URL is accepted.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectReassignStatus",
+    "description": "[INTERNAL] Updates all projects currently assigned to to a project status to a new project status.",
+    "returns": "SuccessPayload!",
+    "args": [
+      {
+        "name": "newProjectStatusId",
+        "description": "The identifier of the new project status to update the projects to.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "originalProjectStatusId",
+        "description": "The identifier of the project status with which projects will be updated.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectRelationCreate",
+    "description": "Creates a new project relation.",
+    "returns": "ProjectRelationPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The project relation to create.",
+        "type": "ProjectRelationCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectRelationDelete",
+    "description": "Deletes a project relation.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the project relation to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectRelationUpdate",
+    "description": "Updates a project relation.",
+    "returns": "ProjectRelationPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the project relation to update.",
+        "type": "ProjectRelationUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the project relation to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectRemoveLabel",
+    "description": "Removes a label from a project.",
+    "returns": "ProjectPayload!",
+    "args": [
+      {
+        "name": "labelId",
+        "description": "The identifier of the label to remove.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the project to remove the label from.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectStatusArchive",
+    "description": "Archives a project status.",
+    "returns": "ProjectStatusArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the project status to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectStatusCreate",
+    "description": "Creates a new project status.",
+    "returns": "ProjectStatusPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The ProjectStatus object to create.",
+        "type": "ProjectStatusCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectStatusUnarchive",
+    "description": "Unarchives a project status.",
+    "returns": "ProjectStatusArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the project status to unarchive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectStatusUpdate",
+    "description": "Updates a project status.",
+    "returns": "ProjectStatusPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial ProjectStatus object to update the ProjectStatus with.",
+        "type": "ProjectStatusUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the project status to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectUnarchive",
+    "description": "Unarchives a project.",
+    "returns": "ProjectArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the project to restore. Also the identifier from the URL is accepted.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectUpdate",
+    "description": "Updates a project.",
+    "returns": "ProjectPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial project object to update the project with.",
+        "type": "ProjectUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the project to update. Also the identifier from the URL is accepted.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectUpdateArchive",
+    "description": "Archives a project update.",
+    "returns": "ProjectUpdateArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the project update to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectUpdateCreate",
+    "description": "Creates a new project update.",
+    "returns": "ProjectUpdatePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "Data for the project update to create.",
+        "type": "ProjectUpdateCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectUpdateDelete",
+    "description": "Deletes a project update.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the project update to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectUpdateUnarchive",
+    "description": "Unarchives a project update.",
+    "returns": "ProjectUpdateArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the project update to unarchive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectUpdateUpdate",
+    "description": "Updates a project update.",
+    "returns": "ProjectUpdatePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A data to update the project update with.",
+        "type": "ProjectUpdateUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the project update to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "pushSubscriptionCreate",
+    "description": "Creates a push subscription.",
+    "returns": "PushSubscriptionPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The push subscription to create.",
+        "type": "PushSubscriptionCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "pushSubscriptionDelete",
+    "description": "Deletes a push subscription.",
+    "returns": "PushSubscriptionPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the push subscription to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "reactionCreate",
+    "description": "Creates a new reaction.",
+    "returns": "ReactionPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The reaction object to create.",
+        "type": "ReactionCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "reactionDelete",
+    "description": "Deletes a reaction.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the reaction to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "refreshGoogleSheetsData",
+    "description": "Manually update Google Sheets data.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "type",
+        "description": "The type of export.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the Google Sheets integration to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseArchive",
+    "description": "[ALPHA] Archives a release.",
+    "returns": "ReleaseArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the release to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseComplete",
+    "description": "[ALPHA] Marks a release as completed. If version is provided, completes that specific release; otherwise completes the most recent started release.",
+    "returns": "ReleasePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The input containing the pipeline ID and optional version.",
+        "type": "ReleaseCompleteInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseCompleteByAccessKey",
+    "description": "[ALPHA] Marks a release as completed using an access key. If version is provided, completes that specific release; otherwise completes the most recent started release. The pipeline is inferred from the access key.",
+    "returns": "ReleasePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The input containing the optional version.",
+        "type": "ReleaseCompleteInputBase!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseCreate",
+    "description": "[ALPHA] Creates a new release.",
+    "returns": "ReleasePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The release to create.",
+        "type": "ReleaseCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseDelete",
+    "description": "[ALPHA] Deletes a release.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the release to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releasePipelineArchive",
+    "description": "[ALPHA] Archives a release pipeline.",
+    "returns": "ReleasePipelineArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the release pipeline to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releasePipelineCreate",
+    "description": "[ALPHA] Creates a new release pipeline.",
+    "returns": "ReleasePipelinePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The ReleasePipeline object to create.",
+        "type": "ReleasePipelineCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releasePipelineDelete",
+    "description": "[ALPHA] Deletes a release pipeline.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the release pipeline to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releasePipelineUnarchive",
+    "description": "[ALPHA] Unarchives a release pipeline.",
+    "returns": "ReleasePipelineArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the release pipeline to unarchive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releasePipelineUpdate",
+    "description": "[ALPHA] Updates a release pipeline.",
+    "returns": "ReleasePipelinePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial ReleasePipeline object to update the ReleasePipeline with.",
+        "type": "ReleasePipelineUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the release pipeline to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseStageArchive",
+    "description": "[ALPHA] Archives a release stage.",
+    "returns": "ReleaseStageArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the release stage to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseStageCreate",
+    "description": "[ALPHA] Creates a new release stage.",
+    "returns": "ReleaseStagePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The ReleaseStage object to create.",
+        "type": "ReleaseStageCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseStageUnarchive",
+    "description": "[ALPHA] Unarchives a release stage.",
+    "returns": "ReleaseStageArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the release stage to unarchive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseStageUpdate",
+    "description": "[ALPHA] Updates a release stage.",
+    "returns": "ReleaseStagePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial ReleaseStage object to update the ReleaseStage with.",
+        "type": "ReleaseStageUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the release stage to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseSync",
+    "description": "[ALPHA] Syncs release data.",
+    "returns": "ReleasePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The release data to sync.",
+        "type": "ReleaseSyncInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseSyncByAccessKey",
+    "description": "[ALPHA] Syncs release data using an access key. The pipeline is inferred from the access key.",
+    "returns": "ReleasePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The release data to sync.",
+        "type": "ReleaseSyncInputBase!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseUnarchive",
+    "description": "[ALPHA] Unarchives a release.",
+    "returns": "ReleaseArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the release to unarchive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseUpdate",
+    "description": "[ALPHA] Updates a release.",
+    "returns": "ReleasePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial Release object to update the Release with.",
+        "type": "ReleaseUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the release to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseUpdateByPipeline",
+    "description": "[ALPHA] Updates a release by pipeline.",
+    "returns": "ReleasePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The input containing the pipeline ID, optional version, and optional stage name.",
+        "type": "ReleaseUpdateByPipelineInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseUpdateByPipelineByAccessKey",
+    "description": "[ALPHA] Updates a release by pipeline using an access key.",
+    "returns": "ReleasePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The input containing the optional version and optional stage name.",
+        "type": "ReleaseUpdateByPipelineInputBase!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "resendOrganizationInvite",
+    "description": "Re-send an organization invite.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the organization invite to re-send.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "resendOrganizationInviteByEmail",
+    "description": "Re-send an organization invite tied to an email address.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "email",
+        "description": "The email address tied to the organization invite to re-send.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "roadmapArchive",
+    "description": "Archives a roadmap.",
+    "returns": "RoadmapArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the roadmap to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "roadmapCreate",
+    "description": "Creates a new roadmap.",
+    "returns": "RoadmapPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the roadmap to create.",
+        "type": "RoadmapCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "roadmapDelete",
+    "description": "Deletes a roadmap.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the roadmap to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "roadmapToProjectCreate",
+    "description": "Creates a new roadmapToProject join.",
+    "returns": "RoadmapToProjectPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the roadmapToProject to create.",
+        "type": "RoadmapToProjectCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "roadmapToProjectDelete",
+    "description": "Deletes a roadmapToProject.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the roadmapToProject to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "roadmapToProjectUpdate",
+    "description": "Updates a roadmapToProject.",
+    "returns": "RoadmapToProjectPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the roadmapToProject to update.",
+        "type": "RoadmapToProjectUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the roadmapToProject to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "roadmapUnarchive",
+    "description": "Unarchives a roadmap.",
+    "returns": "RoadmapArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the roadmap to unarchive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "roadmapUpdate",
+    "description": "Updates a roadmap.",
+    "returns": "RoadmapPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the roadmap to update.",
+        "type": "RoadmapUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the roadmap to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "samlTokenUserAccountAuth",
+    "description": "Authenticates a user account via email and authentication token for SAML.",
+    "returns": "AuthResolverResponse!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The data used for token authentication.",
+        "type": "TokenUserAccountAuthInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "teamCreate",
+    "description": "Creates a new team. The user who creates the team will automatically be added as a member to the newly created team.",
+    "returns": "TeamPayload!",
+    "args": [
+      {
+        "name": "copySettingsFromTeamId",
+        "description": "The team id to copy settings from, if any.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "input",
+        "description": "The team object to create.",
+        "type": "TeamCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "teamCyclesDelete",
+    "description": "Deletes team's cycles data",
+    "returns": "TeamPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the team, which cycles will be deleted.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "teamDelete",
+    "description": "Deletes a team.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the team to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "teamKeyDelete",
+    "description": "Deletes a previously used team key.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the team key to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "teamMembershipCreate",
+    "description": "Creates a new team membership.",
+    "returns": "TeamMembershipPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The team membership object to create.",
+        "type": "TeamMembershipCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "teamMembershipDelete",
+    "description": "Deletes a team membership.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "alsoLeaveParentTeams",
+        "description": "Whether to leave the parent teams.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the team membership to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "teamMembershipUpdate",
+    "description": "Updates a team membership.",
+    "returns": "TeamMembershipPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial team membership object to update the team membership with.",
+        "type": "TeamMembershipUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the team membership to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "teamUnarchive",
+    "description": "Unarchives a team and cancels deletion.",
+    "returns": "TeamArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the team to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "teamUpdate",
+    "description": "Updates a team.",
+    "returns": "TeamPayload!",
+    "args": [
+      {
+        "name": "mapping",
+        "description": "[INTERNAL] Mapping of existing team entities to those inherited from the parent team",
+        "type": "InheritanceEntityMapping",
+        "defaultValue": null
+      },
+      {
+        "name": "input",
+        "description": "A partial team object to update the team with.",
+        "type": "TeamUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the team to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "templateCreate",
+    "description": "Creates a new template.",
+    "returns": "TemplatePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The template object to create.",
+        "type": "TemplateCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "templateDelete",
+    "description": "Deletes a template.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the template to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "templateUpdate",
+    "description": "Updates an existing template.",
+    "returns": "TemplatePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the template to update.",
+        "type": "TemplateUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the template.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "timeScheduleCreate",
+    "description": "Creates a new time schedule.",
+    "returns": "TimeSchedulePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the time schedule to create.",
+        "type": "TimeScheduleCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "timeScheduleDelete",
+    "description": "Deletes a time schedule.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the time schedule to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "timeScheduleRefreshIntegrationSchedule",
+    "description": "Refresh the integration schedule information.",
+    "returns": "TimeSchedulePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the time schedule to refresh.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "timeScheduleUpdate",
+    "description": "Updates a time schedule.",
+    "returns": "TimeSchedulePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the time schedule to update.",
+        "type": "TimeScheduleUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the time schedule to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "timeScheduleUpsertExternal",
+    "description": "Upsert an external time schedule.",
+    "returns": "TimeSchedulePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the time schedule to insert or update.",
+        "type": "TimeScheduleUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "externalId",
+        "description": "The unique identifier of the external schedule.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "triageResponsibilityCreate",
+    "description": "Creates a new triage responsibility.",
+    "returns": "TriageResponsibilityPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the triage responsibility to create.",
+        "type": "TriageResponsibilityCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "triageResponsibilityDelete",
+    "description": "Deletes a triage responsibility.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the triage responsibility to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "triageResponsibilityUpdate",
+    "description": "Updates an existing triage responsibility.",
+    "returns": "TriageResponsibilityPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the triage responsibility to update.",
+        "type": "TriageResponsibilityUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the triage responsibility to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "updateIntegrationSlackScopes",
+    "description": "[Internal] Updates existing Slack integration scopes.",
+    "returns": "IntegrationPayload!",
+    "args": [
+      {
+        "name": "integrationId",
+        "description": "The ID of the existing Slack integration",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "redirectUri",
+        "description": "The Slack OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Slack OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "userChangeRole",
+    "description": "Changes the role of a user.",
+    "returns": "UserAdminPayload!",
+    "args": [
+      {
+        "name": "role",
+        "description": "The new role for the user.",
+        "type": "UserRoleType!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the user",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "userDiscordConnect",
+    "description": "Connects the Discord user to this Linear account via OAuth2.",
+    "returns": "UserPayload!",
+    "args": [
+      {
+        "name": "redirectUri",
+        "description": "The Discord OAuth redirect URI.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "code",
+        "description": "The Discord OAuth code.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "userExternalUserDisconnect",
+    "description": "Disconnects the external user from this Linear account.",
+    "returns": "UserPayload!",
+    "args": [
+      {
+        "name": "service",
+        "description": "The external service to disconnect.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "userFlagUpdate",
+    "description": "Updates a user's settings flag.",
+    "returns": "UserSettingsFlagPayload!",
+    "args": [
+      {
+        "name": "operation",
+        "description": "Flag operation to perform.",
+        "type": "UserFlagUpdateOperation!",
+        "defaultValue": null
+      },
+      {
+        "name": "flag",
+        "description": "Settings flag to increment.",
+        "type": "UserFlagType!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "userRevokeAllSessions",
+    "description": "Revokes a user's sessions. Can only be called by an admin or owner.",
+    "returns": "UserAdminPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the user to logout all sessions of.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "userRevokeSession",
+    "description": "Revokes a specific session for a user. Can only be called by an admin or owner.",
+    "returns": "UserAdminPayload!",
+    "args": [
+      {
+        "name": "sessionId",
+        "description": "The identifier of the session to revoke.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the user whose session to revoke.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "userSettingsFlagsReset",
+    "description": "Resets user's setting flags.",
+    "returns": "UserSettingsFlagsResetPayload!",
+    "args": [
+      {
+        "name": "flags",
+        "description": "The flags to reset. If not provided all flags will be reset.",
+        "type": "[UserFlagType!]",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "userSettingsUpdate",
+    "description": "Updates the user's settings.",
+    "returns": "UserSettingsPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial notification object to update the settings with.",
+        "type": "UserSettingsUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the userSettings to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "userSuspend",
+    "description": "Suspends a user. Can only be called by an admin or owner.",
+    "returns": "UserAdminPayload!",
+    "args": [
+      {
+        "name": "forceBypassScimRestrictions",
+        "description": "[INTERNAL] Whether to bypass SCIM restrictions when suspending. Use with caution — this overrides identity provider management.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the user to suspend.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "userUnlinkFromIdentityProvider",
+    "description": "Unlinks a guest user from their identity provider. Can only be called by an admin when SCIM is enabled.",
+    "returns": "UserAdminPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the guest user to unlink from their identity provider.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "userUnsuspend",
+    "description": "Un-suspends a user. Can only be called by an admin or owner.",
+    "returns": "UserAdminPayload!",
+    "args": [
+      {
+        "name": "forceBypassScimRestrictions",
+        "description": "[INTERNAL] Whether to bypass SCIM restrictions when unsuspending. Use with caution — this overrides identity provider management.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the user to unsuspend.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "userUpdate",
+    "description": "Updates a user. Only available to organization admins and the user themselves.",
+    "returns": "UserPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial user object to update the user with.",
+        "type": "UserUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the user to update. Use `me` to reference currently authenticated user.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "viewPreferencesCreate",
+    "description": "Creates a new ViewPreferences object.",
+    "returns": "ViewPreferencesPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The ViewPreferences object to create.",
+        "type": "ViewPreferencesCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "viewPreferencesDelete",
+    "description": "Deletes a ViewPreferences.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the ViewPreferences to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "viewPreferencesUpdate",
+    "description": "Updates an existing ViewPreferences object.",
+    "returns": "ViewPreferencesPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the view preferences.",
+        "type": "ViewPreferencesUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the ViewPreferences object.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "webhookCreate",
+    "description": "Creates a new webhook.",
+    "returns": "WebhookPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The webhook object to create.",
+        "type": "WebhookCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "webhookDelete",
+    "description": "Deletes a Webhook.",
+    "returns": "DeletePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the Webhook to delete.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "webhookRotateSecret",
+    "description": "Rotates the signing secret for a Webhook.",
+    "returns": "WebhookRotateSecretPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the Webhook to rotate the secret for.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "webhookUpdate",
+    "description": "Updates an existing Webhook.",
+    "returns": "WebhookPayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The properties of the Webhook.",
+        "type": "WebhookUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the Webhook.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "workflowStateArchive",
+    "description": "Archives a state. Only states with issues that have all been archived can be archived.",
+    "returns": "WorkflowStateArchivePayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the state to archive.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "workflowStateCreate",
+    "description": "Creates a new state, adding it to the workflow of a team.",
+    "returns": "WorkflowStatePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "The state to create.",
+        "type": "WorkflowStateCreateInput!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "workflowStateUpdate",
+    "description": "Updates a state.",
+    "returns": "WorkflowStatePayload!",
+    "args": [
+      {
+        "name": "input",
+        "description": "A partial state object to update.",
+        "type": "WorkflowStateUpdateInput!",
+        "defaultValue": null
+      },
+      {
+        "name": "id",
+        "description": "The identifier of the state to update.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  }
+]

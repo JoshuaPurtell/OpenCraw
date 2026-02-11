@@ -14,13 +14,13 @@ This is not a demo plan. This is an operational delivery plan with hard quality 
 ## Source of Truth
 
 - Feature baseline and parity target:
-  - `docs/product/feature-inventory.md`
+  - `specs/parity/openclaw-feature-inventory-canonical.md`
   - `(openclaw)/README.md`
   - `(openclaw)/docs`
 - Existing parity docs:
-  - (historical) `plans/02-parity-gap-matrix.md`
-  - (historical) `plans/03-target-architecture.md`
-  - (historical) `plans/04-implementation-roadmap.md`
+  - `specs/parity/openclaw-parity-gap-matrix.md`
+  - `specs/system/target-architecture.md`
+  - (historical) `docs/issues/planning/implementation-roadmap-2026-02-07.md`
 - Code quality and investigation principles:
   - `~/.claude/CLAUDE.md`
 
@@ -702,7 +702,7 @@ When work progresses, update:
   - `cargo test --workspace --all-targets --locked` passes.
   - `bun run build` passes in `web`.
 - Rust foundation conformance audit completed against `standards/rust.md`:
-  - Added `(historical) plans/18-rust-foundation-conformance-audit.md`.
+  - Added `(historical) docs/issues/audits/rust-foundation-conformance-audit.md`.
   - Identified P0 gaps in toolchain policy, graceful shutdown/cancellation model, HTTP guardrails, and CI supply-chain gates.
 - Foundation remediation tranche executed:
   - Upgraded workspace policy to Rust 2024 + resolver v3 + explicit MSRV and propagated `rust-version` to all workspace crates.
