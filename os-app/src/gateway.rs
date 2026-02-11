@@ -155,28 +155,43 @@ impl Gateway {
             .await?;
 
         if let Some(recipient) = inbound.thread_id.as_ref() {
-            if inbound.channel_id.as_str().eq_ignore_ascii_case("telegram") {
-                if let Some(callback_message_id) =
-                    parse_telegram_callback_message_id(&inbound.metadata)
+            let is_telegram = inbound.channel_id.as_str().eq_ignore_ascii_case("telegram");
+            let callback_message_id = if is_telegram {
+                parse_telegram_callback_message_id(&inbound.metadata)
+            } else {
+                None
+            };
+            let mut suppress_follow_up_reply = false;
+
+            if let Some(callback_message_id) = callback_message_id {
+                let original_prompt = parse_telegram_callback_message_text(&inbound.metadata);
+                let fallback_prompt = self
+                    .assistant
+                    .render_telegram_approval_prompt_snapshot(decision.action_id)
+                    .await?;
+                let resolution = render_telegram_approval_resolution(
+                    decision.decision,
+                    original_prompt,
+                    fallback_prompt.as_deref(),
+                );
+                let metadata = serde_json::json!({
+                    TELEGRAM_EDIT_MESSAGE_ID_KEY: callback_message_id,
+                    TELEGRAM_CLEAR_REPLY_MARKUP_KEY: true,
+                });
+                match channel
+                    .send(
+                        recipient.as_str(),
+                        OutboundMessage {
+                            content: resolution,
+                            reply_to_message_id: None,
+                            attachments: vec![],
+                            metadata,
+                        },
+                    )
+                    .await
                 {
-                    let resolution =
-                        render_telegram_approval_resolution(decision.decision, decision.action_id);
-                    let metadata = serde_json::json!({
-                        TELEGRAM_EDIT_MESSAGE_ID_KEY: callback_message_id,
-                        TELEGRAM_CLEAR_REPLY_MARKUP_KEY: true,
-                    });
-                    if let Err(error) = channel
-                        .send(
-                            recipient.as_str(),
-                            OutboundMessage {
-                                content: resolution,
-                                reply_to_message_id: None,
-                                attachments: vec![],
-                                metadata,
-                            },
-                        )
-                        .await
-                    {
+                    Ok(()) => suppress_follow_up_reply = true,
+                    Err(error) => {
                         tracing::warn!(
                             %error,
                             channel_id = %inbound.channel_id,
@@ -188,25 +203,26 @@ impl Gateway {
                 }
             }
 
-            let reply_to_message_id =
-                if inbound.channel_id.as_str().eq_ignore_ascii_case("telegram") {
-                    parse_telegram_callback_message_id(&inbound.metadata)
+            if !suppress_follow_up_reply {
+                let reply_to_message_id = if is_telegram {
+                    callback_message_id
                         .map(|value| value.to_string().into())
                         .or_else(|| Some(inbound.message_id.clone()))
                 } else {
                     Some(inbound.message_id.clone())
                 };
-            channel
-                .send(
-                    recipient.as_str(),
-                    OutboundMessage {
-                        content: reply,
-                        reply_to_message_id,
-                        attachments: vec![],
-                        metadata: serde_json::Value::Null,
-                    },
-                )
-                .await?;
+                channel
+                    .send(
+                        recipient.as_str(),
+                        OutboundMessage {
+                            content: reply,
+                            reply_to_message_id,
+                            attachments: vec![],
+                            metadata: serde_json::Value::Null,
+                        },
+                    )
+                    .await?;
+            }
         }
 
         tracing::info!(
@@ -679,20 +695,39 @@ fn parse_telegram_callback_message_id(metadata: &serde_json::Value) -> Option<i6
         })
 }
 
+fn parse_telegram_callback_message_text<'a>(metadata: &'a serde_json::Value) -> Option<&'a str> {
+    metadata
+        .get("message")
+        .and_then(|value| value.get("text").or_else(|| value.get("caption")))
+        .and_then(|value| value.as_str())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+}
+
 fn render_telegram_approval_resolution(
     decision: ActionDecision,
-    action_id: Option<Uuid>,
+    original_prompt: Option<&str>,
+    fallback_prompt: Option<&str>,
 ) -> String {
-    let decision_label = match decision {
-        ActionDecision::Approve => "APPROVED",
-        ActionDecision::Deny => "DENIED",
+    let status_label = match decision {
+        ActionDecision::Approve => "approved",
+        ActionDecision::Deny => "denied",
     };
-    let action_label = action_id
-        .map(|id| id.to_string())
-        .unwrap_or_else(|| "unknown".to_string());
-    format!(
-        "Approval {decision_label}\nAction ID: `{action_label}`\nStatus: closed (this prompt is no longer interactive)."
-    )
+    let mut preserved = original_prompt
+        .or(fallback_prompt)
+        .map(|text| {
+            text.lines()
+                .filter(|line| !line.trim_start().starts_with("Status:"))
+                .collect::<Vec<_>>()
+                .join("\n")
+        })
+        .unwrap_or_else(|| "Approval required".to_string())
+        .trim()
+        .to_string();
+    if preserved.is_empty() {
+        preserved = "Approval required".to_string();
+    }
+    format!("{preserved}\n\nStatus: {status_label}")
 }
 
 fn parse_action_decision_command(content: &str) -> Option<ParsedActionDecision> {
@@ -1070,13 +1105,38 @@ mod tests {
     }
 
     #[test]
-    fn render_telegram_approval_resolution_marks_prompt_closed() {
-        let action_id = Uuid::new_v4();
+    fn parse_telegram_callback_message_text_extracts_message_text() {
+        let metadata = serde_json::json!({
+            "message": {
+                "text": "Approval required for tool `linear`.\n\nArguments:\n{}\n\nStatus: pending"
+            }
+        });
+        assert_eq!(
+            parse_telegram_callback_message_text(&metadata),
+            Some("Approval required for tool `linear`.\n\nArguments:\n{}\n\nStatus: pending")
+        );
+    }
+
+    #[test]
+    fn render_telegram_approval_resolution_preserves_prompt_and_replaces_status() {
+        let original = "Approval required for tool `linear`.\n\nArguments:\n{\"op\":\"create\"}\n\nStatus: pending";
         let rendered =
-            render_telegram_approval_resolution(ActionDecision::Approve, Some(action_id));
-        assert!(rendered.contains("APPROVED"));
-        assert!(rendered.contains("closed"));
-        assert!(rendered.contains(&action_id.to_string()));
+            render_telegram_approval_resolution(ActionDecision::Approve, Some(original), None);
+        assert!(rendered.contains("Approval required for tool `linear`."));
+        assert!(rendered.contains("Arguments:"));
+        assert!(rendered.contains("Status: approved"));
+        assert!(!rendered.contains("Status: pending"));
+    }
+
+    #[test]
+    fn render_telegram_approval_resolution_uses_fallback_prompt_when_original_missing() {
+        let fallback = "Approval required for tool `linear`.\n\nArguments:\n{\"op\":\"create\"}\n\nStatus: pending";
+        let rendered =
+            render_telegram_approval_resolution(ActionDecision::Deny, None, Some(fallback));
+        assert!(rendered.contains("Approval required for tool `linear`."));
+        assert!(rendered.contains("Arguments:"));
+        assert!(rendered.contains("Status: denied"));
+        assert!(!rendered.contains("Status: pending"));
     }
 
     #[test]

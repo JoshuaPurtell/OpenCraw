@@ -7,7 +7,7 @@ cd "$ROOT_DIR"
 CONFIG_ROOT="${OPENCRAW_CONFIG_ROOT:-$HOME/.opencraw}"
 LINEAR_CONFIG_PATH="${OPENCRAW_LINEAR_CONFIG_PATH:-$CONFIG_ROOT/configs/channel-linear.toml}"
 BACKUP_DIR="${OPENCRAW_BACKUP_DIR:-$CONFIG_ROOT/backups}"
-LINEAR_GRAPHQL_URL="https://api.linear.app/graphql"
+LINEAR_GRAPHQL_URL="${OPENCRAW_LINEAR_GRAPHQL_URL:-https://api.linear.app/graphql}"
 
 load_env() {
   [[ -f .env ]] && { set -a; source .env; set +a; }
@@ -282,23 +282,33 @@ resolve_default_team_id() {
 write_linear_config() {
   local enabled="$1"
   local api_key="$2"
-  local default_team_id="$3"
-  local poll_interval_ms="$4"
-  local team_ids_toml="$5"
-  local start_from_latest="$6"
-  local action_whoami="$7"
-  local action_list_assigned="$8"
-  local action_list_users="$9"
-  local action_list_teams="${10}"
-  local action_list_projects="${11}"
-  local action_create_issue="${12}"
-  local action_create_project="${13}"
-  local action_update_issue="${14}"
-  local action_assign_issue="${15}"
-  local action_comment_issue="${16}"
-  local access_mode="${17}"
-  local allowed_senders_toml="${18}"
-  local path="${19}"
+  local graphql_url="$3"
+  local default_team_id="$4"
+  local poll_interval_ms="$5"
+  local team_ids_toml="$6"
+  local start_from_latest="$7"
+  local default_max_results="$8"
+  local max_results_cap="$9"
+  local reference_lookup_max_results="${10}"
+  local graphql_max_query_chars="${11}"
+  local graphql_max_variables_bytes="${12}"
+  local action_whoami="${13}"
+  local action_list_assigned="${14}"
+  local action_list_users="${15}"
+  local action_list_teams="${16}"
+  local action_list_projects="${17}"
+  local action_get_project="${18}"
+  local action_create_issue="${19}"
+  local action_create_project="${20}"
+  local action_update_project="${21}"
+  local action_update_issue="${22}"
+  local action_assign_issue="${23}"
+  local action_comment_issue="${24}"
+  local action_graphql_query="${25}"
+  local action_graphql_mutation="${26}"
+  local access_mode="${27}"
+  local allowed_senders_toml="${28}"
+  local path="${29}"
 
   local timestamp backup
   mkdir -p "$(dirname "$path")"
@@ -315,10 +325,18 @@ write_linear_config() {
 [channels.linear]
 enabled = $enabled
 api_key = "$api_key"
+graphql_url = "$graphql_url"
 default_team_id = "$default_team_id"
 poll_interval_ms = $poll_interval_ms
 team_ids = $team_ids_toml
 start_from_latest = $start_from_latest
+
+[channels.linear.limits]
+default_max_results = $default_max_results
+max_results_cap = $max_results_cap
+reference_lookup_max_results = $reference_lookup_max_results
+graphql_max_query_chars = $graphql_max_query_chars
+graphql_max_variables_bytes = $graphql_max_variables_bytes
 
 [channels.linear.actions]
 whoami = $action_whoami
@@ -326,11 +344,15 @@ list_assigned = $action_list_assigned
 list_users = $action_list_users
 list_teams = $action_list_teams
 list_projects = $action_list_projects
+get_project = $action_get_project
 create_issue = $action_create_issue
 create_project = $action_create_project
+update_project = $action_update_project
 update_issue = $action_update_issue
 assign_issue = $action_assign_issue
 comment_issue = $action_comment_issue
+graphql_query = $action_graphql_query
+graphql_mutation = $action_graphql_mutation
 
 [channels.linear.access]
 mode = "$access_mode"
@@ -346,23 +368,44 @@ main() {
   require_cmd curl
   require_env OPENCRAW_LINEAR_API_KEY
 
-  local enabled start_from_latest poll_interval_ms access_mode
-  local action_whoami action_list_assigned action_list_users action_list_teams action_list_projects
-  local action_create_issue action_create_project action_update_issue action_assign_issue action_comment_issue
+  local enabled start_from_latest poll_interval_ms access_mode graphql_url
+  local default_max_results max_results_cap reference_lookup_max_results
+  local graphql_max_query_chars graphql_max_variables_bytes
+  local action_whoami action_list_assigned action_list_users action_list_teams action_list_projects action_get_project
+  local action_create_issue action_create_project action_update_project action_update_issue action_assign_issue action_comment_issue
+  local action_graphql_query action_graphql_mutation
   enabled="$(normalize_bool "${OPENCRAW_LINEAR_ENABLED:-true}" "OPENCRAW_LINEAR_ENABLED")"
   start_from_latest="$(normalize_bool "${OPENCRAW_LINEAR_START_FROM_LATEST:-true}" "OPENCRAW_LINEAR_START_FROM_LATEST")"
   poll_interval_ms="$(normalize_positive_int "${OPENCRAW_LINEAR_POLL_INTERVAL_MS:-3000}" "OPENCRAW_LINEAR_POLL_INTERVAL_MS")"
+  graphql_url="$(trim_spaces "${OPENCRAW_LINEAR_GRAPHQL_URL:-$LINEAR_GRAPHQL_URL}")"
+  if [[ -z "$graphql_url" ]]; then
+    echo "ERROR: OPENCRAW_LINEAR_GRAPHQL_URL must not be empty." >&2
+    exit 1
+  fi
+  default_max_results="$(normalize_positive_int "${OPENCRAW_LINEAR_LIMIT_DEFAULT_MAX_RESULTS:-20}" "OPENCRAW_LINEAR_LIMIT_DEFAULT_MAX_RESULTS")"
+  max_results_cap="$(normalize_positive_int "${OPENCRAW_LINEAR_LIMIT_MAX_RESULTS_CAP:-100}" "OPENCRAW_LINEAR_LIMIT_MAX_RESULTS_CAP")"
+  reference_lookup_max_results="$(normalize_positive_int "${OPENCRAW_LINEAR_LIMIT_REFERENCE_LOOKUP_MAX_RESULTS:-100}" "OPENCRAW_LINEAR_LIMIT_REFERENCE_LOOKUP_MAX_RESULTS")"
+  graphql_max_query_chars="$(normalize_positive_int "${OPENCRAW_LINEAR_LIMIT_GRAPHQL_MAX_QUERY_CHARS:-64000}" "OPENCRAW_LINEAR_LIMIT_GRAPHQL_MAX_QUERY_CHARS")"
+  graphql_max_variables_bytes="$(normalize_positive_int "${OPENCRAW_LINEAR_LIMIT_GRAPHQL_MAX_VARIABLES_BYTES:-128000}" "OPENCRAW_LINEAR_LIMIT_GRAPHQL_MAX_VARIABLES_BYTES")"
+  if [[ "$default_max_results" -gt "$max_results_cap" ]]; then
+    echo "ERROR: OPENCRAW_LINEAR_LIMIT_DEFAULT_MAX_RESULTS must be <= OPENCRAW_LINEAR_LIMIT_MAX_RESULTS_CAP." >&2
+    exit 1
+  fi
   access_mode="$(normalize_access_mode "${OPENCRAW_LINEAR_ACCESS_MODE:-pairing}")"
   action_whoami="$(normalize_bool "${OPENCRAW_LINEAR_ACTION_WHOAMI:-true}" "OPENCRAW_LINEAR_ACTION_WHOAMI")"
   action_list_assigned="$(normalize_bool "${OPENCRAW_LINEAR_ACTION_LIST_ASSIGNED:-true}" "OPENCRAW_LINEAR_ACTION_LIST_ASSIGNED")"
   action_list_users="$(normalize_bool "${OPENCRAW_LINEAR_ACTION_LIST_USERS:-true}" "OPENCRAW_LINEAR_ACTION_LIST_USERS")"
   action_list_teams="$(normalize_bool "${OPENCRAW_LINEAR_ACTION_LIST_TEAMS:-true}" "OPENCRAW_LINEAR_ACTION_LIST_TEAMS")"
   action_list_projects="$(normalize_bool "${OPENCRAW_LINEAR_ACTION_LIST_PROJECTS:-true}" "OPENCRAW_LINEAR_ACTION_LIST_PROJECTS")"
+  action_get_project="$(normalize_bool "${OPENCRAW_LINEAR_ACTION_GET_PROJECT:-true}" "OPENCRAW_LINEAR_ACTION_GET_PROJECT")"
   action_create_issue="$(normalize_bool "${OPENCRAW_LINEAR_ACTION_CREATE_ISSUE:-true}" "OPENCRAW_LINEAR_ACTION_CREATE_ISSUE")"
   action_create_project="$(normalize_bool "${OPENCRAW_LINEAR_ACTION_CREATE_PROJECT:-true}" "OPENCRAW_LINEAR_ACTION_CREATE_PROJECT")"
+  action_update_project="$(normalize_bool "${OPENCRAW_LINEAR_ACTION_UPDATE_PROJECT:-true}" "OPENCRAW_LINEAR_ACTION_UPDATE_PROJECT")"
   action_update_issue="$(normalize_bool "${OPENCRAW_LINEAR_ACTION_UPDATE_ISSUE:-true}" "OPENCRAW_LINEAR_ACTION_UPDATE_ISSUE")"
   action_assign_issue="$(normalize_bool "${OPENCRAW_LINEAR_ACTION_ASSIGN_ISSUE:-true}" "OPENCRAW_LINEAR_ACTION_ASSIGN_ISSUE")"
   action_comment_issue="$(normalize_bool "${OPENCRAW_LINEAR_ACTION_COMMENT_ISSUE:-true}" "OPENCRAW_LINEAR_ACTION_COMMENT_ISSUE")"
+  action_graphql_query="$(normalize_bool "${OPENCRAW_LINEAR_ACTION_GRAPHQL_QUERY:-true}" "OPENCRAW_LINEAR_ACTION_GRAPHQL_QUERY")"
+  action_graphql_mutation="$(normalize_bool "${OPENCRAW_LINEAR_ACTION_GRAPHQL_MUTATION:-true}" "OPENCRAW_LINEAR_ACTION_GRAPHQL_MUTATION")"
 
   local teams_json teams_tsv default_team_id team_ids_toml allowed_senders_toml backup
   teams_json="$(fetch_teams_json)"
@@ -374,20 +417,30 @@ main() {
   backup="$(write_linear_config \
     "$enabled" \
     "$OPENCRAW_LINEAR_API_KEY" \
+    "$graphql_url" \
     "$default_team_id" \
     "$poll_interval_ms" \
     "$team_ids_toml" \
     "$start_from_latest" \
+    "$default_max_results" \
+    "$max_results_cap" \
+    "$reference_lookup_max_results" \
+    "$graphql_max_query_chars" \
+    "$graphql_max_variables_bytes" \
     "$action_whoami" \
     "$action_list_assigned" \
     "$action_list_users" \
     "$action_list_teams" \
     "$action_list_projects" \
+    "$action_get_project" \
     "$action_create_issue" \
     "$action_create_project" \
+    "$action_update_project" \
     "$action_update_issue" \
     "$action_assign_issue" \
     "$action_comment_issue" \
+    "$action_graphql_query" \
+    "$action_graphql_mutation" \
     "$access_mode" \
     "$allowed_senders_toml" \
     "$LINEAR_CONFIG_PATH")"

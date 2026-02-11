@@ -78,35 +78,39 @@ fn validate_request_payload(messages: &[ChatMessage], tools: &[ToolDefinition]) 
         }
     }
 
+    let mut active_tool_call_ids: HashSet<&str> = HashSet::new();
+    let mut active_tool_turn = false;
     for (message_idx, message) in messages.iter().enumerate() {
+        if message.role == Role::Assistant {
+            active_tool_call_ids.clear();
+            for tool_call in &message.tool_calls {
+                active_tool_call_ids.insert(tool_call.id.as_str());
+            }
+            active_tool_turn = !active_tool_call_ids.is_empty();
+        } else if message.role != Role::Tool {
+            active_tool_call_ids.clear();
+            active_tool_turn = false;
+        }
+
         if message.role == Role::Tool {
             let tool_call_id = message.tool_call_id.as_deref().ok_or_else(|| {
                 LlmError::InvalidInput(format!(
                     "message[{message_idx}] is a tool result missing tool_call_id"
                 ))
             })?;
-            if message_idx == 0 {
+            if !active_tool_turn {
                 return Err(LlmError::InvalidInput(format!(
                     "message[{message_idx}] is a tool result without a preceding assistant tool_use"
                 )));
             }
-            let previous = &messages[message_idx - 1];
-            if previous.role != Role::Assistant {
+            if !active_tool_call_ids.remove(tool_call_id) {
                 return Err(LlmError::InvalidInput(format!(
-                    "message[{message_idx}] tool_result must follow assistant message"
-                )));
-            }
-            let matched = previous
-                .tool_calls
-                .iter()
-                .any(|tool_call| tool_call.id == tool_call_id);
-            if !matched {
-                return Err(LlmError::InvalidInput(format!(
-                    "message[{message_idx}] tool_result references unknown tool_call_id '{}'",
+                    "message[{message_idx}] tool_result references unknown or duplicate tool_call_id '{}'",
                     tool_call_id
                 )));
             }
         }
+
         for (tool_call_idx, tool_call) in message.tool_calls.iter().enumerate() {
             if tool_call.id.trim().is_empty() {
                 return Err(LlmError::InvalidInput(format!(
@@ -631,7 +635,140 @@ mod tests {
             .expect_err("orphan tool_result should be rejected");
         assert!(
             err.to_string()
-                .contains("tool_result must follow assistant message")
+                .contains("without a preceding assistant tool_use")
         );
+    }
+
+    #[test]
+    fn validate_request_payload_allows_multiple_tool_results_for_single_assistant_turn() {
+        let tools = vec![ToolDefinition {
+            name: "filesystem".to_string(),
+            description: "filesystem".to_string(),
+            parameters: json!({}),
+        }];
+        let messages = vec![
+            ChatMessage {
+                role: Role::Assistant,
+                content: String::new(),
+                tool_calls: vec![
+                    ToolCall {
+                        id: "tool_1".to_string(),
+                        name: "filesystem".to_string(),
+                        arguments: "{}".to_string(),
+                    },
+                    ToolCall {
+                        id: "tool_2".to_string(),
+                        name: "filesystem".to_string(),
+                        arguments: "{}".to_string(),
+                    },
+                ],
+                tool_call_id: None,
+            },
+            ChatMessage {
+                role: Role::Tool,
+                content: "{\"ok\":true}".to_string(),
+                tool_calls: vec![],
+                tool_call_id: Some("tool_1".to_string()),
+            },
+            ChatMessage {
+                role: Role::Tool,
+                content: "{\"ok\":true}".to_string(),
+                tool_calls: vec![],
+                tool_call_id: Some("tool_2".to_string()),
+            },
+        ];
+
+        validate_request_payload(&messages, &tools)
+            .expect("multiple tool results from one assistant turn should validate");
+    }
+
+    #[test]
+    fn validate_request_payload_rejects_duplicate_tool_result_for_same_call() {
+        let tools = vec![ToolDefinition {
+            name: "filesystem".to_string(),
+            description: "filesystem".to_string(),
+            parameters: json!({}),
+        }];
+        let messages = vec![
+            ChatMessage {
+                role: Role::Assistant,
+                content: String::new(),
+                tool_calls: vec![ToolCall {
+                    id: "tool_1".to_string(),
+                    name: "filesystem".to_string(),
+                    arguments: "{}".to_string(),
+                }],
+                tool_call_id: None,
+            },
+            ChatMessage {
+                role: Role::Tool,
+                content: "{\"ok\":true}".to_string(),
+                tool_calls: vec![],
+                tool_call_id: Some("tool_1".to_string()),
+            },
+            ChatMessage {
+                role: Role::Tool,
+                content: "{\"ok\":true}".to_string(),
+                tool_calls: vec![],
+                tool_call_id: Some("tool_1".to_string()),
+            },
+        ];
+
+        let err = validate_request_payload(&messages, &tools)
+            .expect_err("duplicate tool_result for the same tool_call_id must fail");
+        assert!(
+            err.to_string()
+                .contains("unknown or duplicate tool_call_id 'tool_1'")
+        );
+    }
+
+    #[test]
+    fn sanitize_then_validate_supports_multi_tool_result_contract() {
+        let tools = vec![ToolDefinition {
+            name: "filesystem".to_string(),
+            description: "filesystem".to_string(),
+            parameters: json!({}),
+        }];
+        let messages = vec![
+            ChatMessage {
+                role: Role::User,
+                content: "run it".to_string(),
+                tool_calls: vec![],
+                tool_call_id: None,
+            },
+            ChatMessage {
+                role: Role::Assistant,
+                content: String::new(),
+                tool_calls: vec![
+                    ToolCall {
+                        id: "tool_1".to_string(),
+                        name: "filesystem".to_string(),
+                        arguments: "{}".to_string(),
+                    },
+                    ToolCall {
+                        id: "tool_2".to_string(),
+                        name: "filesystem".to_string(),
+                        arguments: "{}".to_string(),
+                    },
+                ],
+                tool_call_id: None,
+            },
+            ChatMessage {
+                role: Role::Tool,
+                content: "{\"ok\":true}".to_string(),
+                tool_calls: vec![],
+                tool_call_id: Some("tool_1".to_string()),
+            },
+            ChatMessage {
+                role: Role::Tool,
+                content: "{\"ok\":true}".to_string(),
+                tool_calls: vec![],
+                tool_call_id: Some("tool_2".to_string()),
+            },
+        ];
+
+        let sanitized = sanitize_request_messages(&messages);
+        validate_request_payload(&sanitized, &tools)
+            .expect("sanitized payload should keep a valid multi-tool-result contract");
     }
 }

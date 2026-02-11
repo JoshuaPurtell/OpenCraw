@@ -648,7 +648,7 @@ Send /nuke and retry, or raise context.tool_no_progress_limit."
                             tool_calls: vec![],
                             tool_call_id: Some(tool_call.id.clone()),
                         });
-                        continue;
+                        return Ok(tool_execution_failed_user_message(&tool_call.name, &e));
                     }
                 };
                 let tool_out_json = tool_out.to_string();
@@ -1524,11 +1524,17 @@ Send /nuke and retry, or raise context.tool_no_progress_limit."
             return;
         };
 
-        let args_preview = compact_json(arguments, 400);
-        let content = format!(
-            "Approval required for tool `{tool_name}`.\nAction ID: `{action_id}`\n\nApprove: /approve-action {action_id}\nDeny: /deny-action {action_id}\n\nArguments:\n{args_preview}"
-        );
-        let metadata = if channel_id.eq_ignore_ascii_case("telegram") {
+        let render_arguments = self.enrich_approval_arguments(tool_name, arguments).await;
+        let is_telegram = channel_id.eq_ignore_ascii_case("telegram");
+        let content = if is_telegram {
+            render_telegram_approval_prompt(tool_name, &render_arguments, "pending")
+        } else {
+            let args_preview = compact_json(&render_arguments, 400);
+            format!(
+                "Approval required for tool `{tool_name}`.\nAction ID: `{action_id}`\n\nApprove: /approve-action {action_id}\nDeny: /deny-action {action_id}\n\nArguments:\n{args_preview}"
+            )
+        };
+        let metadata = if is_telegram {
             json!({
                 "telegram_reply_markup": {
                     "inline_keyboard": [[
@@ -1569,6 +1575,98 @@ Send /nuke and retry, or raise context.tool_no_progress_limit."
         }
     }
 
+    async fn enrich_approval_arguments(
+        &self,
+        tool_name: &str,
+        arguments: &serde_json::Value,
+    ) -> serde_json::Value {
+        let mut enriched = arguments.clone();
+        if tool_name.eq_ignore_ascii_case("linear") {
+            self.enrich_linear_approval_arguments(&mut enriched).await;
+        }
+        enriched
+    }
+
+    async fn enrich_linear_approval_arguments(&self, arguments: &mut serde_json::Value) {
+        let Some(action) = arguments.get("action").and_then(|value| value.as_str()) else {
+            return;
+        };
+        if normalize_linear_action_name(action) != "update_project" {
+            return;
+        }
+        if non_empty_string_from_keys(arguments, &["project_name"]).is_some() {
+            return;
+        }
+        let Some(project_ref) = non_empty_string_from_keys(
+            arguments,
+            &["project_id", "projectid", "project_ref", "project"],
+        ) else {
+            return;
+        };
+        let Some(project_name) = self
+            .resolve_linear_project_name_for_approval(project_ref)
+            .await
+        else {
+            return;
+        };
+        if let Some(object) = arguments.as_object_mut() {
+            object.insert(
+                "project_name".to_string(),
+                serde_json::Value::String(project_name),
+            );
+        }
+    }
+
+    async fn resolve_linear_project_name_for_approval(&self, project_ref: &str) -> Option<String> {
+        let linear = self
+            .tools
+            .iter()
+            .find(|tool| tool.spec().name == "linear")
+            .cloned()?;
+
+        if let Ok(direct) = linear
+            .execute(json!({
+                "action": "get_project",
+                "project_id": project_ref
+            }))
+            .await
+        {
+            if let Some(project_name) = direct
+                .get("project")
+                .and_then(|project| project.get("name"))
+                .and_then(|value| value.as_str())
+                .map(str::trim)
+                .filter(|value| !value.is_empty())
+                .map(ToOwned::to_owned)
+            {
+                return Some(project_name);
+            }
+        }
+
+        let response = linear
+            .execute(json!({
+                "action": "list_projects",
+                "query": project_ref
+            }))
+            .await
+            .ok()?;
+        let projects = response.get("projects")?.as_array()?;
+        let exact = projects.iter().find(|project| {
+            project
+                .get("id")
+                .and_then(|value| value.as_str())
+                .map(|id| id.eq_ignore_ascii_case(project_ref))
+                .unwrap_or(false)
+        });
+        let selected = exact.or_else(|| projects.first())?;
+        selected
+            .get("name")
+            .and_then(|value| value.as_str())
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .map(ToOwned::to_owned)
+    }
+
     async fn notify_human_approval_timed_out(
         &self,
         action_id: Uuid,
@@ -1600,11 +1698,18 @@ Send /nuke and retry, or raise context.tool_no_progress_limit."
         } else {
             format!("{timeout_seconds}s")
         };
-        let content = format!(
-            "Approval timed out for action `{action_id}` after {timeout_label}. \
+        let is_telegram = channel_id.eq_ignore_ascii_case("telegram");
+        let content = if is_telegram {
+            format!(
+                "Approval timed out after {timeout_label}. I stopped this run to avoid hanging.\n\nYou can still decide below, then resend your request."
+            )
+        } else {
+            format!(
+                "Approval timed out for action `{action_id}` after {timeout_label}. \
 I stopped this run to avoid hanging.\n\nYou can still decide it:\nApprove: /approve-action {action_id}\nDeny: /deny-action {action_id}\n\nThen resend your request."
-        );
-        let metadata = if channel_id.eq_ignore_ascii_case("telegram") {
+            )
+        };
+        let metadata = if is_telegram {
             json!({
                 "telegram_reply_markup": {
                     "inline_keyboard": [[
@@ -1643,6 +1748,33 @@ I stopped this run to avoid hanging.\n\nYou can still decide it:\nApprove: /appr
                 "failed to send in-channel approval-timeout notice"
             );
         }
+    }
+
+    pub async fn render_telegram_approval_prompt_snapshot(
+        &self,
+        action_id: Option<Uuid>,
+    ) -> Result<Option<String>> {
+        let Some(action_id) = action_id else {
+            return Ok(None);
+        };
+        let Some(record) = self.load_action_record(action_id).await? else {
+            return Ok(None);
+        };
+        let tool_name = record
+            .context
+            .get("tool")
+            .and_then(|value| value.as_str())
+            .unwrap_or("tool");
+        let arguments = record
+            .context
+            .get("arguments")
+            .unwrap_or(&serde_json::Value::Null);
+        let render_arguments = self.enrich_approval_arguments(tool_name, arguments).await;
+        Ok(Some(render_telegram_approval_prompt(
+            tool_name,
+            &render_arguments,
+            "pending",
+        )))
     }
 
     pub async fn resolve_action_decision(
@@ -1744,16 +1876,12 @@ I stopped this run to avoid hanging.\n\nYou can still decide it:\nApprove: /appr
 
         match decision_result {
             Ok(()) => Ok(match decision {
-                ActionDecision::Approve => format!(
-                    "Approved action `{action_id}`. Continuing request.\nThis approval is closed."
-                ),
-                ActionDecision::Deny => {
-                    format!("Denied action `{action_id}`.\nThis approval is closed.")
+                ActionDecision::Approve => {
+                    "Approved. Continuing request.\nThis approval is closed.".to_string()
                 }
+                ActionDecision::Deny => "Denied.\nThis approval is closed.".to_string(),
             }),
-            Err(error) => Ok(format!(
-                "Failed to apply decision for action `{action_id}`: {error}"
-            )),
+            Err(error) => Ok(format!("Failed to apply decision: {error}")),
         }
     }
 
@@ -1940,6 +2068,12 @@ fn sqlite_approval_write_user_message() -> String {
     "I couldn't persist the approval request due to local database contention, so I stopped this run instead of hanging. Please retry in a few seconds. If it keeps happening, restart the dev backend and rerun the request.".to_string()
 }
 
+fn tool_execution_failed_user_message(tool_name: &str, error: &dyn std::fmt::Display) -> String {
+    format!(
+        "I couldn't complete the `{tool_name}` action, so I stopped this run.\n\nTool error: {error}"
+    )
+}
+
 fn approval_wait_timeout(timeout_seconds: u64) -> Option<Duration> {
     if timeout_seconds == 0 {
         None
@@ -2022,6 +2156,84 @@ fn compact_json(value: &serde_json::Value, max_chars: usize) -> String {
     let mut compact: String = rendered.chars().take(max_chars).collect();
     compact.push_str("...");
     compact
+}
+
+fn render_telegram_approval_prompt(
+    tool_name: &str,
+    arguments: &serde_json::Value,
+    status: &str,
+) -> String {
+    let summary = render_tool_approval_summary(tool_name, arguments)
+        .map(|value| format!("{value}\n\n"))
+        .unwrap_or_default();
+    let args_preview = compact_json(arguments, 400);
+    format!(
+        "Approval required for tool `{tool_name}`.\n\n{summary}Arguments:\n{args_preview}\n\nStatus: {status}"
+    )
+}
+
+fn render_tool_approval_summary(tool_name: &str, arguments: &serde_json::Value) -> Option<String> {
+    if !tool_name.eq_ignore_ascii_case("linear") {
+        return None;
+    }
+    render_linear_approval_summary(arguments)
+}
+
+fn render_linear_approval_summary(arguments: &serde_json::Value) -> Option<String> {
+    let action = arguments
+        .get("action")
+        .and_then(|value| value.as_str())
+        .map(normalize_linear_action_name)?;
+    if action != "update_project" {
+        return None;
+    }
+
+    let project_name = non_empty_string_from_keys(arguments, &["project_name"]);
+    let project_id = non_empty_string_from_keys(arguments, &["project_id", "projectid"]);
+    let project_ref = non_empty_string_from_keys(arguments, &["project_ref", "project"]);
+    let project_display = match (project_name, project_id.or(project_ref)) {
+        (Some(name), Some(reference)) => format!("{name} ({reference})"),
+        (Some(name), None) => name.to_string(),
+        (None, Some(reference)) => reference.to_string(),
+        (None, None) => "<missing>".to_string(),
+    };
+
+    let priority = arguments.get("priority").and_then(|value| {
+        if let Some(numeric) = value.as_i64() {
+            return Some(numeric.to_string());
+        }
+        value
+            .as_str()
+            .map(str::trim)
+            .filter(|entry| !entry.is_empty())
+            .map(ToOwned::to_owned)
+    });
+    let state = non_empty_string_from_keys(arguments, &["state", "status"]);
+    let mut lines = vec![
+        "Summary:".to_string(),
+        format!("- action: {action}"),
+        format!("- project: {project_display}"),
+    ];
+    if let Some(value) = priority {
+        lines.push(format!("- priority: {value}"));
+    }
+    if let Some(value) = state {
+        lines.push(format!("- state: {value}"));
+    }
+    if let Some(value) = non_empty_string_from_keys(arguments, &["name"]) {
+        lines.push(format!("- rename_to: {value}"));
+    }
+    Some(lines.join("\n"))
+}
+
+fn non_empty_string_from_keys<'a>(value: &'a serde_json::Value, keys: &[&str]) -> Option<&'a str> {
+    keys.iter().find_map(|key| {
+        value
+            .get(*key)
+            .and_then(|entry| entry.as_str())
+            .map(str::trim)
+            .filter(|entry| !entry.is_empty())
+    })
 }
 
 fn estimate_tokens(message: &ChatMessage) -> usize {
@@ -2213,12 +2425,13 @@ fn action_type_for_tool(tool_name: &str, arguments: &serde_json::Value) -> Resul
             match action {
                 "create_issue" => Ok("tool.linear.issue.create".to_string()),
                 "create_project" => Ok("tool.linear.project.create".to_string()),
+                "update_project" => Ok("tool.linear.project.update".to_string()),
                 "update_issue" => Ok("tool.linear.issue.update".to_string()),
                 "assign_issue" => Ok("tool.linear.issue.assign".to_string()),
                 "comment_issue" => Ok("tool.linear.comment.send".to_string()),
-                "list_assigned" | "list_users" | "list_teams" | "list_projects" | "whoami" => {
-                    Ok("tool.linear.read".to_string())
-                }
+                "graphql_mutation" => Ok("tool.linear.graphql.mutation".to_string()),
+                "list_assigned" | "list_users" | "list_teams" | "list_projects" | "get_project"
+                | "whoami" | "graphql_query" => Ok("tool.linear.read".to_string()),
                 _ => Ok("tool.linear".to_string()),
             }
         }
@@ -2284,9 +2497,11 @@ fn approval_mode_for_tool(
                 action,
                 "create_issue"
                     | "create_project"
+                    | "update_project"
                     | "update_issue"
                     | "assign_issue"
                     | "comment_issue"
+                    | "graphql_mutation"
             ) {
                 Ok(ApprovalMode::Human)
             } else {
@@ -2357,9 +2572,11 @@ fn effective_risk_level(tool: &dyn Tool, arguments: &serde_json::Value) -> Resul
                 action,
                 "create_issue"
                     | "create_project"
+                    | "update_project"
                     | "update_issue"
                     | "assign_issue"
                     | "comment_issue"
+                    | "graphql_mutation"
             ) {
                 Ok(RiskLevel::High)
             } else {
@@ -2415,10 +2632,91 @@ fn imessage_action(arguments: &serde_json::Value) -> Result<&str> {
 }
 
 fn linear_action(arguments: &serde_json::Value) -> Result<&str> {
-    arguments
+    let action = arguments
         .get("action")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| anyhow::anyhow!("linear tool arguments missing string action"))
+        .ok_or_else(|| anyhow::anyhow!("linear tool arguments missing string action"))?;
+    Ok(normalize_linear_action_name(action))
+}
+
+fn normalize_linear_action_name(action: &str) -> &str {
+    let trimmed = action.trim();
+    if trimmed.eq_ignore_ascii_case("issuecreate") {
+        return "create_issue";
+    }
+    if trimmed.eq_ignore_ascii_case("projectcreate") {
+        return "create_project";
+    }
+    if trimmed.eq_ignore_ascii_case("projectupdate") {
+        return "update_project";
+    }
+    if trimmed.eq_ignore_ascii_case("issueupdate") {
+        return "update_issue";
+    }
+    if trimmed.eq_ignore_ascii_case("commentcreate") {
+        return "comment_issue";
+    }
+    if trimmed.eq_ignore_ascii_case("viewer") {
+        return "whoami";
+    }
+    if trimmed.eq_ignore_ascii_case("projects") {
+        return "list_projects";
+    }
+    if trimmed.eq_ignore_ascii_case("users") {
+        return "list_users";
+    }
+    if trimmed.eq_ignore_ascii_case("teams") {
+        return "list_teams";
+    }
+    if trimmed.eq_ignore_ascii_case("assignedissues") {
+        return "list_assigned";
+    }
+    if trimmed.eq_ignore_ascii_case("updateproject") {
+        return "update_project";
+    }
+    if trimmed.eq_ignore_ascii_case("createproject") {
+        return "create_project";
+    }
+    if trimmed.eq_ignore_ascii_case("createissue") {
+        return "create_issue";
+    }
+    if trimmed.eq_ignore_ascii_case("updateissue") {
+        return "update_issue";
+    }
+    if trimmed.eq_ignore_ascii_case("assignissue") {
+        return "assign_issue";
+    }
+    if trimmed.eq_ignore_ascii_case("commentissue") {
+        return "comment_issue";
+    }
+    if trimmed.eq_ignore_ascii_case("listprojects") {
+        return "list_projects";
+    }
+    if trimmed.eq_ignore_ascii_case("getproject") {
+        return "get_project";
+    }
+    if trimmed.eq_ignore_ascii_case("listusers") {
+        return "list_users";
+    }
+    if trimmed.eq_ignore_ascii_case("listassigned") {
+        return "list_assigned";
+    }
+    if trimmed.eq_ignore_ascii_case("listteams") {
+        return "list_teams";
+    }
+    if trimmed.eq_ignore_ascii_case("graphqlquery")
+        || trimmed.eq_ignore_ascii_case("query")
+        || trimmed.eq_ignore_ascii_case("graphql_query")
+    {
+        return "graphql_query";
+    }
+    if trimmed.eq_ignore_ascii_case("graphqlmutation")
+        || trimmed.eq_ignore_ascii_case("mutation")
+        || trimmed.eq_ignore_ascii_case("graphql_mutation")
+    {
+        return "graphql_mutation";
+    }
+    trimmed
 }
 
 #[tracing::instrument(level = "debug", skip_all)]
@@ -2504,8 +2802,10 @@ mod tests {
     use super::{
         approval_timeout_user_message, approval_wait_timeout, compute_profile_attempt_order,
         estimate_history_tokens, is_approval_timeout_error, is_rate_limit_error, min_duration,
-        parse_memory_search_arguments, parse_memory_summarize_arguments,
-        render_compaction_transcript, sqlite_approval_write_user_message,
+        non_empty_string_from_keys, normalize_linear_action_name, parse_memory_search_arguments,
+        parse_memory_summarize_arguments, render_compaction_transcript,
+        render_telegram_approval_prompt, sqlite_approval_write_user_message,
+        tool_execution_failed_user_message,
     };
     use crate::session::ModelPinningMode;
     use os_llm::{ChatMessage, Role};
@@ -2638,5 +2938,56 @@ mod tests {
         let msg = sqlite_approval_write_user_message();
         assert!(msg.contains("database contention"));
         assert!(msg.contains("retry"));
+    }
+
+    #[test]
+    fn tool_execution_failed_user_message_reports_tool_and_error() {
+        let err = anyhow::anyhow!("linear graphql returned errors: INVALID_INPUT");
+        let msg = tool_execution_failed_user_message("linear", &err);
+        assert!(msg.contains("`linear`"));
+        assert!(msg.contains("INVALID_INPUT"));
+    }
+
+    #[test]
+    fn normalize_linear_action_name_accepts_compact_aliases() {
+        assert_eq!(
+            normalize_linear_action_name("updateproject"),
+            "update_project"
+        );
+        assert_eq!(normalize_linear_action_name("createissue"), "create_issue");
+        assert_eq!(
+            normalize_linear_action_name("projectUpdate"),
+            "update_project"
+        );
+        assert_eq!(normalize_linear_action_name("mutation"), "graphql_mutation");
+    }
+
+    #[test]
+    fn non_empty_string_from_keys_prefers_first_present() {
+        let value = serde_json::json!({"project_name":"Bible","project_id":"123"});
+        assert_eq!(
+            non_empty_string_from_keys(&value, &["project_name", "project_id"]),
+            Some("Bible")
+        );
+    }
+
+    #[test]
+    fn render_telegram_approval_prompt_adds_linear_update_project_summary() {
+        let prompt = render_telegram_approval_prompt(
+            "linear",
+            &serde_json::json!({
+                "action":"updateproject",
+                "project_name":"Bible ingestion",
+                "projectid":"6bba92d9-6405-4f25-acce-2ca9af17058a",
+                "priority":4,
+                "state":"In Progress"
+            }),
+            "pending",
+        );
+        assert!(prompt.contains("Summary:"));
+        assert!(prompt.contains("project: Bible ingestion"));
+        assert!(prompt.contains("priority: 4"));
+        assert!(prompt.contains("state: In Progress"));
+        assert!(prompt.contains("Status: pending"));
     }
 }

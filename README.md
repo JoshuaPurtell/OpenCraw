@@ -144,8 +144,8 @@ The populate script:
 - Resolves `default_team_id` from `OPENCRAW_LINEAR_TEAM` (name/key/id) when provided.
 - Auto-selects `default_team_id` only when exactly one team is visible.
 - Writes `[channels.linear.actions]` toggles into local config (all enabled by default), including:
-  - `whoami`, `list_assigned`, `list_users`, `list_teams`, `list_projects`
-  - `create_issue`, `create_project`, `update_issue`, `assign_issue`, `comment_issue`
+  - `whoami`, `list_assigned`, `list_users`, `list_teams`, `list_projects`, `get_project`
+  - `create_issue`, `create_project`, `update_project`, `update_issue`, `assign_issue`, `comment_issue`
 - Writes `~/.opencraw/configs/channel-linear.toml`.
 - Backs up any existing file to `~/.opencraw/backups/`.
 

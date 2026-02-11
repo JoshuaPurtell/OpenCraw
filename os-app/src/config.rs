@@ -494,6 +494,8 @@ fn default_email_max_results() -> usize {
 #[serde(deny_unknown_fields)]
 pub struct EmailActionsConfig {
     #[serde(default = "default_channel_action_enabled")]
+    pub list_labels: bool,
+    #[serde(default = "default_channel_action_enabled")]
     pub list_inbox: bool,
     #[serde(default = "default_channel_action_enabled")]
     pub search: bool,
@@ -506,6 +508,7 @@ pub struct EmailActionsConfig {
 impl Default for EmailActionsConfig {
     fn default() -> Self {
         Self {
+            list_labels: default_channel_action_enabled(),
             list_inbox: default_channel_action_enabled(),
             search: default_channel_action_enabled(),
             read: default_channel_action_enabled(),
@@ -581,6 +584,57 @@ fn default_linear_max_issues() -> usize {
     50
 }
 
+fn default_linear_graphql_url() -> String {
+    "https://api.linear.app/graphql".to_string()
+}
+
+fn default_linear_default_max_results() -> usize {
+    20
+}
+
+fn default_linear_max_results_cap() -> usize {
+    100
+}
+
+fn default_linear_reference_lookup_max_results() -> usize {
+    100
+}
+
+fn default_linear_graphql_max_query_chars() -> usize {
+    64_000
+}
+
+fn default_linear_graphql_max_variables_bytes() -> usize {
+    128_000
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LinearLimitsConfig {
+    #[serde(default = "default_linear_default_max_results")]
+    pub default_max_results: usize,
+    #[serde(default = "default_linear_max_results_cap")]
+    pub max_results_cap: usize,
+    #[serde(default = "default_linear_reference_lookup_max_results")]
+    pub reference_lookup_max_results: usize,
+    #[serde(default = "default_linear_graphql_max_query_chars")]
+    pub graphql_max_query_chars: usize,
+    #[serde(default = "default_linear_graphql_max_variables_bytes")]
+    pub graphql_max_variables_bytes: usize,
+}
+
+impl Default for LinearLimitsConfig {
+    fn default() -> Self {
+        Self {
+            default_max_results: default_linear_default_max_results(),
+            max_results_cap: default_linear_max_results_cap(),
+            reference_lookup_max_results: default_linear_reference_lookup_max_results(),
+            graphql_max_query_chars: default_linear_graphql_max_query_chars(),
+            graphql_max_variables_bytes: default_linear_graphql_max_variables_bytes(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct LinearConfig {
@@ -588,6 +642,8 @@ pub struct LinearConfig {
     pub enabled: bool,
     #[serde(default)]
     pub api_key: String,
+    #[serde(default = "default_linear_graphql_url")]
+    pub graphql_url: String,
     #[serde(default)]
     pub default_team_id: String,
     #[serde(default = "default_linear_poll_interval_ms")]
@@ -599,6 +655,8 @@ pub struct LinearConfig {
     pub start_from_latest: bool,
     #[serde(default = "default_linear_max_issues")]
     pub max_issues: usize,
+    #[serde(default)]
+    pub limits: LinearLimitsConfig,
     #[serde(default)]
     pub actions: LinearActionsConfig,
     #[serde(default)]
@@ -618,11 +676,13 @@ impl Default for LinearConfig {
         Self {
             enabled: false,
             api_key: String::new(),
+            graphql_url: default_linear_graphql_url(),
             default_team_id: String::new(),
             poll_interval_ms: default_linear_poll_interval_ms(),
             team_ids: Vec::new(),
             start_from_latest: default_linear_start_from_latest(),
             max_issues: default_linear_max_issues(),
+            limits: LinearLimitsConfig::default(),
             actions: LinearActionsConfig::default(),
             access: ChannelAccessConfig::default(),
         }
@@ -647,15 +707,23 @@ pub struct LinearActionsConfig {
     #[serde(default = "default_linear_action_enabled")]
     pub list_projects: bool,
     #[serde(default = "default_linear_action_enabled")]
+    pub get_project: bool,
+    #[serde(default = "default_linear_action_enabled")]
     pub create_issue: bool,
     #[serde(default = "default_linear_action_enabled")]
     pub create_project: bool,
+    #[serde(default = "default_linear_action_enabled")]
+    pub update_project: bool,
     #[serde(default = "default_linear_action_enabled")]
     pub update_issue: bool,
     #[serde(default = "default_linear_action_enabled")]
     pub assign_issue: bool,
     #[serde(default = "default_linear_action_enabled")]
     pub comment_issue: bool,
+    #[serde(default = "default_linear_action_enabled")]
+    pub graphql_query: bool,
+    #[serde(default = "default_linear_action_enabled")]
+    pub graphql_mutation: bool,
 }
 
 impl Default for LinearActionsConfig {
@@ -666,11 +734,15 @@ impl Default for LinearActionsConfig {
             list_users: default_linear_action_enabled(),
             list_teams: default_linear_action_enabled(),
             list_projects: default_linear_action_enabled(),
+            get_project: default_linear_action_enabled(),
             create_issue: default_linear_action_enabled(),
             create_project: default_linear_action_enabled(),
+            update_project: default_linear_action_enabled(),
             update_issue: default_linear_action_enabled(),
             assign_issue: default_linear_action_enabled(),
             comment_issue: default_linear_action_enabled(),
+            graphql_query: default_linear_action_enabled(),
+            graphql_mutation: default_linear_action_enabled(),
         }
     }
 }
@@ -2527,6 +2599,11 @@ impl OpenShellConfig {
                     "channels.linear.api_key is required when channels.linear.enabled=true"
                 ));
             }
+            if self.channels.linear.graphql_url.trim().is_empty() {
+                return Err(anyhow::anyhow!(
+                    "channels.linear.graphql_url is required when channels.linear.enabled=true"
+                ));
+            }
             if self.channels.linear.poll_interval_ms == 0 {
                 return Err(anyhow::anyhow!(
                     "channels.linear.poll_interval_ms must be > 0"
@@ -2534,6 +2611,38 @@ impl OpenShellConfig {
             }
             if self.channels.linear.max_issues == 0 {
                 return Err(anyhow::anyhow!("channels.linear.max_issues must be > 0"));
+            }
+            if self.channels.linear.limits.default_max_results == 0 {
+                return Err(anyhow::anyhow!(
+                    "channels.linear.limits.default_max_results must be > 0"
+                ));
+            }
+            if self.channels.linear.limits.max_results_cap == 0 {
+                return Err(anyhow::anyhow!(
+                    "channels.linear.limits.max_results_cap must be > 0"
+                ));
+            }
+            if self.channels.linear.limits.default_max_results
+                > self.channels.linear.limits.max_results_cap
+            {
+                return Err(anyhow::anyhow!(
+                    "channels.linear.limits.default_max_results must be <= channels.linear.limits.max_results_cap"
+                ));
+            }
+            if self.channels.linear.limits.reference_lookup_max_results == 0 {
+                return Err(anyhow::anyhow!(
+                    "channels.linear.limits.reference_lookup_max_results must be > 0"
+                ));
+            }
+            if self.channels.linear.limits.graphql_max_query_chars == 0 {
+                return Err(anyhow::anyhow!(
+                    "channels.linear.limits.graphql_max_query_chars must be > 0"
+                ));
+            }
+            if self.channels.linear.limits.graphql_max_variables_bytes == 0 {
+                return Err(anyhow::anyhow!(
+                    "channels.linear.limits.graphql_max_variables_bytes must be > 0"
+                ));
             }
             if self
                 .channels

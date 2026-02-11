@@ -32,8 +32,8 @@ use os_channels::{
 use os_llm::validate_tool_name_all_providers;
 use os_tools::{
     ApplyPatchTool, BrowserTool, ClipboardTool, EmailActionToggles, EmailTool, FilesystemTool,
-    ImessageActionToggles, ImessageTool, LinearActionToggles, LinearTool,
-    ShellExecutionMode as ToolShellExecutionMode, ShellPolicy,
+    ImessageActionToggles, ImessageTool, LinearActionToggles, LinearLimits, LinearTool,
+    LinearToolConfig, ShellExecutionMode as ToolShellExecutionMode, ShellPolicy,
     ShellSandboxBackend as ToolShellSandboxBackend, ShellTool, Tool,
 };
 use std::collections::{HashMap, HashSet};
@@ -270,6 +270,7 @@ pub async fn serve(config_path: Option<PathBuf>) -> Result<()> {
             &cfg.channels.email.gmail_access_token,
             cfg.channels.email.query.clone(),
             EmailActionToggles {
+                list_labels: cfg.channels.email.actions.list_labels,
                 list_inbox: cfg.channels.email.actions.list_inbox,
                 search: cfg.channels.email.actions.search,
                 read: cfg.channels.email.actions.read,
@@ -297,18 +298,40 @@ pub async fn serve(config_path: Option<PathBuf>) -> Result<()> {
     if cfg.tools.tool_enabled("linear") && cfg.channels.linear.enabled {
         tools.push(Arc::new(LinearTool::new(
             &cfg.channels.linear.api_key,
-            Some(cfg.channels.linear.default_team_id.clone()),
-            LinearActionToggles {
-                whoami: cfg.channels.linear.actions.whoami,
-                list_assigned: cfg.channels.linear.actions.list_assigned,
-                list_users: cfg.channels.linear.actions.list_users,
-                list_teams: cfg.channels.linear.actions.list_teams,
-                list_projects: cfg.channels.linear.actions.list_projects,
-                create_issue: cfg.channels.linear.actions.create_issue,
-                create_project: cfg.channels.linear.actions.create_project,
-                update_issue: cfg.channels.linear.actions.update_issue,
-                assign_issue: cfg.channels.linear.actions.assign_issue,
-                comment_issue: cfg.channels.linear.actions.comment_issue,
+            LinearToolConfig {
+                graphql_url: cfg.channels.linear.graphql_url.clone(),
+                default_team_id: Some(cfg.channels.linear.default_team_id.clone()),
+                action_toggles: LinearActionToggles {
+                    whoami: cfg.channels.linear.actions.whoami,
+                    list_assigned: cfg.channels.linear.actions.list_assigned,
+                    list_users: cfg.channels.linear.actions.list_users,
+                    list_teams: cfg.channels.linear.actions.list_teams,
+                    list_projects: cfg.channels.linear.actions.list_projects,
+                    get_project: cfg.channels.linear.actions.get_project,
+                    create_issue: cfg.channels.linear.actions.create_issue,
+                    create_project: cfg.channels.linear.actions.create_project,
+                    update_project: cfg.channels.linear.actions.update_project,
+                    update_issue: cfg.channels.linear.actions.update_issue,
+                    assign_issue: cfg.channels.linear.actions.assign_issue,
+                    comment_issue: cfg.channels.linear.actions.comment_issue,
+                    graphql_query: cfg.channels.linear.actions.graphql_query,
+                    graphql_mutation: cfg.channels.linear.actions.graphql_mutation,
+                },
+                limits: LinearLimits {
+                    default_max_results: cfg.channels.linear.limits.default_max_results,
+                    max_results_cap: cfg.channels.linear.limits.max_results_cap,
+                    reference_lookup_max_results: cfg
+                        .channels
+                        .linear
+                        .limits
+                        .reference_lookup_max_results,
+                    graphql_max_query_chars: cfg.channels.linear.limits.graphql_max_query_chars,
+                    graphql_max_variables_bytes: cfg
+                        .channels
+                        .linear
+                        .limits
+                        .graphql_max_variables_bytes,
+                },
             },
         )?));
     }

@@ -21,6 +21,6 @@ pub use email::{EmailActionToggles, EmailTool};
 pub use error::{Result, ToolError};
 pub use filesystem::FilesystemTool;
 pub use imessage::{ImessageActionToggles, ImessageTool};
-pub use linear::{LinearActionToggles, LinearTool};
+pub use linear::{LinearActionToggles, LinearLimits, LinearTool, LinearToolConfig};
 pub use shell::{ShellExecutionMode, ShellPolicy, ShellSandboxBackend, ShellTool};
 pub use traits::{Tool, ToolSpec, to_llm_tool_def};

@@ -12,6 +12,7 @@ mark_processed_as_read = true
 max_results = 25
 
 [channels.email.actions]
+list_labels = true
 list_inbox = true
 search = true
 read = true
