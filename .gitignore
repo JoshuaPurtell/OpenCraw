@@ -6,10 +6,16 @@ data/
 *.swp
 *.swo
 .env
-*.local.*
+config.local.toml
+config.*.local.toml
 web/node_modules
 web/dist
 web/src/styles.css
 web/.env
 web/.env.*
 plans/
+docs/providers/
+docs/issues/
+docs/process/parallel-agents/status/
+docs/process/parallel-agents/certification/
+docs/process/parallel-agents/prompts/
