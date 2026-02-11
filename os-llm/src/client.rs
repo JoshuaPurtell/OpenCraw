@@ -2,7 +2,7 @@ use crate::anthropic::AnthropicClient;
 use crate::error::LlmError;
 use crate::error::Result;
 use crate::openai::OpenAiClient;
-use crate::types::{ChatMessage, ChatResponse, StreamChunk, ToolDefinition};
+use crate::types::{ChatMessage, ChatResponse, Role, StreamChunk, ToolCall, ToolDefinition};
 use futures_util::Stream;
 use std::collections::HashSet;
 use std::pin::Pin;
@@ -79,6 +79,34 @@ fn validate_request_payload(messages: &[ChatMessage], tools: &[ToolDefinition]) 
     }
 
     for (message_idx, message) in messages.iter().enumerate() {
+        if message.role == Role::Tool {
+            let tool_call_id = message.tool_call_id.as_deref().ok_or_else(|| {
+                LlmError::InvalidInput(format!(
+                    "message[{message_idx}] is a tool result missing tool_call_id"
+                ))
+            })?;
+            if message_idx == 0 {
+                return Err(LlmError::InvalidInput(format!(
+                    "message[{message_idx}] is a tool result without a preceding assistant tool_use"
+                )));
+            }
+            let previous = &messages[message_idx - 1];
+            if previous.role != Role::Assistant {
+                return Err(LlmError::InvalidInput(format!(
+                    "message[{message_idx}] tool_result must follow assistant message"
+                )));
+            }
+            let matched = previous
+                .tool_calls
+                .iter()
+                .any(|tool_call| tool_call.id == tool_call_id);
+            if !matched {
+                return Err(LlmError::InvalidInput(format!(
+                    "message[{message_idx}] tool_result references unknown tool_call_id '{}'",
+                    tool_call_id
+                )));
+            }
+        }
         for (tool_call_idx, tool_call) in message.tool_calls.iter().enumerate() {
             if tool_call.id.trim().is_empty() {
                 return Err(LlmError::InvalidInput(format!(
@@ -104,6 +132,197 @@ fn validate_request_payload(messages: &[ChatMessage], tools: &[ToolDefinition]) 
     }
 
     Ok(())
+}
+
+#[derive(Debug, Clone)]
+struct CanonicalToolExchange {
+    call: ToolCall,
+    result_content: String,
+}
+
+#[derive(Debug, Clone)]
+enum CanonicalMessage {
+    System {
+        content: String,
+    },
+    User {
+        content: String,
+    },
+    Assistant {
+        content: String,
+        tool_exchanges: Vec<CanonicalToolExchange>,
+    },
+}
+
+#[derive(Debug, Clone, Default)]
+struct CanonicalConversation {
+    messages: Vec<CanonicalMessage>,
+    dropped_orphan_tool_results: usize,
+    stripped_orphan_assistant_calls: usize,
+    normalized_invalid_tool_arguments: usize,
+}
+
+fn sanitize_request_messages(messages: &[ChatMessage]) -> Vec<ChatMessage> {
+    let canonical = canonicalize_messages(messages);
+    if canonical.dropped_orphan_tool_results > 0
+        || canonical.stripped_orphan_assistant_calls > 0
+        || canonical.normalized_invalid_tool_arguments > 0
+    {
+        tracing::debug!(
+            dropped_orphan_tool_results = canonical.dropped_orphan_tool_results,
+            stripped_orphan_assistant_calls = canonical.stripped_orphan_assistant_calls,
+            normalized_invalid_tool_arguments = canonical.normalized_invalid_tool_arguments,
+            "sanitized tool-call contract before LLM request"
+        );
+    }
+
+    materialize_canonical_messages(&canonical.messages)
+}
+
+fn canonicalize_messages(messages: &[ChatMessage]) -> CanonicalConversation {
+    let mut out = CanonicalConversation::default();
+    let mut idx = 0usize;
+
+    while idx < messages.len() {
+        let message = &messages[idx];
+        match message.role {
+            Role::System => {
+                out.messages.push(CanonicalMessage::System {
+                    content: message.content.clone(),
+                });
+                idx += 1;
+            }
+            Role::User => {
+                out.messages.push(CanonicalMessage::User {
+                    content: message.content.clone(),
+                });
+                idx += 1;
+            }
+            Role::Assistant => {
+                let mut lookahead = idx + 1;
+                let mut tool_results: Vec<&ChatMessage> = Vec::new();
+                while lookahead < messages.len() && messages[lookahead].role == Role::Tool {
+                    tool_results.push(&messages[lookahead]);
+                    lookahead += 1;
+                }
+
+                let (tool_exchanges, dropped_results, stripped_calls, normalized_args) =
+                    canonicalize_assistant_tools(&message.tool_calls, &tool_results);
+                out.dropped_orphan_tool_results += dropped_results;
+                out.stripped_orphan_assistant_calls += stripped_calls;
+                out.normalized_invalid_tool_arguments += normalized_args;
+
+                out.messages.push(CanonicalMessage::Assistant {
+                    content: message.content.clone(),
+                    tool_exchanges,
+                });
+                idx = lookahead;
+            }
+            Role::Tool => {
+                out.dropped_orphan_tool_results += 1;
+                idx += 1;
+            }
+        }
+    }
+
+    out
+}
+
+fn canonicalize_assistant_tools(
+    tool_calls: &[ToolCall],
+    tool_results: &[&ChatMessage],
+) -> (Vec<CanonicalToolExchange>, usize, usize, usize) {
+    let mut normalized_calls: Vec<ToolCall> = Vec::with_capacity(tool_calls.len());
+    let mut normalized_invalid_tool_arguments = 0usize;
+    for tool_call in tool_calls {
+        let mut normalized = tool_call.clone();
+        if serde_json::from_str::<serde_json::Value>(&normalized.arguments).is_err() {
+            normalized.arguments = "{}".to_string();
+            normalized_invalid_tool_arguments += 1;
+        }
+        normalized_calls.push(normalized);
+    }
+
+    let mut consumed_results = vec![false; tool_results.len()];
+    let mut exchanges = Vec::new();
+    let mut stripped_orphan_assistant_calls = 0usize;
+
+    for tool_call in normalized_calls {
+        let result_idx = tool_results
+            .iter()
+            .enumerate()
+            .find_map(|(idx, candidate)| {
+                if consumed_results[idx] {
+                    return None;
+                }
+                if candidate.tool_call_id.as_deref() == Some(tool_call.id.as_str()) {
+                    Some(idx)
+                } else {
+                    None
+                }
+            });
+        let Some(result_idx) = result_idx else {
+            stripped_orphan_assistant_calls += 1;
+            continue;
+        };
+        consumed_results[result_idx] = true;
+        exchanges.push(CanonicalToolExchange {
+            call: tool_call,
+            result_content: tool_results[result_idx].content.clone(),
+        });
+    }
+
+    let dropped_orphan_tool_results = consumed_results.iter().filter(|used| !**used).count();
+
+    (
+        exchanges,
+        dropped_orphan_tool_results,
+        stripped_orphan_assistant_calls,
+        normalized_invalid_tool_arguments,
+    )
+}
+
+fn materialize_canonical_messages(messages: &[CanonicalMessage]) -> Vec<ChatMessage> {
+    let mut out: Vec<ChatMessage> = Vec::new();
+    for message in messages {
+        match message {
+            CanonicalMessage::System { content } => out.push(ChatMessage {
+                role: Role::System,
+                content: content.clone(),
+                tool_calls: vec![],
+                tool_call_id: None,
+            }),
+            CanonicalMessage::User { content } => out.push(ChatMessage {
+                role: Role::User,
+                content: content.clone(),
+                tool_calls: vec![],
+                tool_call_id: None,
+            }),
+            CanonicalMessage::Assistant {
+                content,
+                tool_exchanges,
+            } => {
+                out.push(ChatMessage {
+                    role: Role::Assistant,
+                    content: content.clone(),
+                    tool_calls: tool_exchanges
+                        .iter()
+                        .map(|exchange| exchange.call.clone())
+                        .collect(),
+                    tool_call_id: None,
+                });
+                for exchange in tool_exchanges {
+                    out.push(ChatMessage {
+                        role: Role::Tool,
+                        content: exchange.result_content.clone(),
+                        tool_calls: vec![],
+                        tool_call_id: Some(exchange.call.id.clone()),
+                    });
+                }
+            }
+        }
+    }
+    out
 }
 
 #[derive(Clone)]
@@ -149,11 +368,12 @@ impl LlmClient {
         messages: &[ChatMessage],
         tools: &[ToolDefinition],
     ) -> Result<ChatResponse> {
-        validate_request_payload(messages, tools)?;
+        let sanitized_messages = sanitize_request_messages(messages);
+        validate_request_payload(&sanitized_messages, tools)?;
         tracing::info!(
             provider = ?self.provider,
             model = %self.model,
-            message_count = messages.len(),
+            message_count = sanitized_messages.len(),
             tool_count = tools.len(),
             "llm chat request started"
         );
@@ -161,11 +381,11 @@ impl LlmClient {
         let resp = match self.provider {
             Provider::OpenAI => {
                 let c = OpenAiClient::new(self.client.clone(), &self.api_key, &self.model);
-                c.chat(messages, tools).await?
+                c.chat(&sanitized_messages, tools).await?
             }
             Provider::Anthropic => {
                 let c = AnthropicClient::new(self.client.clone(), &self.api_key, &self.model);
-                c.chat(messages, tools).await?
+                c.chat(&sanitized_messages, tools).await?
             }
         };
         tracing::info!(
@@ -187,11 +407,12 @@ impl LlmClient {
         messages: &[ChatMessage],
         tools: &[ToolDefinition],
     ) -> Result<Pin<Box<dyn Stream<Item = Result<StreamChunk>> + Send>>> {
-        validate_request_payload(messages, tools)?;
+        let sanitized_messages = sanitize_request_messages(messages);
+        validate_request_payload(&sanitized_messages, tools)?;
         tracing::info!(
             provider = ?self.provider,
             model = %self.model,
-            message_count = messages.len(),
+            message_count = sanitized_messages.len(),
             tool_count = tools.len(),
             "llm stream request started"
         );
@@ -199,11 +420,11 @@ impl LlmClient {
         let stream = match self.provider {
             Provider::OpenAI => {
                 let c = OpenAiClient::new(self.client.clone(), &self.api_key, &self.model);
-                c.chat_stream(messages, tools).await?
+                c.chat_stream(&sanitized_messages, tools).await?
             }
             Provider::Anthropic => {
                 let c = AnthropicClient::new(self.client.clone(), &self.api_key, &self.model);
-                c.chat_stream(messages, tools).await?
+                c.chat_stream(&sanitized_messages, tools).await?
             }
         };
         tracing::info!(
@@ -325,6 +546,92 @@ mod tests {
         assert_eq!(
             detect_provider("claude-3-sonnet").unwrap(),
             Provider::Anthropic
+        );
+    }
+
+    #[test]
+    fn sanitize_request_messages_drops_orphan_tool_result() {
+        let messages = vec![
+            ChatMessage {
+                role: Role::User,
+                content: "hello".to_string(),
+                tool_calls: vec![],
+                tool_call_id: None,
+            },
+            ChatMessage {
+                role: Role::Tool,
+                content: "{\"ok\":true}".to_string(),
+                tool_calls: vec![],
+                tool_call_id: Some("tool_missing".to_string()),
+            },
+        ];
+
+        let sanitized = sanitize_request_messages(&messages);
+        assert_eq!(sanitized.len(), 1);
+        assert_eq!(sanitized[0].role, Role::User);
+    }
+
+    #[test]
+    fn sanitize_request_messages_clears_orphan_assistant_tool_call_and_result() {
+        let messages = vec![
+            ChatMessage {
+                role: Role::Assistant,
+                content: "calling tool".to_string(),
+                tool_calls: vec![ToolCall {
+                    id: "tool_1".to_string(),
+                    name: "filesystem".to_string(),
+                    arguments: "{}".to_string(),
+                }],
+                tool_call_id: None,
+            },
+            ChatMessage {
+                role: Role::User,
+                content: "new turn".to_string(),
+                tool_calls: vec![],
+                tool_call_id: None,
+            },
+            ChatMessage {
+                role: Role::Tool,
+                content: "{\"late\":true}".to_string(),
+                tool_calls: vec![],
+                tool_call_id: Some("tool_1".to_string()),
+            },
+        ];
+
+        let sanitized = sanitize_request_messages(&messages);
+        assert_eq!(sanitized.len(), 2);
+        assert_eq!(sanitized[0].role, Role::Assistant);
+        assert!(sanitized[0].tool_calls.is_empty());
+        assert_eq!(sanitized[1].role, Role::User);
+    }
+
+    #[test]
+    fn validate_request_payload_rejects_orphan_tool_result_contract() {
+        let tools = vec![ToolDefinition {
+            name: "filesystem".to_string(),
+            description: "filesystem".to_string(),
+            parameters: json!({}),
+        }];
+        let messages = vec![
+            ChatMessage {
+                role: Role::User,
+                content: "hello".to_string(),
+                tool_calls: vec![],
+                tool_call_id: None,
+            },
+            ChatMessage {
+                role: Role::Tool,
+                content: "{\"ok\":true}".to_string(),
+                tool_calls: vec![],
+                tool_call_id: Some("tool_1".to_string()),
+            },
+        ];
+
+        let err = validate_request_payload(&messages, &tools)
+            .expect_err("orphan tool_result should be rejected");
+        assert!(
+            err.to_string()
+                .contains("tool_result must follow assistant message")
         );
     }
 }

@@ -4,7 +4,7 @@ use bytes::Bytes;
 use futures_util::Stream;
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::pin::Pin;
 use std::time::Instant;
 
@@ -259,21 +259,14 @@ impl AnthropicRequest {
         tools: &[ToolDefinition],
         stream: bool,
     ) -> Result<Self> {
-        let mut system = String::new();
-        let mut out_messages = Vec::new();
-
-        for m in messages {
-            match m.role {
-                Role::System => {
-                    if !system.is_empty() {
-                        system.push('\n');
-                    }
-                    system.push_str(m.content.trim());
-                }
-                Role::User => out_messages.push(to_anthropic_user_message(m)),
-                Role::Assistant => out_messages.push(to_anthropic_assistant_message(m)?),
-                Role::Tool => out_messages.push(to_anthropic_tool_result_message(m)?),
-            }
+        let (system, out_messages) = build_anthropic_messages(messages)?;
+        let (out_messages, dropped_tool_results) =
+            sanitize_anthropic_tool_result_contract(out_messages);
+        if dropped_tool_results > 0 {
+            tracing::warn!(
+                dropped_tool_results,
+                "sanitized anthropic tool_result contract before request"
+            );
         }
 
         Ok(Self {
@@ -285,6 +278,50 @@ impl AnthropicRequest {
             stream: if stream { Some(true) } else { None },
         })
     }
+}
+
+fn build_anthropic_messages(messages: &[ChatMessage]) -> Result<(String, Vec<AnthropicMessage>)> {
+    let mut system = String::new();
+    let mut out_messages = Vec::new();
+    let mut idx = 0usize;
+
+    while idx < messages.len() {
+        let message = &messages[idx];
+        match message.role {
+            Role::System => {
+                if !system.is_empty() {
+                    system.push('\n');
+                }
+                system.push_str(message.content.trim());
+                idx += 1;
+            }
+            Role::User => {
+                out_messages.push(to_anthropic_user_message(message));
+                idx += 1;
+            }
+            Role::Assistant => {
+                out_messages.push(to_anthropic_assistant_message(message)?);
+                idx += 1;
+            }
+            Role::Tool => {
+                // Anthropic requires tool_result blocks to be carried in a single user message
+                // following the assistant tool_use turn.
+                let mut blocks = Vec::new();
+                while idx < messages.len() && messages[idx].role == Role::Tool {
+                    blocks.push(to_anthropic_tool_result_block(&messages[idx])?);
+                    idx += 1;
+                }
+                if !blocks.is_empty() {
+                    out_messages.push(AnthropicMessage {
+                        role: "user".to_string(),
+                        content: blocks,
+                    });
+                }
+            }
+        }
+    }
+
+    Ok((system, out_messages))
 }
 
 #[derive(Debug, Serialize)]
@@ -334,16 +371,13 @@ fn to_anthropic_user_message(m: &ChatMessage) -> AnthropicMessage {
     }
 }
 
-fn to_anthropic_tool_result_message(m: &ChatMessage) -> Result<AnthropicMessage> {
+fn to_anthropic_tool_result_block(m: &ChatMessage) -> Result<AnthropicContentBlock> {
     let tool_use_id = m.tool_call_id.clone().ok_or_else(|| {
         LlmError::InvalidInput("anthropic tool result message is missing tool_call_id".to_string())
     })?;
-    Ok(AnthropicMessage {
-        role: "user".to_string(),
-        content: vec![AnthropicContentBlock::ToolResult {
-            tool_use_id,
-            content: m.content.clone(),
-        }],
+    Ok(AnthropicContentBlock::ToolResult {
+        tool_use_id,
+        content: m.content.clone(),
     })
 }
 
@@ -371,6 +405,58 @@ fn to_anthropic_assistant_message(m: &ChatMessage) -> Result<AnthropicMessage> {
         role: "assistant".to_string(),
         content: blocks,
     })
+}
+
+fn sanitize_anthropic_tool_result_contract(
+    messages: Vec<AnthropicMessage>,
+) -> (Vec<AnthropicMessage>, usize) {
+    let mut out: Vec<AnthropicMessage> = Vec::with_capacity(messages.len());
+    let mut dropped_tool_results = 0usize;
+
+    for mut message in messages {
+        let has_tool_result = message
+            .content
+            .iter()
+            .any(|block| matches!(block, AnthropicContentBlock::ToolResult { .. }));
+        if !has_tool_result {
+            if !message.content.is_empty() {
+                out.push(message);
+            }
+            continue;
+        }
+
+        let mut allowed_ids: HashSet<String> = out
+            .last()
+            .filter(|prev| prev.role == "assistant")
+            .map(|prev| {
+                prev.content
+                    .iter()
+                    .filter_map(|block| match block {
+                        AnthropicContentBlock::ToolUse { id, .. } => Some(id.clone()),
+                        _ => None,
+                    })
+                    .collect::<HashSet<String>>()
+            })
+            .unwrap_or_default();
+
+        message.content.retain(|block| match block {
+            AnthropicContentBlock::ToolResult { tool_use_id, .. } => {
+                if allowed_ids.remove(tool_use_id) {
+                    true
+                } else {
+                    dropped_tool_results = dropped_tool_results.saturating_add(1);
+                    false
+                }
+            }
+            _ => true,
+        });
+
+        if !message.content.is_empty() {
+            out.push(message);
+        }
+    }
+
+    (out, dropped_tool_results)
 }
 
 #[derive(Debug, Deserialize)]
@@ -525,4 +611,146 @@ enum AnthropicDelta {
 struct AnthropicMessageDelta {
     #[serde(default)]
     usage: Option<AnthropicUsage>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        AnthropicContentBlock, AnthropicMessage, build_anthropic_messages,
+        sanitize_anthropic_tool_result_contract,
+    };
+    use crate::types::{ChatMessage, Role, ToolCall};
+
+    #[test]
+    fn sanitize_anthropic_contract_drops_orphan_tool_result_not_after_assistant() {
+        let messages = vec![
+            AnthropicMessage {
+                role: "user".to_string(),
+                content: vec![AnthropicContentBlock::Text {
+                    text: "hi".to_string(),
+                }],
+            },
+            AnthropicMessage {
+                role: "user".to_string(),
+                content: vec![AnthropicContentBlock::ToolResult {
+                    tool_use_id: "tool_1".to_string(),
+                    content: "{\"ok\":true}".to_string(),
+                }],
+            },
+        ];
+        let (sanitized, dropped) = sanitize_anthropic_tool_result_contract(messages);
+        assert_eq!(dropped, 1);
+        assert_eq!(sanitized.len(), 1);
+        assert_eq!(sanitized[0].role, "user");
+    }
+
+    #[test]
+    fn sanitize_anthropic_contract_drops_tool_result_with_unknown_tool_use_id() {
+        let messages = vec![
+            AnthropicMessage {
+                role: "assistant".to_string(),
+                content: vec![AnthropicContentBlock::ToolUse {
+                    id: "tool_1".to_string(),
+                    name: "linear".to_string(),
+                    input: serde_json::json!({}),
+                }],
+            },
+            AnthropicMessage {
+                role: "user".to_string(),
+                content: vec![
+                    AnthropicContentBlock::ToolResult {
+                        tool_use_id: "tool_2".to_string(),
+                        content: "{\"ok\":false}".to_string(),
+                    },
+                    AnthropicContentBlock::Text {
+                        text: "note".to_string(),
+                    },
+                ],
+            },
+        ];
+        let (sanitized, dropped) = sanitize_anthropic_tool_result_contract(messages);
+        assert_eq!(dropped, 1);
+        assert_eq!(sanitized.len(), 2);
+        assert_eq!(sanitized[1].role, "user");
+        assert!(matches!(
+            sanitized[1].content[0],
+            AnthropicContentBlock::Text { .. }
+        ));
+    }
+
+    #[test]
+    fn sanitize_anthropic_contract_keeps_valid_tool_result() {
+        let messages = vec![
+            AnthropicMessage {
+                role: "assistant".to_string(),
+                content: vec![AnthropicContentBlock::ToolUse {
+                    id: "tool_1".to_string(),
+                    name: "linear".to_string(),
+                    input: serde_json::json!({}),
+                }],
+            },
+            AnthropicMessage {
+                role: "user".to_string(),
+                content: vec![AnthropicContentBlock::ToolResult {
+                    tool_use_id: "tool_1".to_string(),
+                    content: "{\"ok\":true}".to_string(),
+                }],
+            },
+        ];
+        let (sanitized, dropped) = sanitize_anthropic_tool_result_contract(messages);
+        assert_eq!(dropped, 0);
+        assert_eq!(sanitized.len(), 2);
+        assert_eq!(sanitized[1].role, "user");
+        assert_eq!(sanitized[1].content.len(), 1);
+    }
+
+    #[test]
+    fn build_anthropic_messages_coalesces_consecutive_tool_results() {
+        let messages = vec![
+            ChatMessage {
+                role: Role::Assistant,
+                content: String::new(),
+                tool_calls: vec![
+                    ToolCall {
+                        id: "tool_1".to_string(),
+                        name: "linear".to_string(),
+                        arguments: "{}".to_string(),
+                    },
+                    ToolCall {
+                        id: "tool_2".to_string(),
+                        name: "linear".to_string(),
+                        arguments: "{}".to_string(),
+                    },
+                ],
+                tool_call_id: None,
+            },
+            ChatMessage {
+                role: Role::Tool,
+                content: "{\"ok\":true}".to_string(),
+                tool_calls: vec![],
+                tool_call_id: Some("tool_1".to_string()),
+            },
+            ChatMessage {
+                role: Role::Tool,
+                content: "{\"ok\":true}".to_string(),
+                tool_calls: vec![],
+                tool_call_id: Some("tool_2".to_string()),
+            },
+        ];
+
+        let (_system, anthropic_messages) =
+            build_anthropic_messages(&messages).expect("build anthropic messages");
+        assert_eq!(anthropic_messages.len(), 2);
+        assert_eq!(anthropic_messages[0].role, "assistant");
+        assert_eq!(anthropic_messages[1].role, "user");
+        assert_eq!(anthropic_messages[1].content.len(), 2);
+        assert!(matches!(
+            anthropic_messages[1].content[0],
+            AnthropicContentBlock::ToolResult { .. }
+        ));
+        assert!(matches!(
+            anthropic_messages[1].content[1],
+            AnthropicContentBlock::ToolResult { .. }
+        ));
+    }
 }
