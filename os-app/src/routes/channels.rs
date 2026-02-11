@@ -9,7 +9,7 @@ use std::sync::Arc;
 pub fn router() -> axum::Router {
     axum::Router::new()
         .route("/api/v1/os/channels", get(list_channels))
-        .route("/api/v1/os/channels/:channel_id/probe", get(probe_channel))
+        .route("/api/v1/os/channels/{channel_id}/probe", get(probe_channel))
 }
 
 #[tracing::instrument(level = "debug", skip_all)]

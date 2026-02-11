@@ -7,6 +7,60 @@ use crate::session::Session;
 use chrono::Utc;
 use std::time::Duration;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ChatCommandSpec {
+    pub command: &'static str,
+    pub description: &'static str,
+}
+
+const SUPPORTED_COMMANDS: [ChatCommandSpec; 7] = [
+    ChatCommandSpec {
+        command: "/help",
+        description: "Show available commands",
+    },
+    ChatCommandSpec {
+        command: "/nuke",
+        description: "Nuke current chat context",
+    },
+    ChatCommandSpec {
+        command: "/status",
+        description: "Show runtime/model status",
+    },
+    ChatCommandSpec {
+        command: "/think",
+        description: "Toggle thinking visibility",
+    },
+    ChatCommandSpec {
+        command: "/verbose",
+        description: "Toggle tool-call visibility",
+    },
+    ChatCommandSpec {
+        command: "/usage",
+        description: "Show token usage totals",
+    },
+    ChatCommandSpec {
+        command: "/model",
+        description: "Inspect or set active model",
+    },
+];
+
+pub fn supported_commands() -> &'static [ChatCommandSpec] {
+    &SUPPORTED_COMMANDS
+}
+
+pub fn telegram_bot_commands() -> Vec<(String, String)> {
+    supported_commands()
+        .iter()
+        .filter_map(|spec| {
+            let command = spec.command.trim().trim_start_matches('/');
+            if command.is_empty() {
+                return None;
+            }
+            Some((command.to_string(), spec.description.to_string()))
+        })
+        .collect()
+}
+
 pub fn handle_command(
     cfg: &OpenShellConfig,
     session: &mut Session,
@@ -26,13 +80,13 @@ pub fn handle_command(
     let response = if command.eq_ignore_ascii_case("/model") {
         Some(handle_model_command(cfg, session, args))
     } else if command.eq_ignore_ascii_case("/help") {
-        ensure_no_args("/help", args).or_else(|| Some(help_text().to_string()))
-    } else if command.eq_ignore_ascii_case("/new") {
-        if let Some(usage) = ensure_no_args("/new", args) {
-            Some(usage)
+        ensure_no_args("/help", args).or_else(|| Some(help_text()))
+    } else if is_nuke_command(command) {
+        if !args.is_empty() {
+            Some("Usage: /nuke".to_string())
         } else {
             session.reset();
-            Some("Session reset.".to_string())
+            Some("Context nuked for this chat. Fresh start ready.".to_string())
         }
     } else if command.eq_ignore_ascii_case("/think") {
         if let Some(usage) = ensure_no_args("/think", args) {
@@ -64,13 +118,15 @@ pub fn handle_command(
             } else {
                 active_channels.join(",")
             };
+            let default_model = default_model(cfg);
+            let active_model = session
+                .model_override
+                .as_deref()
+                .unwrap_or(default_model.as_str());
             Some(format!(
                 "model={}\ndefault_model={}\nchannels={}\nuptime_seconds={}",
-                session
-                    .model_override
-                    .as_deref()
-                    .unwrap_or(cfg.general.model.as_str()),
-                cfg.general.model,
+                active_model,
+                default_model,
                 channels,
                 uptime.as_secs()
             ))
@@ -94,7 +150,7 @@ fn handle_model_command(cfg: &OpenShellConfig, session: &mut Session, args: &[&s
             session.model_override = None;
             format!(
                 "model override cleared; using default model {}",
-                cfg.general.model
+                default_model(cfg)
             )
         }
         [action] if action.eq_ignore_ascii_case("list") => model_summary(cfg, session, &available),
@@ -112,12 +168,14 @@ fn handle_model_command(cfg: &OpenShellConfig, session: &mut Session, args: &[&s
 }
 
 fn available_models(cfg: &OpenShellConfig) -> Vec<String> {
-    let mut models = Vec::new();
-    push_unique_model(&mut models, &cfg.general.model);
-    for model in &cfg.general.fallback_models {
-        push_unique_model(&mut models, model);
-    }
-    models
+    cfg.configured_models().unwrap_or_else(|_| {
+        let fallback = default_model(cfg);
+        if fallback.is_empty() {
+            Vec::new()
+        } else {
+            vec![fallback]
+        }
+    })
 }
 
 fn set_model_override(session: &mut Session, available: &[String], requested: &str) -> String {
@@ -144,28 +202,22 @@ fn resolve_model_name<'a>(available: &'a [String], requested: &str) -> Option<&'
 }
 
 fn model_summary(cfg: &OpenShellConfig, session: &Session, available: &[String]) -> String {
+    let default_model = default_model(cfg);
     let active = session
         .model_override
         .as_deref()
-        .unwrap_or(cfg.general.model.as_str());
+        .unwrap_or(default_model.as_str());
     format!(
         "active_model={active}\ndefault_model={}\navailable_models={}",
-        cfg.general.model,
+        default_model,
         available.join(",")
     )
 }
 
-fn push_unique_model(models: &mut Vec<String>, candidate: &str) {
-    let trimmed = candidate.trim();
-    if trimmed.is_empty() {
-        return;
-    }
-    if !models
-        .iter()
-        .any(|existing| existing.eq_ignore_ascii_case(trimmed))
-    {
-        models.push(trimmed.to_string());
-    }
+fn default_model(cfg: &OpenShellConfig) -> String {
+    cfg.default_model()
+        .map(str::to_string)
+        .unwrap_or_else(|_| "<invalid-config>".to_string())
 }
 
 fn is_clear_token(token: &str) -> bool {
@@ -183,8 +235,21 @@ fn ensure_no_args(usage: &str, args: &[&str]) -> Option<String> {
     }
 }
 
-fn help_text() -> &'static str {
-    "Supported: /help /new /status /think /verbose /usage /model"
+fn help_text() -> String {
+    let joined = supported_commands()
+        .iter()
+        .map(|spec| spec.command)
+        .collect::<Vec<_>>()
+        .join(" ");
+    format!("Supported: {joined}")
+}
+
+pub fn is_nuke_command(command: &str) -> bool {
+    command
+        .trim()
+        .split_whitespace()
+        .next()
+        .is_some_and(|value| value.eq_ignore_ascii_case("/nuke"))
 }
 
 #[cfg(test)]
@@ -197,11 +262,26 @@ mod tests {
 
     fn base_cfg() -> OpenShellConfig {
         serde_json::from_value(serde_json::json!({
+            "llm": {
+                "active_profile": "primary",
+                "fallback_profiles": ["backup"],
+                "profiles": {
+                    "primary": {
+                        "provider": "openai",
+                        "model": "gpt-4o-mini",
+                        "fallback_models": []
+                    },
+                    "backup": {
+                        "provider": "openai",
+                        "model": "gpt-4.1-mini",
+                        "fallback_models": [" GPT-4O-MINI ", "  "]
+                    }
+                }
+            },
             "general": {
-                "model": "gpt-4o-mini",
-                "fallback_models": ["gpt-4.1-mini", " GPT-4O-MINI ", "  "],
                 "system_prompt": "You are OpenShell."
             },
+            "keys": { "openai_api_key": "test-key" },
             "channels": {
                 "webchat": { "enabled": true, "port": 3000 }
             }
@@ -287,6 +367,52 @@ mod tests {
         .expect("model set response");
         assert!(response.contains("model override set to gpt-4.1-mini"));
         assert_eq!(session.model_override.as_deref(), Some("gpt-4.1-mini"));
+    }
+
+    #[test]
+    fn nuke_command_resets_session_history_and_usage() {
+        let cfg = base_cfg();
+        let mut session = new_session();
+        session.history.push(os_llm::ChatMessage {
+            role: os_llm::Role::User,
+            content: "hello".to_string(),
+            tool_calls: vec![],
+            tool_call_id: None,
+        });
+        session.usage_totals.prompt_tokens = 12;
+        session.usage_totals.completion_tokens = 34;
+        session.model_override = Some("gpt-4.1-mini".to_string());
+
+        let reply = handle_command(
+            &cfg,
+            &mut session,
+            "/nuke",
+            Duration::from_secs(1),
+            &["webchat".to_string()],
+        )
+        .expect("nuke reply");
+
+        assert!(reply.contains("nuked"));
+        assert!(session.history.is_empty());
+        assert_eq!(session.usage_totals.prompt_tokens, 0);
+        assert_eq!(session.usage_totals.completion_tokens, 0);
+        assert_eq!(session.model_override.as_deref(), Some("gpt-4.1-mini"));
+    }
+
+    #[test]
+    fn clear_command_is_unknown() {
+        let cfg = base_cfg();
+        let mut session = new_session();
+        let reply = handle_command(
+            &cfg,
+            &mut session,
+            "/clear",
+            Duration::from_secs(1),
+            &["webchat".to_string()],
+        )
+        .expect("unknown clear command");
+        assert!(reply.contains("Unknown command"));
+        assert!(reply.contains("/nuke"));
     }
 
     #[test]

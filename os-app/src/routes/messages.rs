@@ -54,6 +54,7 @@ async fn send_message(
                 content: req.message,
                 reply_to_message_id: None,
                 attachments: vec![],
+                metadata: serde_json::Value::Null,
             },
         )
         .await

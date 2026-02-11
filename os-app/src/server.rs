@@ -31,7 +31,8 @@ use os_channels::{
 };
 use os_llm::validate_tool_name_all_providers;
 use os_tools::{
-    ApplyPatchTool, BrowserTool, ClipboardTool, EmailTool, FilesystemTool, ImessageTool,
+    ApplyPatchTool, BrowserTool, ClipboardTool, EmailActionToggles, EmailTool, FilesystemTool,
+    ImessageActionToggles, ImessageTool, LinearActionToggles, LinearTool,
     ShellExecutionMode as ToolShellExecutionMode, ShellPolicy,
     ShellSandboxBackend as ToolShellSandboxBackend, ShellTool, Tool,
 };
@@ -61,8 +62,10 @@ pub struct OsState {
 
 pub async fn doctor(config_path: Option<PathBuf>) -> Result<()> {
     let (cfg, path) = OpenShellConfig::load_with_path(config_path).await?;
+    let model = cfg.default_model()?;
     tracing::info!(
-        model = %cfg.general.model,
+        model = %model,
+        llm_active_profile = %cfg.llm.active_profile,
         runtime_mode = ?cfg.runtime.mode,
         runtime_data_dir = %cfg.runtime.data_dir,
         config_path = %path.display(),
@@ -73,8 +76,10 @@ pub async fn doctor(config_path: Option<PathBuf>) -> Result<()> {
 
 pub async fn status(config_path: Option<PathBuf>) -> Result<()> {
     let (cfg, path) = OpenShellConfig::load_with_path(config_path).await?;
+    let model = cfg.default_model()?;
     tracing::info!(
-        model = %cfg.general.model,
+        model = %model,
+        llm_active_profile = %cfg.llm.active_profile,
         runtime_mode = ?cfg.runtime.mode,
         runtime_data_dir = %cfg.runtime.data_dir,
         config_path = %path.display(),
@@ -156,6 +161,7 @@ pub async fn send_one_shot(
                 content: message.to_string(),
                 reply_to_message_id: None,
                 attachments: vec![],
+                metadata: serde_json::Value::Null,
             },
         )
         .await?;
@@ -167,6 +173,7 @@ pub async fn serve(config_path: Option<PathBuf>) -> Result<()> {
     let started_at = Instant::now();
     let network_policy = cfg.runtime_network_policy()?;
     let addr = network_policy.bind_addr;
+    let model = cfg.default_model()?;
     tracing::info!(
         runtime_mode = ?cfg.runtime.mode,
         runtime_data_dir = %cfg.runtime.data_dir,
@@ -181,7 +188,8 @@ pub async fn serve(config_path: Option<PathBuf>) -> Result<()> {
         runtime_http_timeout_seconds = cfg.runtime.http_timeout_seconds,
         runtime_http_max_in_flight = cfg.runtime.http_max_in_flight,
         bind_addr = %addr,
-        model = %cfg.general.model,
+        model = %model,
+        llm_active_profile = %cfg.llm.active_profile,
         webchat_enabled = cfg.channels.webchat.enabled,
         telegram_enabled = cfg.channels.telegram.enabled,
         discord_enabled = cfg.channels.discord.enabled,
@@ -199,6 +207,9 @@ pub async fn serve(config_path: Option<PathBuf>) -> Result<()> {
         context_max_prompt_tokens = cfg.context.max_prompt_tokens,
         context_min_recent_messages = cfg.context.min_recent_messages,
         context_max_tool_chars = cfg.context.max_tool_chars,
+        context_tool_loops_max = cfg.context.tool_loops_max,
+        context_tool_max_runtime_seconds = cfg.context.tool_max_runtime_seconds,
+        context_tool_no_progress_limit = cfg.context.tool_no_progress_limit,
         "server configuration loaded"
     );
     let listener = preflight_bind_listener(addr).await?;
@@ -258,6 +269,12 @@ pub async fn serve(config_path: Option<PathBuf>) -> Result<()> {
         tools.push(Arc::new(EmailTool::new(
             &cfg.channels.email.gmail_access_token,
             cfg.channels.email.query.clone(),
+            EmailActionToggles {
+                list_inbox: cfg.channels.email.actions.list_inbox,
+                search: cfg.channels.email.actions.search,
+                read: cfg.channels.email.actions.read,
+                send: cfg.channels.email.actions.send,
+            },
         )?));
     }
     if cfg.tools.tool_enabled("imessage") && cfg.channels.imessage.enabled {
@@ -269,7 +286,31 @@ pub async fn serve(config_path: Option<PathBuf>) -> Result<()> {
             .map(|p| expand_home(&p))
             .transpose()?
             .ok_or_else(|| anyhow::anyhow!("channels.imessage.source_db is required"))?;
-        tools.push(Arc::new(ImessageTool::new(source_db)?));
+        tools.push(Arc::new(ImessageTool::new(
+            source_db,
+            ImessageActionToggles {
+                list_recent: cfg.channels.imessage.actions.list_recent,
+                send: cfg.channels.imessage.actions.send,
+            },
+        )?));
+    }
+    if cfg.tools.tool_enabled("linear") && cfg.channels.linear.enabled {
+        tools.push(Arc::new(LinearTool::new(
+            &cfg.channels.linear.api_key,
+            Some(cfg.channels.linear.default_team_id.clone()),
+            LinearActionToggles {
+                whoami: cfg.channels.linear.actions.whoami,
+                list_assigned: cfg.channels.linear.actions.list_assigned,
+                list_users: cfg.channels.linear.actions.list_users,
+                list_teams: cfg.channels.linear.actions.list_teams,
+                list_projects: cfg.channels.linear.actions.list_projects,
+                create_issue: cfg.channels.linear.actions.create_issue,
+                create_project: cfg.channels.linear.actions.create_project,
+                update_issue: cfg.channels.linear.actions.update_issue,
+                assign_issue: cfg.channels.linear.actions.assign_issue,
+                comment_issue: cfg.channels.linear.actions.comment_issue,
+            },
+        )?));
     }
     preflight_validate_tool_names(&tools)?;
 
@@ -326,6 +367,7 @@ pub async fn serve(config_path: Option<PathBuf>) -> Result<()> {
         runtime.project_id,
         runtime.project_db_handle.clone(),
         runtime.evaluation.clone(),
+        channels.clone(),
     ));
 
     let gateway = Arc::new(Gateway::new(
@@ -488,26 +530,29 @@ fn preflight_validate_tool_names(tools: &[Arc<dyn Tool>]) -> Result<()> {
 
 fn build_llm_clients(cfg: &OpenShellConfig) -> Result<Vec<os_llm::LlmClient>> {
     let mut clients = Vec::new();
-    let mut seen_profiles: HashSet<(String, String)> = HashSet::new();
+    let mut seen_profiles: HashSet<(String, String, String)> = HashSet::new();
 
-    let mut model_chain = Vec::with_capacity(1 + cfg.general.fallback_models.len());
-    model_chain.push(cfg.general.model.clone());
-    model_chain.extend(cfg.general.fallback_models.iter().cloned());
+    for profile_name in cfg.llm_profile_chain_names()? {
+        let profile = cfg.llm_profile(&profile_name)?;
+        let keys = cfg.api_keys_for_provider(profile.provider)?;
+        let mut model_chain = Vec::with_capacity(1 + profile.fallback_models.len());
+        model_chain.push(profile.model.clone());
+        model_chain.extend(profile.fallback_models.iter().cloned());
 
-    for model in model_chain {
-        let keys = cfg.api_keys_for_model_name(&model)?;
-        for api_key in keys {
-            let profile_key = (model.clone(), api_key.clone());
-            if !seen_profiles.insert(profile_key) {
-                continue;
+        for model in model_chain {
+            for api_key in &keys {
+                let profile_key = (profile_name.clone(), model.clone(), api_key.clone());
+                if !seen_profiles.insert(profile_key) {
+                    continue;
+                }
+                clients.push(os_llm::LlmClient::new(api_key, &model)?);
             }
-            clients.push(os_llm::LlmClient::new(&api_key, &model)?);
         }
     }
 
     if clients.is_empty() {
         return Err(anyhow::anyhow!(
-            "no llm profiles could be built from model chain"
+            "no llm clients could be built from configured llm profile chain"
         ));
     }
     Ok(clients)

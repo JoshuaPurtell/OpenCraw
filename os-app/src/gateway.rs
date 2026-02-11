@@ -2,18 +2,22 @@
 //!
 //! See: specifications/openshell/implementation_v0_1_0.md
 
-use crate::assistant::AssistantAgent;
+use crate::assistant::{ActionDecision, AssistantAgent};
 use crate::commands;
 use crate::config::{OpenShellConfig, QueueMode};
 use crate::pairing;
 use crate::session::SessionManager;
-use anyhow::Result;
+use anyhow::{Error, Result};
 use os_channels::{ChannelAdapter, InboundMessage, InboundMessageKind, OutboundMessage};
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::{Mutex, Semaphore, mpsc, watch};
 use tokio_util::sync::CancellationToken;
+use uuid::Uuid;
+
+const TELEGRAM_EDIT_MESSAGE_ID_KEY: &str = "telegram_edit_message_id";
+const TELEGRAM_CLEAR_REPLY_MARKUP_KEY: &str = "telegram_clear_reply_markup";
 
 #[derive(Clone)]
 struct LaneHandle {
@@ -24,6 +28,7 @@ struct LaneHandle {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum HandleInboundOutcome {
     Completed,
+    Nuked,
     Interrupted,
 }
 
@@ -104,8 +109,114 @@ impl Gateway {
                 inbound_kind = ?inbound.kind,
                 "inbound message received"
             );
+            if self.try_handle_action_decision(&inbound).await? {
+                continue;
+            }
             self.dispatch_inbound(inbound, &shutdown).await?;
         }
+    }
+
+    async fn try_handle_action_decision(&self, inbound: &InboundMessage) -> Result<bool> {
+        let Some(decision) = parse_action_decision_command(&inbound.content) else {
+            return Ok(false);
+        };
+
+        if inbound.kind != InboundMessageKind::Message {
+            return Ok(false);
+        }
+
+        let Some(channel) = self.channels.get(inbound.channel_id.as_str()) else {
+            return Ok(false);
+        };
+
+        if !pairing::is_allowed(
+            &self.cfg,
+            inbound.channel_id.as_str(),
+            inbound.sender_id.as_str(),
+        ) {
+            tracing::warn!(
+                channel_id = %inbound.channel_id,
+                sender_id = %inbound.sender_id,
+                "approval decision rejected by pairing policy"
+            );
+            return Ok(true);
+        }
+
+        let reply = self
+            .assistant
+            .resolve_action_decision(
+                inbound.channel_id.as_str(),
+                inbound.sender_id.as_str(),
+                inbound.thread_id.as_ref().map(|id| id.as_str()),
+                decision.decision,
+                decision.action_id,
+                decision.reason.as_deref(),
+            )
+            .await?;
+
+        if let Some(recipient) = inbound.thread_id.as_ref() {
+            if inbound.channel_id.as_str().eq_ignore_ascii_case("telegram") {
+                if let Some(callback_message_id) =
+                    parse_telegram_callback_message_id(&inbound.metadata)
+                {
+                    let resolution =
+                        render_telegram_approval_resolution(decision.decision, decision.action_id);
+                    let metadata = serde_json::json!({
+                        TELEGRAM_EDIT_MESSAGE_ID_KEY: callback_message_id,
+                        TELEGRAM_CLEAR_REPLY_MARKUP_KEY: true,
+                    });
+                    if let Err(error) = channel
+                        .send(
+                            recipient.as_str(),
+                            OutboundMessage {
+                                content: resolution,
+                                reply_to_message_id: None,
+                                attachments: vec![],
+                                metadata,
+                            },
+                        )
+                        .await
+                    {
+                        tracing::warn!(
+                            %error,
+                            channel_id = %inbound.channel_id,
+                            sender_id = %inbound.sender_id,
+                            callback_message_id,
+                            "failed to update telegram approval prompt state"
+                        );
+                    }
+                }
+            }
+
+            let reply_to_message_id =
+                if inbound.channel_id.as_str().eq_ignore_ascii_case("telegram") {
+                    parse_telegram_callback_message_id(&inbound.metadata)
+                        .map(|value| value.to_string().into())
+                        .or_else(|| Some(inbound.message_id.clone()))
+                } else {
+                    Some(inbound.message_id.clone())
+                };
+            channel
+                .send(
+                    recipient.as_str(),
+                    OutboundMessage {
+                        content: reply,
+                        reply_to_message_id,
+                        attachments: vec![],
+                        metadata: serde_json::Value::Null,
+                    },
+                )
+                .await?;
+        }
+
+        tracing::info!(
+            channel_id = %inbound.channel_id,
+            sender_id = %inbound.sender_id,
+            action_id = ?decision.action_id,
+            decision = ?decision.decision,
+            "action decision handled out-of-band"
+        );
+        Ok(true)
     }
 
     async fn dispatch_inbound(
@@ -216,6 +327,11 @@ impl Gateway {
                 "lane dequeued inbound message"
             );
             let outcome = self.handle_inbound(inbound, &mut interrupt_rx).await?;
+            if outcome == HandleInboundOutcome::Nuked {
+                drain_lane_receiver(&mut lane_rx, &mut pending);
+                pending.clear();
+                tracing::info!(lane = %lane_key, "lane backlog purged by /nuke command");
+            }
             if outcome == HandleInboundOutcome::Interrupted {
                 tracing::warn!(lane = %lane_key, "assistant run interrupted by newer lane message");
             }
@@ -291,9 +407,29 @@ impl Gateway {
             uptime,
             &active_channels,
         ) {
+            let is_nuke = commands::is_nuke_command(&inbound.content);
             drop(session);
-            self.sessions.persist().await?;
+            let mut reply = reply;
+            if is_nuke {
+                let removed_session = self
+                    .sessions
+                    .clear_scope(inbound.channel_id.as_str(), inbound.sender_id.as_str())
+                    .await?;
+                let nuked_actions = self
+                    .assistant
+                    .nuke_pending_actions_for_sender(
+                        inbound.channel_id.as_str(),
+                        inbound.sender_id.as_str(),
+                    )
+                    .await?;
+                reply = format!(
+                    "Context nuked. session_removed={removed_session} pending_actions_denied={nuked_actions} lane_backlog_purged=true"
+                );
+            } else {
+                self.sessions.persist().await?;
+            }
             tracing::info!(
+                is_nuke,
                 reply_len = reply.len(),
                 "command handled inbound message without assistant run"
             );
@@ -304,18 +440,57 @@ impl Gateway {
                         content: reply,
                         reply_to_message_id: Some(inbound.message_id.clone()),
                         attachments: vec![],
+                        metadata: serde_json::Value::Null,
                     },
                 )
                 .await?;
-            return Ok(HandleInboundOutcome::Completed);
+            return Ok(if is_nuke {
+                HandleInboundOutcome::Nuked
+            } else {
+                HandleInboundOutcome::Completed
+            });
         }
 
         session.last_user_message_id = Some(inbound.message_id.to_string());
         session.last_active = chrono::Utc::now();
-        if channel.supports_typing_events() {
+        let typing_heartbeat = if channel.supports_typing_events() {
             tracing::debug!("typing indicator enabled");
-            channel.send_typing(recipient.as_str(), true).await?;
-        }
+            if let Err(error) = channel.send_typing(recipient.as_str(), true).await {
+                tracing::warn!(
+                    %error,
+                    channel_id = %inbound.channel_id,
+                    "failed to send initial typing indicator"
+                );
+            }
+
+            let cancel = CancellationToken::new();
+            let cancel_child = cancel.child_token();
+            let channel_typing = channel.clone();
+            let recipient_typing = recipient.clone();
+            let channel_id = inbound.channel_id.to_string();
+            let heartbeat = tokio::spawn(async move {
+                let mut ticker = tokio::time::interval(Duration::from_secs(4));
+                ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+                ticker.tick().await;
+                loop {
+                    tokio::select! {
+                        _ = cancel_child.cancelled() => break,
+                        _ = ticker.tick() => {
+                            if let Err(error) = channel_typing.send_typing(recipient_typing.as_str(), true).await {
+                                tracing::warn!(
+                                    %error,
+                                    channel_id = %channel_id,
+                                    "typing heartbeat send failed"
+                                );
+                            }
+                        }
+                    }
+                }
+            });
+            Some((cancel, heartbeat))
+        } else {
+            None
+        };
 
         let supports_streaming = channel.supports_streaming_deltas();
         tracing::info!(supports_streaming, "channel capability evaluated");
@@ -346,6 +521,7 @@ impl Gateway {
             let run_fut = self.assistant.run(
                 inbound.channel_id.as_str(),
                 inbound.sender_id.as_str(),
+                Some(recipient.as_str()),
                 &mut session,
                 &inbound.content,
                 stream_tx,
@@ -364,6 +540,7 @@ impl Gateway {
                     .run(
                         inbound.channel_id.as_str(),
                         inbound.sender_id.as_str(),
+                        Some(recipient.as_str()),
                         &mut session,
                         &inbound.content,
                         stream_tx,
@@ -384,29 +561,92 @@ impl Gateway {
                 .map_err(|e| anyhow::anyhow!("delta stream task join failed: {e}"))??;
             tracing::debug!("streaming delta task drained");
         }
-        if channel.supports_typing_events() {
+        if let Some((typing_cancel, typing_task)) = typing_heartbeat {
+            typing_cancel.cancel();
+            if let Err(error) = typing_task.await {
+                tracing::warn!(
+                    %error,
+                    channel_id = %inbound.channel_id,
+                    "typing heartbeat join failed"
+                );
+            }
             tracing::debug!("typing indicator disabled");
-            channel.send_typing(recipient.as_str(), false).await?;
+            if let Err(error) = channel.send_typing(recipient.as_str(), false).await {
+                tracing::warn!(
+                    %error,
+                    channel_id = %inbound.channel_id,
+                    "failed to disable typing indicator"
+                );
+            }
         }
         let response = match response {
-            AssistantRunOutcome::Completed(response) => response?,
+            AssistantRunOutcome::Completed(Ok(response)) => response,
+            AssistantRunOutcome::Completed(Err(error)) => {
+                let fallback = user_visible_assistant_error(&error);
+                tracing::error!(
+                    %error,
+                    channel_id = %inbound.channel_id,
+                    sender_id = %inbound.sender_id,
+                    "assistant run failed; returning fallback error reply"
+                );
+                if let Err(send_error) = channel
+                    .send(
+                        recipient.as_str(),
+                        OutboundMessage {
+                            content: fallback,
+                            reply_to_message_id: Some(inbound.message_id.clone()),
+                            attachments: vec![],
+                            metadata: serde_json::Value::Null,
+                        },
+                    )
+                    .await
+                {
+                    tracing::error!(
+                        %send_error,
+                        channel_id = %inbound.channel_id,
+                        sender_id = %inbound.sender_id,
+                        "failed to deliver assistant error reply"
+                    );
+                }
+                return Ok(HandleInboundOutcome::Completed);
+            }
             AssistantRunOutcome::Interrupted => {
                 tracing::warn!("assistant run interrupted by queue mode");
                 return Ok(HandleInboundOutcome::Interrupted);
             }
         };
+        let response = if response.trim().is_empty() {
+            tracing::warn!(
+                channel_id = %inbound.channel_id,
+                sender_id = %inbound.sender_id,
+                "assistant returned empty response; sending fallback message"
+            );
+            "I couldn't produce a response message for that request. Please retry. If this follows a tool approval prompt, approve/deny it first and resend your request.".to_string()
+        } else {
+            response
+        };
         tracing::info!(response_len = response.len(), "sending assistant response");
 
-        channel
+        if let Err(error) = channel
             .send(
                 recipient.as_str(),
                 OutboundMessage {
                     content: response,
-                    reply_to_message_id: Some(inbound.message_id),
+                    reply_to_message_id: Some(inbound.message_id.clone()),
                     attachments: vec![],
+                    metadata: serde_json::Value::Null,
                 },
             )
-            .await?;
+            .await
+        {
+            tracing::error!(
+                %error,
+                channel_id = %inbound.channel_id,
+                sender_id = %inbound.sender_id,
+                "failed to deliver assistant response"
+            );
+            return Ok(HandleInboundOutcome::Completed);
+        }
         tracing::info!("assistant response delivered");
 
         Ok(HandleInboundOutcome::Completed)
@@ -417,6 +657,88 @@ impl Gateway {
 enum AssistantRunOutcome {
     Completed(Result<String>),
     Interrupted,
+}
+
+#[derive(Debug, Clone)]
+struct ParsedActionDecision {
+    decision: ActionDecision,
+    action_id: Option<Uuid>,
+    reason: Option<String>,
+}
+
+fn parse_telegram_callback_message_id(metadata: &serde_json::Value) -> Option<i64> {
+    metadata
+        .get("message")
+        .and_then(|value| value.get("message_id"))
+        .and_then(|value| {
+            value.as_i64().or_else(|| {
+                value
+                    .as_str()
+                    .and_then(|raw| raw.trim().parse::<i64>().ok())
+            })
+        })
+}
+
+fn render_telegram_approval_resolution(
+    decision: ActionDecision,
+    action_id: Option<Uuid>,
+) -> String {
+    let decision_label = match decision {
+        ActionDecision::Approve => "APPROVED",
+        ActionDecision::Deny => "DENIED",
+    };
+    let action_label = action_id
+        .map(|id| id.to_string())
+        .unwrap_or_else(|| "unknown".to_string());
+    format!(
+        "Approval {decision_label}\nAction ID: `{action_label}`\nStatus: closed (this prompt is no longer interactive)."
+    )
+}
+
+fn parse_action_decision_command(content: &str) -> Option<ParsedActionDecision> {
+    let trimmed = content.trim();
+    if !trimmed.starts_with('/') {
+        return None;
+    }
+
+    let mut parts = trimmed.split_whitespace();
+    let command = parts.next()?.to_ascii_lowercase();
+    let decision = match command.as_str() {
+        "/approve" | "/approve-action" => ActionDecision::Approve,
+        "/deny" | "/deny-action" => ActionDecision::Deny,
+        _ => return None,
+    };
+
+    let remaining: Vec<&str> = parts.collect();
+    let requires_action_id = matches!(command.as_str(), "/approve-action" | "/deny-action");
+    let action_id = if requires_action_id {
+        Some(Uuid::parse_str(remaining.first()?).ok()?)
+    } else {
+        remaining
+            .first()
+            .and_then(|candidate| Uuid::parse_str(candidate).ok())
+    };
+    let reason = match decision {
+        ActionDecision::Approve => None,
+        ActionDecision::Deny => {
+            let start_idx = usize::from(action_id.is_some());
+            let text = remaining
+                .iter()
+                .skip(start_idx)
+                .copied()
+                .collect::<Vec<_>>()
+                .join(" ")
+                .trim()
+                .to_string();
+            if text.is_empty() { None } else { Some(text) }
+        }
+    };
+
+    Some(ParsedActionDecision {
+        decision,
+        action_id,
+        reason,
+    })
 }
 
 async fn wait_for_interrupt_signal(
@@ -582,6 +904,19 @@ fn attach_queue_metadata(message: &mut InboundMessage, key: &str, value: u64) {
     message.metadata = serde_json::Value::Object(map);
 }
 
+fn user_visible_assistant_error(error: &Error) -> String {
+    let normalized = error.to_string().to_ascii_lowercase();
+    if normalized.contains("429 too many requests") || normalized.contains("rate_limit") {
+        return "I hit the AI provider rate limit for this request. Please retry in a few seconds. If it keeps happening, send /nuke to reset this chat context and reduce prompt size.".to_string();
+    }
+
+    if normalized.contains("timeout") || normalized.contains("timed out") {
+        return "The request timed out before I could finish. Please retry once. If it keeps timing out, send /nuke to reset this chat context and try a shorter request.".to_string();
+    }
+
+    "I hit an internal error while processing that request. Please retry once. If it keeps failing, send /nuke to reset this chat context and try again.".to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -703,5 +1038,60 @@ mod tests {
                 .and_then(|v| v.as_u64()),
             Some(2)
         );
+    }
+
+    #[test]
+    fn parse_action_decision_command_supports_explicit_ids() {
+        let action_id = Uuid::new_v4();
+        let parsed = parse_action_decision_command(&format!("/approve-action {action_id}"))
+            .expect("parse approve-action");
+        assert_eq!(parsed.decision, ActionDecision::Approve);
+        assert_eq!(parsed.action_id, Some(action_id));
+    }
+
+    #[test]
+    fn parse_action_decision_command_supports_latest_pending_shortcut() {
+        let parsed = parse_action_decision_command("/deny this is unsafe")
+            .expect("parse deny without explicit id");
+        assert_eq!(parsed.decision, ActionDecision::Deny);
+        assert_eq!(parsed.action_id, None);
+        assert_eq!(parsed.reason.as_deref(), Some("this is unsafe"));
+    }
+
+    #[test]
+    fn parse_telegram_callback_message_id_extracts_nested_message_id() {
+        let metadata = serde_json::json!({
+            "id": "callback-id",
+            "message": {
+                "message_id": 12345
+            }
+        });
+        assert_eq!(parse_telegram_callback_message_id(&metadata), Some(12345));
+    }
+
+    #[test]
+    fn render_telegram_approval_resolution_marks_prompt_closed() {
+        let action_id = Uuid::new_v4();
+        let rendered =
+            render_telegram_approval_resolution(ActionDecision::Approve, Some(action_id));
+        assert!(rendered.contains("APPROVED"));
+        assert!(rendered.contains("closed"));
+        assert!(rendered.contains(&action_id.to_string()));
+    }
+
+    #[test]
+    fn user_visible_assistant_error_handles_rate_limit() {
+        let err = anyhow::anyhow!("anthropic stream status=429 Too Many Requests rate_limit_error");
+        let msg = user_visible_assistant_error(&err);
+        assert!(msg.contains("rate limit"));
+        assert!(msg.contains("/nuke"));
+    }
+
+    #[test]
+    fn user_visible_assistant_error_handles_timeout() {
+        let err = anyhow::anyhow!("request timed out while waiting for response");
+        let msg = user_visible_assistant_error(&err);
+        assert!(msg.contains("timed out"));
+        assert!(msg.contains("/nuke"));
     }
 }

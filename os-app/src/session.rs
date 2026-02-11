@@ -284,6 +284,26 @@ DELETE FROM opencraw_sessions
         Ok(false)
     }
 
+    pub async fn clear_scope(&self, channel_id: &str, sender_id: &str) -> Result<bool> {
+        let key = SessionScope::new(channel_id, sender_id);
+        self.project_db
+            .execute(
+                self.org_id,
+                &self.project_db_handle,
+                r#"
+DELETE FROM opencraw_sessions
+ WHERE channel_id = ?1
+   AND sender_id = ?2
+"#,
+                &[
+                    ProjectDbParam::String(key.channel_id().to_string()),
+                    ProjectDbParam::String(key.sender_id().to_string()),
+                ],
+            )
+            .await?;
+        Ok(self.sessions.remove(&key).is_some())
+    }
+
     pub async fn persist(&self) -> Result<()> {
         let snapshots: Vec<(SessionScope, Session)> = self
             .sessions
