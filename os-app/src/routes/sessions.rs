@@ -55,10 +55,15 @@ async fn set_session_model(
 
     let configured_models = {
         let snapshot = state.config_control.snapshot().await;
-        collect_configured_models(
-            snapshot.config.general.model.as_str(),
-            &snapshot.config.general.fallback_models,
-        )
+        match snapshot.config.configured_models() {
+            Ok(models) => models,
+            Err(error) => {
+                return Json(serde_json::json!({
+                    "status": "error",
+                    "error": format!("model configuration invalid: {error}"),
+                }));
+            }
+        }
     };
 
     let normalized_override =
@@ -95,28 +100,6 @@ async fn set_session_model(
     }
 }
 
-fn collect_configured_models(default_model: &str, fallback_models: &[String]) -> Vec<String> {
-    let mut models = Vec::new();
-    push_configured_model(&mut models, default_model);
-    for fallback in fallback_models {
-        push_configured_model(&mut models, fallback);
-    }
-    models
-}
-
-fn push_configured_model(models: &mut Vec<String>, candidate: &str) {
-    let trimmed = candidate.trim();
-    if trimmed.is_empty() {
-        return;
-    }
-    if !models
-        .iter()
-        .any(|existing| existing.eq_ignore_ascii_case(trimmed))
-    {
-        models.push(trimmed.to_string());
-    }
-}
-
 fn normalize_model_override(
     model_override: Option<&str>,
     configured_models: &[String],
@@ -149,21 +132,8 @@ fn validate_model_pinning(
 
 #[cfg(test)]
 mod tests {
-    use super::{collect_configured_models, normalize_model_override, validate_model_pinning};
+    use super::{normalize_model_override, validate_model_pinning};
     use crate::session::ModelPinningMode;
-
-    #[test]
-    fn collect_configured_models_trims_and_deduplicates() {
-        let models = collect_configured_models(
-            " gpt-4o-mini ",
-            &[
-                "gpt-4.1-mini".to_string(),
-                " GPT-4O-MINI ".to_string(),
-                " ".to_string(),
-            ],
-        );
-        assert_eq!(models, vec!["gpt-4o-mini", "gpt-4.1-mini"]);
-    }
 
     #[test]
     fn normalize_model_override_accepts_case_insensitive_match() {

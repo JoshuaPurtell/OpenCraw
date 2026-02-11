@@ -1,0 +1,18 @@
+[channels]
+external_plugins = []
+
+# Example external channel plugin:
+# [[channels.external_plugins]]
+# id = "custom_ops"
+# enabled = true
+# send_url = "https://plugins.example.com/custom_ops/send"
+# poll_url = "https://plugins.example.com/custom_ops/poll"
+# auth_token = "..."
+# poll_interval_ms = 3000
+# start_from_latest = true
+# supports_streaming_deltas = false
+# supports_typing_events = false
+# supports_reactions = true
+# [channels.external_plugins.access]
+# mode = "pairing"
+# allowed_senders = []

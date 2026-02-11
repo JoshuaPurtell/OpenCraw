@@ -10,6 +10,7 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OpenShellConfig {
+    pub llm: LlmConfig,
     pub general: GeneralConfig,
     #[serde(default)]
     pub runtime: RuntimeConfig,
@@ -37,13 +38,6 @@ pub struct OpenShellConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GeneralConfig {
-    pub model: String,
-    #[serde(default)]
-    pub fallback_models: Vec<String>,
-    #[serde(default = "default_failover_cooldown_base_seconds")]
-    pub failover_cooldown_base_seconds: u64,
-    #[serde(default = "default_failover_cooldown_max_seconds")]
-    pub failover_cooldown_max_seconds: u64,
     pub system_prompt: String,
 }
 
@@ -53,6 +47,35 @@ fn default_failover_cooldown_base_seconds() -> u64 {
 
 fn default_failover_cooldown_max_seconds() -> u64 {
     300
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[serde(rename_all = "lowercase")]
+pub enum LlmProvider {
+    Openai,
+    Anthropic,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LlmProfileConfig {
+    pub provider: LlmProvider,
+    pub model: String,
+    #[serde(default)]
+    pub fallback_models: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LlmConfig {
+    pub active_profile: String,
+    #[serde(default)]
+    pub fallback_profiles: Vec<String>,
+    #[serde(default = "default_failover_cooldown_base_seconds")]
+    pub failover_cooldown_base_seconds: u64,
+    #[serde(default = "default_failover_cooldown_max_seconds")]
+    pub failover_cooldown_max_seconds: u64,
+    pub profiles: std::collections::BTreeMap<String, LlmProfileConfig>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -220,25 +243,199 @@ pub struct WebChatConfig {
     pub port: u16,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SenderAccessMode {
+    Pairing,
+    Allowlist,
+    Open,
+}
+
+fn default_sender_access_mode() -> SenderAccessMode {
+    SenderAccessMode::Pairing
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ChannelAccessConfig {
+    #[serde(default = "default_sender_access_mode")]
+    pub mode: SenderAccessMode,
+    #[serde(default)]
+    pub allowed_senders: Vec<String>,
+}
+
+impl Default for ChannelAccessConfig {
+    fn default() -> Self {
+        Self {
+            mode: default_sender_access_mode(),
+            allowed_senders: Vec::new(),
+        }
+    }
+}
+
+fn default_telegram_long_poll_timeout_seconds() -> u64 {
+    30
+}
+
+fn default_telegram_allowed_updates() -> Vec<String> {
+    vec![
+        "message".to_string(),
+        "message_reaction".to_string(),
+        "callback_query".to_string(),
+    ]
+}
+
+fn default_telegram_retry_base_ms() -> u64 {
+    250
+}
+
+fn default_telegram_retry_max_ms() -> u64 {
+    30_000
+}
+
+fn default_telegram_non_transient_delay_seconds() -> u64 {
+    10
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TelegramParseMode {
+    Plain,
+    Markdown,
+    MarkdownV2,
+    Html,
+}
+
+fn default_telegram_parse_mode() -> TelegramParseMode {
+    TelegramParseMode::Markdown
+}
+
+fn default_telegram_disable_link_previews() -> bool {
+    true
+}
+
+fn default_telegram_max_message_chars() -> usize {
+    4000
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TelegramConfig {
     #[serde(default)]
     pub enabled: bool,
     #[serde(default)]
     pub bot_token: String,
+    #[serde(default = "default_telegram_long_poll_timeout_seconds")]
+    pub long_poll_timeout_seconds: u64,
+    #[serde(default = "default_telegram_allowed_updates")]
+    pub allowed_updates: Vec<String>,
+    #[serde(default = "default_telegram_retry_base_ms")]
+    pub retry_base_ms: u64,
+    #[serde(default = "default_telegram_retry_max_ms")]
+    pub retry_max_ms: u64,
+    #[serde(default = "default_telegram_non_transient_delay_seconds")]
+    pub non_transient_delay_seconds: u64,
+    #[serde(default = "default_telegram_parse_mode")]
+    pub parse_mode: TelegramParseMode,
+    #[serde(default = "default_telegram_disable_link_previews")]
+    pub disable_link_previews: bool,
+    #[serde(default = "default_telegram_max_message_chars")]
+    pub max_message_chars: usize,
+    #[serde(default)]
+    pub access: ChannelAccessConfig,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+impl Default for TelegramConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            bot_token: String::new(),
+            long_poll_timeout_seconds: default_telegram_long_poll_timeout_seconds(),
+            allowed_updates: default_telegram_allowed_updates(),
+            retry_base_ms: default_telegram_retry_base_ms(),
+            retry_max_ms: default_telegram_retry_max_ms(),
+            non_transient_delay_seconds: default_telegram_non_transient_delay_seconds(),
+            parse_mode: default_telegram_parse_mode(),
+            disable_link_previews: default_telegram_disable_link_previews(),
+            max_message_chars: default_telegram_max_message_chars(),
+            access: ChannelAccessConfig::default(),
+        }
+    }
+}
+
+fn default_discord_require_mention_in_group_chats() -> bool {
+    true
+}
+
+fn default_discord_intent_guild_messages() -> bool {
+    true
+}
+
+fn default_discord_intent_message_content() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DiscordConfig {
     #[serde(default)]
     pub enabled: bool,
     #[serde(default)]
     pub bot_token: String,
+    #[serde(default = "default_discord_require_mention_in_group_chats")]
+    pub require_mention_in_group_chats: bool,
+    #[serde(default = "default_discord_intent_guild_messages")]
+    pub intent_guild_messages: bool,
+    #[serde(default = "default_discord_intent_message_content")]
+    pub intent_message_content: bool,
+    #[serde(default)]
+    pub access: ChannelAccessConfig,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+impl Default for DiscordConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            bot_token: String::new(),
+            require_mention_in_group_chats: default_discord_require_mention_in_group_chats(),
+            intent_guild_messages: default_discord_intent_guild_messages(),
+            intent_message_content: default_discord_intent_message_content(),
+            access: ChannelAccessConfig::default(),
+        }
+    }
+}
+
+fn default_imessage_max_per_poll() -> usize {
+    200
+}
+
+fn default_imessage_group_prefixes() -> Vec<String> {
+    vec!["@opencraw".to_string(), "opencraw".to_string()]
+}
+
+fn default_channel_action_enabled() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ImessageActionsConfig {
+    #[serde(default = "default_channel_action_enabled")]
+    pub list_recent: bool,
+    #[serde(default = "default_channel_action_enabled")]
+    pub send: bool,
+}
+
+impl Default for ImessageActionsConfig {
+    fn default() -> Self {
+        Self {
+            list_recent: default_channel_action_enabled(),
+            send: default_channel_action_enabled(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ImessageConfig {
     #[serde(default)]
@@ -253,10 +450,17 @@ pub struct ImessageConfig {
     /// Start from the latest message at startup (avoids backfilling old history).
     #[serde(default = "default_imessage_start_from_latest")]
     pub start_from_latest: bool,
+    /// Max rows read from chat.db per poll cycle.
+    #[serde(default = "default_imessage_max_per_poll")]
+    pub max_per_poll: usize,
     /// In group chats, only respond if the message starts with one of these prefixes.
     /// Example: ["@openshell", "openshell"]
-    #[serde(default)]
+    #[serde(default = "default_imessage_group_prefixes")]
     pub group_prefixes: Vec<String>,
+    #[serde(default)]
+    pub actions: ImessageActionsConfig,
+    #[serde(default)]
+    pub access: ChannelAccessConfig,
 }
 
 fn default_imessage_poll_interval_ms() -> u64 {
@@ -267,7 +471,50 @@ fn default_imessage_start_from_latest() -> bool {
     true
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+impl Default for ImessageConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            source_db: None,
+            poll_interval_ms: default_imessage_poll_interval_ms(),
+            start_from_latest: default_imessage_start_from_latest(),
+            max_per_poll: default_imessage_max_per_poll(),
+            group_prefixes: default_imessage_group_prefixes(),
+            actions: ImessageActionsConfig::default(),
+            access: ChannelAccessConfig::default(),
+        }
+    }
+}
+
+fn default_email_max_results() -> usize {
+    25
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct EmailActionsConfig {
+    #[serde(default = "default_channel_action_enabled")]
+    pub list_inbox: bool,
+    #[serde(default = "default_channel_action_enabled")]
+    pub search: bool,
+    #[serde(default = "default_channel_action_enabled")]
+    pub read: bool,
+    #[serde(default = "default_channel_action_enabled")]
+    pub send: bool,
+}
+
+impl Default for EmailActionsConfig {
+    fn default() -> Self {
+        Self {
+            list_inbox: default_channel_action_enabled(),
+            search: default_channel_action_enabled(),
+            read: default_channel_action_enabled(),
+            send: default_channel_action_enabled(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EmailConfig {
     #[serde(default)]
@@ -285,6 +532,12 @@ pub struct EmailConfig {
     pub start_from_latest: bool,
     #[serde(default = "default_email_mark_processed_as_read")]
     pub mark_processed_as_read: bool,
+    #[serde(default = "default_email_max_results")]
+    pub max_results: usize,
+    #[serde(default)]
+    pub actions: EmailActionsConfig,
+    #[serde(default)]
+    pub access: ChannelAccessConfig,
 }
 
 fn default_email_provider() -> String {
@@ -307,13 +560,36 @@ fn default_email_mark_processed_as_read() -> bool {
     true
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+impl Default for EmailConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            provider: default_email_provider(),
+            gmail_access_token: String::new(),
+            poll_interval_ms: default_email_poll_interval_ms(),
+            query: default_email_query(),
+            start_from_latest: default_email_start_from_latest(),
+            mark_processed_as_read: default_email_mark_processed_as_read(),
+            max_results: default_email_max_results(),
+            actions: EmailActionsConfig::default(),
+            access: ChannelAccessConfig::default(),
+        }
+    }
+}
+
+fn default_linear_max_issues() -> usize {
+    50
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct LinearConfig {
     #[serde(default)]
     pub enabled: bool,
     #[serde(default)]
     pub api_key: String,
+    #[serde(default)]
+    pub default_team_id: String,
     #[serde(default = "default_linear_poll_interval_ms")]
     pub poll_interval_ms: u64,
     /// Optional list of team IDs/keys/names to include.
@@ -321,6 +597,12 @@ pub struct LinearConfig {
     pub team_ids: Vec<String>,
     #[serde(default = "default_linear_start_from_latest")]
     pub start_from_latest: bool,
+    #[serde(default = "default_linear_max_issues")]
+    pub max_issues: usize,
+    #[serde(default)]
+    pub actions: LinearActionsConfig,
+    #[serde(default)]
+    pub access: ChannelAccessConfig,
 }
 
 fn default_linear_poll_interval_ms() -> u64 {
@@ -331,7 +613,73 @@ fn default_linear_start_from_latest() -> bool {
     true
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+impl Default for LinearConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            api_key: String::new(),
+            default_team_id: String::new(),
+            poll_interval_ms: default_linear_poll_interval_ms(),
+            team_ids: Vec::new(),
+            start_from_latest: default_linear_start_from_latest(),
+            max_issues: default_linear_max_issues(),
+            actions: LinearActionsConfig::default(),
+            access: ChannelAccessConfig::default(),
+        }
+    }
+}
+
+fn default_linear_action_enabled() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LinearActionsConfig {
+    #[serde(default = "default_linear_action_enabled")]
+    pub whoami: bool,
+    #[serde(default = "default_linear_action_enabled")]
+    pub list_assigned: bool,
+    #[serde(default = "default_linear_action_enabled")]
+    pub list_users: bool,
+    #[serde(default = "default_linear_action_enabled")]
+    pub list_teams: bool,
+    #[serde(default = "default_linear_action_enabled")]
+    pub list_projects: bool,
+    #[serde(default = "default_linear_action_enabled")]
+    pub create_issue: bool,
+    #[serde(default = "default_linear_action_enabled")]
+    pub create_project: bool,
+    #[serde(default = "default_linear_action_enabled")]
+    pub update_issue: bool,
+    #[serde(default = "default_linear_action_enabled")]
+    pub assign_issue: bool,
+    #[serde(default = "default_linear_action_enabled")]
+    pub comment_issue: bool,
+}
+
+impl Default for LinearActionsConfig {
+    fn default() -> Self {
+        Self {
+            whoami: default_linear_action_enabled(),
+            list_assigned: default_linear_action_enabled(),
+            list_users: default_linear_action_enabled(),
+            list_teams: default_linear_action_enabled(),
+            list_projects: default_linear_action_enabled(),
+            create_issue: default_linear_action_enabled(),
+            create_project: default_linear_action_enabled(),
+            update_issue: default_linear_action_enabled(),
+            assign_issue: default_linear_action_enabled(),
+            comment_issue: default_linear_action_enabled(),
+        }
+    }
+}
+
+fn default_slack_history_limit() -> usize {
+    100
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SlackConfig {
     #[serde(default)]
@@ -345,6 +693,10 @@ pub struct SlackConfig {
     pub channel_ids: Vec<String>,
     #[serde(default = "default_slack_start_from_latest")]
     pub start_from_latest: bool,
+    #[serde(default = "default_slack_history_limit")]
+    pub history_limit: usize,
+    #[serde(default)]
+    pub access: ChannelAccessConfig,
 }
 
 fn default_slack_poll_interval_ms() -> u64 {
@@ -355,7 +707,25 @@ fn default_slack_start_from_latest() -> bool {
     true
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+impl Default for SlackConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            bot_token: String::new(),
+            poll_interval_ms: default_slack_poll_interval_ms(),
+            channel_ids: Vec::new(),
+            start_from_latest: default_slack_start_from_latest(),
+            history_limit: default_slack_history_limit(),
+            access: ChannelAccessConfig::default(),
+        }
+    }
+}
+
+fn default_matrix_sync_timeout_ms() -> u64 {
+    30_000
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MatrixConfig {
     #[serde(default)]
@@ -373,6 +743,10 @@ pub struct MatrixConfig {
     pub room_ids: Vec<String>,
     #[serde(default = "default_matrix_start_from_latest")]
     pub start_from_latest: bool,
+    #[serde(default = "default_matrix_sync_timeout_ms")]
+    pub sync_timeout_ms: u64,
+    #[serde(default)]
+    pub access: ChannelAccessConfig,
 }
 
 fn default_matrix_homeserver_url() -> String {
@@ -385,6 +759,22 @@ fn default_matrix_poll_interval_ms() -> u64 {
 
 fn default_matrix_start_from_latest() -> bool {
     true
+}
+
+impl Default for MatrixConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            homeserver_url: default_matrix_homeserver_url(),
+            access_token: String::new(),
+            user_id: String::new(),
+            poll_interval_ms: default_matrix_poll_interval_ms(),
+            room_ids: Vec::new(),
+            start_from_latest: default_matrix_start_from_latest(),
+            sync_timeout_ms: default_matrix_sync_timeout_ms(),
+            access: ChannelAccessConfig::default(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -404,6 +794,8 @@ pub struct SignalConfig {
     pub start_from_latest: bool,
     #[serde(default = "default_signal_receive_timeout_seconds")]
     pub receive_timeout_seconds: u64,
+    #[serde(default)]
+    pub access: ChannelAccessConfig,
 }
 
 fn default_signal_api_base_url() -> String {
@@ -435,6 +827,8 @@ pub struct WhatsAppConfig {
     pub webhook_verify_token: String,
     #[serde(default)]
     pub app_secret: Option<String>,
+    #[serde(default)]
+    pub access: ChannelAccessConfig,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -461,6 +855,8 @@ pub struct ExternalChannelPluginConfig {
     pub supports_typing_events: bool,
     #[serde(default)]
     pub supports_reactions: bool,
+    #[serde(default)]
+    pub access: ChannelAccessConfig,
 }
 
 fn default_external_plugin_poll_interval_ms() -> u64 {
@@ -560,7 +956,7 @@ pub struct ToolsConfig {
     /// Optional explicit allowlist of tool names.
     ///
     /// Supported names (case-insensitive): `shell_execute` (`shell`), `filesystem`,
-    /// `browser`, `clipboard`, `apply_patch`, `email`, `imessage`.
+    /// `browser`, `clipboard`, `apply_patch`, `email`, `imessage`, `linear`.
     #[serde(default)]
     pub allow: Vec<String>,
     /// Optional explicit denylist of tool names. Deny always wins over allow.
@@ -630,7 +1026,7 @@ fn profile_default_enabled(profile: ToolProfile, canonical: &str) -> bool {
                 "shell_execute" | "filesystem" | "browser" | "apply_patch"
             )
         }
-        ToolProfile::Messaging => matches!(canonical, "email" | "imessage"),
+        ToolProfile::Messaging => matches!(canonical, "email" | "imessage" | "linear"),
         ToolProfile::Full => true,
     }
 }
@@ -645,6 +1041,7 @@ fn canonical_tool_name(name: &str) -> Option<&'static str> {
         "apply_patch" | "patch" => Some("apply_patch"),
         "email" => Some("email"),
         "imessage" => Some("imessage"),
+        "linear" => Some("linear"),
         _ => None,
     }
 }
@@ -683,14 +1080,11 @@ pub struct SecurityConfig {
     pub browser_approval: ApprovalMode,
     #[serde(default = "default_filesystem_write_approval")]
     pub filesystem_write_approval: ApprovalMode,
-    #[serde(default)]
-    pub allowed_users: Vec<String>,
-    /// If true, OpenShell will respond to any sender on non-webchat channels.
+    /// Max time to wait for human approval of a proposed action before timing out.
     ///
-    /// Default is false for safety: external channels require an explicit allowlist in
-    /// `security.allowed_users`.
-    #[serde(default)]
-    pub allow_all_senders: bool,
+    /// Set to `0` to wait indefinitely.
+    #[serde(default = "default_human_approval_timeout_seconds")]
+    pub human_approval_timeout_seconds: u64,
     /// Bearer token required for mutating `/api/v1/os/*` control-plane requests when set.
     ///
     /// In `runtime.mode = "prod"`, this token is required.
@@ -720,6 +1114,10 @@ fn default_filesystem_write_approval() -> ApprovalMode {
     ApprovalMode::Ai
 }
 
+fn default_human_approval_timeout_seconds() -> u64 {
+    300
+}
+
 fn default_mutating_auth_exempt_prefixes() -> Vec<String> {
     vec![
         "/api/v1/os/automation/webhook/".to_string(),
@@ -733,8 +1131,7 @@ impl Default for SecurityConfig {
             shell_approval: default_shell_approval(),
             browser_approval: default_browser_approval(),
             filesystem_write_approval: default_filesystem_write_approval(),
-            allowed_users: Vec::new(),
-            allow_all_senders: false,
+            human_approval_timeout_seconds: default_human_approval_timeout_seconds(),
             control_api_key: None,
             control_api_keys: Vec::new(),
             mutating_auth_exempt_prefixes: default_mutating_auth_exempt_prefixes(),
@@ -822,6 +1219,12 @@ pub struct ContextConfig {
     pub min_recent_messages: usize,
     #[serde(default = "default_context_max_tool_chars")]
     pub max_tool_chars: usize,
+    #[serde(default = "default_context_tool_loops_max")]
+    pub tool_loops_max: usize,
+    #[serde(default = "default_context_tool_max_runtime_seconds")]
+    pub tool_max_runtime_seconds: u64,
+    #[serde(default = "default_context_tool_no_progress_limit")]
+    pub tool_no_progress_limit: usize,
     #[serde(default)]
     pub compaction_enabled: bool,
     #[serde(default = "default_context_compaction_trigger_tokens")]
@@ -840,6 +1243,9 @@ impl Default for ContextConfig {
             max_prompt_tokens: default_context_max_prompt_tokens(),
             min_recent_messages: default_context_min_recent_messages(),
             max_tool_chars: default_context_max_tool_chars(),
+            tool_loops_max: default_context_tool_loops_max(),
+            tool_max_runtime_seconds: default_context_tool_max_runtime_seconds(),
+            tool_no_progress_limit: default_context_tool_no_progress_limit(),
             compaction_enabled: false,
             compaction_trigger_tokens: default_context_compaction_trigger_tokens(),
             compaction_retain_messages: default_context_compaction_retain_messages(),
@@ -859,6 +1265,18 @@ fn default_context_min_recent_messages() -> usize {
 
 fn default_context_max_tool_chars() -> usize {
     4000
+}
+
+fn default_context_tool_loops_max() -> usize {
+    12
+}
+
+fn default_context_tool_max_runtime_seconds() -> u64 {
+    600
+}
+
+fn default_context_tool_no_progress_limit() -> usize {
+    3
 }
 
 fn default_context_compaction_trigger_tokens() -> usize {
@@ -953,6 +1371,338 @@ impl Default for SkillsConfig {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum ConfigFileKind {
+    Llm,
+    General,
+    Runtime,
+    Keys,
+    Tools,
+    Security,
+    Queue,
+    Context,
+    Memory,
+    Optimization,
+    Automation,
+    Skills,
+    ChannelWebchat,
+    ChannelTelegram,
+    ChannelDiscord,
+    ChannelSlack,
+    ChannelMatrix,
+    ChannelSignal,
+    ChannelWhatsapp,
+    ChannelImessage,
+    ChannelEmail,
+    ChannelLinear,
+    ChannelExternalPlugins,
+}
+
+impl ConfigFileKind {
+    fn from_file_name(file_name: &str) -> Option<Self> {
+        match file_name {
+            "llm.toml" => Some(Self::Llm),
+            "general.toml" => Some(Self::General),
+            "runtime.toml" => Some(Self::Runtime),
+            "keys.toml" => Some(Self::Keys),
+            "tools.toml" => Some(Self::Tools),
+            "security.toml" => Some(Self::Security),
+            "queue.toml" => Some(Self::Queue),
+            "context.toml" => Some(Self::Context),
+            "memory.toml" => Some(Self::Memory),
+            "optimization.toml" => Some(Self::Optimization),
+            "automation.toml" => Some(Self::Automation),
+            "skills.toml" => Some(Self::Skills),
+            "channel-webchat.toml" => Some(Self::ChannelWebchat),
+            "channel-telegram.toml" => Some(Self::ChannelTelegram),
+            "channel-discord.toml" => Some(Self::ChannelDiscord),
+            "channel-slack.toml" => Some(Self::ChannelSlack),
+            "channel-matrix.toml" => Some(Self::ChannelMatrix),
+            "channel-signal.toml" => Some(Self::ChannelSignal),
+            "channel-whatsapp.toml" => Some(Self::ChannelWhatsapp),
+            "channel-imessage.toml" => Some(Self::ChannelImessage),
+            "channel-email.toml" | "channel-email-gmail.toml" => Some(Self::ChannelEmail),
+            "channel-linear.toml" => Some(Self::ChannelLinear),
+            "channel-external-plugins.toml" | "channel-external-plugin.toml" => {
+                Some(Self::ChannelExternalPlugins)
+            }
+            _ => None,
+        }
+    }
+
+    fn canonical_file_name(self) -> &'static str {
+        match self {
+            Self::Llm => "llm.toml",
+            Self::General => "general.toml",
+            Self::Runtime => "runtime.toml",
+            Self::Keys => "keys.toml",
+            Self::Tools => "tools.toml",
+            Self::Security => "security.toml",
+            Self::Queue => "queue.toml",
+            Self::Context => "context.toml",
+            Self::Memory => "memory.toml",
+            Self::Optimization => "optimization.toml",
+            Self::Automation => "automation.toml",
+            Self::Skills => "skills.toml",
+            Self::ChannelWebchat => "channel-webchat.toml",
+            Self::ChannelTelegram => "channel-telegram.toml",
+            Self::ChannelDiscord => "channel-discord.toml",
+            Self::ChannelSlack => "channel-slack.toml",
+            Self::ChannelMatrix => "channel-matrix.toml",
+            Self::ChannelSignal => "channel-signal.toml",
+            Self::ChannelWhatsapp => "channel-whatsapp.toml",
+            Self::ChannelImessage => "channel-imessage.toml",
+            Self::ChannelEmail => "channel-email.toml",
+            Self::ChannelLinear => "channel-linear.toml",
+            Self::ChannelExternalPlugins => "channel-external-plugins.toml",
+        }
+    }
+
+    fn canonical_file_names() -> &'static [&'static str] {
+        &[
+            "llm.toml",
+            "general.toml",
+            "runtime.toml",
+            "keys.toml",
+            "tools.toml",
+            "security.toml",
+            "queue.toml",
+            "context.toml",
+            "memory.toml",
+            "optimization.toml",
+            "automation.toml",
+            "skills.toml",
+            "channel-webchat.toml",
+            "channel-telegram.toml",
+            "channel-discord.toml",
+            "channel-slack.toml",
+            "channel-matrix.toml",
+            "channel-signal.toml",
+            "channel-whatsapp.toml",
+            "channel-imessage.toml",
+            "channel-email.toml",
+            "channel-linear.toml",
+            "channel-external-plugins.toml",
+        ]
+    }
+
+    fn canonical_file_names_csv() -> String {
+        Self::canonical_file_names().join(", ")
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LlmFragment {
+    llm: LlmConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct GeneralFragment {
+    general: GeneralConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RuntimeFragment {
+    runtime: RuntimeConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct KeysFragment {
+    keys: KeysConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ToolsFragment {
+    tools: ToolsConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SecurityFragment {
+    security: SecurityConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct QueueFragment {
+    queue: QueueConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ContextFragment {
+    context: ContextConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct MemoryFragment {
+    memory: MemoryConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct OptimizationFragment {
+    optimization: OptimizationConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct AutomationFragment {
+    automation: AutomationConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SkillsFragment {
+    skills: SkillsConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelWebchatFragment {
+    channels: ChannelWebchatOnly,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelWebchatOnly {
+    webchat: WebChatConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelTelegramFragment {
+    channels: ChannelTelegramOnly,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelTelegramOnly {
+    telegram: TelegramConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelDiscordFragment {
+    channels: ChannelDiscordOnly,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelDiscordOnly {
+    discord: DiscordConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelSlackFragment {
+    channels: ChannelSlackOnly,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelSlackOnly {
+    slack: SlackConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelMatrixFragment {
+    channels: ChannelMatrixOnly,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelMatrixOnly {
+    matrix: MatrixConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelSignalFragment {
+    channels: ChannelSignalOnly,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelSignalOnly {
+    signal: SignalConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelWhatsappFragment {
+    channels: ChannelWhatsappOnly,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelWhatsappOnly {
+    whatsapp: WhatsAppConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelImessageFragment {
+    channels: ChannelImessageOnly,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelImessageOnly {
+    imessage: ImessageConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelEmailFragment {
+    channels: ChannelEmailOnly,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelEmailOnly {
+    email: EmailConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelLinearFragment {
+    channels: ChannelLinearOnly,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelLinearOnly {
+    linear: LinearConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelExternalPluginsFragment {
+    channels: ChannelExternalPluginsOnly,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChannelExternalPluginsOnly {
+    external_plugins: Vec<ExternalChannelPluginConfig>,
+}
+
+fn parse_fragment_file<T>(contents: &str, path: &Path) -> anyhow::Result<T>
+where
+    T: for<'de> serde::Deserialize<'de>,
+{
+    toml::from_str(contents)
+        .map_err(|e| anyhow::anyhow!("parse config fragment {}: {e}", path.display()))
+}
+
 impl OpenShellConfig {
     pub async fn load(path: Option<PathBuf>) -> anyhow::Result<Self> {
         let (cfg, _) = Self::load_with_path(path).await?;
@@ -971,9 +1721,127 @@ impl OpenShellConfig {
         let mut cfg: OpenShellConfig = toml::from_str(&contents)
             .map_err(|e| anyhow::anyhow!("parse config {}: {e}", path.display()))?;
 
-        cfg.apply_env_overrides()?;
+        cfg.apply_config_fragments(&path).await?;
         cfg.validate()?;
         Ok((cfg, path))
+    }
+
+    async fn apply_config_fragments(&mut self, base_config_path: &Path) -> anyhow::Result<()> {
+        let fragments_dir = config_fragments_dir(base_config_path);
+        let fragment_entries = read_config_fragment_entries(&fragments_dir).await?;
+
+        for (kind, path) in fragment_entries {
+            let contents = tokio::fs::read_to_string(&path)
+                .await
+                .map_err(|e| anyhow::anyhow!("read config fragment {}: {e}", path.display()))?;
+            self.apply_config_fragment(kind, &path, &contents)?;
+        }
+
+        Ok(())
+    }
+
+    fn apply_config_fragment(
+        &mut self,
+        kind: ConfigFileKind,
+        path: &Path,
+        contents: &str,
+    ) -> anyhow::Result<()> {
+        match kind {
+            ConfigFileKind::Llm => {
+                let fragment: LlmFragment = parse_fragment_file(contents, path)?;
+                self.llm = fragment.llm;
+            }
+            ConfigFileKind::General => {
+                let fragment: GeneralFragment = parse_fragment_file(contents, path)?;
+                self.general = fragment.general;
+            }
+            ConfigFileKind::Runtime => {
+                let fragment: RuntimeFragment = parse_fragment_file(contents, path)?;
+                self.runtime = fragment.runtime;
+            }
+            ConfigFileKind::Keys => {
+                let fragment: KeysFragment = parse_fragment_file(contents, path)?;
+                self.keys = fragment.keys;
+            }
+            ConfigFileKind::Tools => {
+                let fragment: ToolsFragment = parse_fragment_file(contents, path)?;
+                self.tools = fragment.tools;
+            }
+            ConfigFileKind::Security => {
+                let fragment: SecurityFragment = parse_fragment_file(contents, path)?;
+                self.security = fragment.security;
+            }
+            ConfigFileKind::Queue => {
+                let fragment: QueueFragment = parse_fragment_file(contents, path)?;
+                self.queue = fragment.queue;
+            }
+            ConfigFileKind::Context => {
+                let fragment: ContextFragment = parse_fragment_file(contents, path)?;
+                self.context = fragment.context;
+            }
+            ConfigFileKind::Memory => {
+                let fragment: MemoryFragment = parse_fragment_file(contents, path)?;
+                self.memory = fragment.memory;
+            }
+            ConfigFileKind::Optimization => {
+                let fragment: OptimizationFragment = parse_fragment_file(contents, path)?;
+                self.optimization = fragment.optimization;
+            }
+            ConfigFileKind::Automation => {
+                let fragment: AutomationFragment = parse_fragment_file(contents, path)?;
+                self.automation = fragment.automation;
+            }
+            ConfigFileKind::Skills => {
+                let fragment: SkillsFragment = parse_fragment_file(contents, path)?;
+                self.skills = fragment.skills;
+            }
+            ConfigFileKind::ChannelWebchat => {
+                let fragment: ChannelWebchatFragment = parse_fragment_file(contents, path)?;
+                self.channels.webchat = fragment.channels.webchat;
+            }
+            ConfigFileKind::ChannelTelegram => {
+                let fragment: ChannelTelegramFragment = parse_fragment_file(contents, path)?;
+                self.channels.telegram = fragment.channels.telegram;
+            }
+            ConfigFileKind::ChannelDiscord => {
+                let fragment: ChannelDiscordFragment = parse_fragment_file(contents, path)?;
+                self.channels.discord = fragment.channels.discord;
+            }
+            ConfigFileKind::ChannelSlack => {
+                let fragment: ChannelSlackFragment = parse_fragment_file(contents, path)?;
+                self.channels.slack = fragment.channels.slack;
+            }
+            ConfigFileKind::ChannelMatrix => {
+                let fragment: ChannelMatrixFragment = parse_fragment_file(contents, path)?;
+                self.channels.matrix = fragment.channels.matrix;
+            }
+            ConfigFileKind::ChannelSignal => {
+                let fragment: ChannelSignalFragment = parse_fragment_file(contents, path)?;
+                self.channels.signal = fragment.channels.signal;
+            }
+            ConfigFileKind::ChannelWhatsapp => {
+                let fragment: ChannelWhatsappFragment = parse_fragment_file(contents, path)?;
+                self.channels.whatsapp = fragment.channels.whatsapp;
+            }
+            ConfigFileKind::ChannelImessage => {
+                let fragment: ChannelImessageFragment = parse_fragment_file(contents, path)?;
+                self.channels.imessage = fragment.channels.imessage;
+            }
+            ConfigFileKind::ChannelEmail => {
+                let fragment: ChannelEmailFragment = parse_fragment_file(contents, path)?;
+                self.channels.email = fragment.channels.email;
+            }
+            ConfigFileKind::ChannelLinear => {
+                let fragment: ChannelLinearFragment = parse_fragment_file(contents, path)?;
+                self.channels.linear = fragment.channels.linear;
+            }
+            ConfigFileKind::ChannelExternalPlugins => {
+                let fragment: ChannelExternalPluginsFragment = parse_fragment_file(contents, path)?;
+                self.channels.external_plugins = fragment.channels.external_plugins;
+            }
+        }
+
+        Ok(())
     }
 
     pub fn runtime_network_policy(&self) -> anyhow::Result<RuntimeNetworkPolicy> {
@@ -1115,511 +1983,65 @@ impl OpenShellConfig {
         !self.control_api_key_pool().is_empty()
     }
 
-    fn apply_env_overrides(&mut self) -> anyhow::Result<()> {
-        if let Ok(v) = std::env::var("OPENSHELL_RUNTIME_MODE") {
-            let mode = v.trim().to_ascii_lowercase();
-            self.runtime.mode = match mode.as_str() {
-                "dev" => RuntimeMode::Dev,
-                "prod" => RuntimeMode::Prod,
-                _ => {
-                    return Err(anyhow::anyhow!(
-                        "invalid OPENSHELL_RUNTIME_MODE={v:?}: expected 'dev' or 'prod'"
-                    ));
-                }
-            };
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_BIND_MODE") {
-            let mode = v.trim().to_ascii_lowercase();
-            self.runtime.bind_mode = match mode.as_str() {
-                "loopback" => BindMode::Loopback,
-                "lan" => BindMode::Lan,
-                "tailnet" => BindMode::Tailnet,
-                "auto" => BindMode::Auto,
-                "custom" => BindMode::Custom,
-                _ => {
-                    return Err(anyhow::anyhow!(
-                        "invalid OPENSHELL_BIND_MODE={v:?}: expected 'loopback', 'lan', 'tailnet', 'auto', or 'custom'"
-                    ));
-                }
-            };
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_DISCOVERY_MODE") {
-            let mode = v.trim().to_ascii_lowercase();
-            self.runtime.discovery_mode = match mode.as_str() {
-                "disabled" | "off" => DiscoveryMode::Disabled,
-                "mdns" | "bonjour" => DiscoveryMode::Mdns,
-                "tailnet_serve" | "serve" => DiscoveryMode::TailnetServe,
-                "tailnet_funnel" | "funnel" => DiscoveryMode::TailnetFunnel,
-                _ => {
-                    return Err(anyhow::anyhow!(
-                        "invalid OPENSHELL_DISCOVERY_MODE={v:?}: expected 'disabled', 'mdns', 'tailnet_serve', or 'tailnet_funnel'"
-                    ));
-                }
-            };
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_DATA_DIR") {
-            if !v.trim().is_empty() {
-                self.runtime.data_dir = v;
-            }
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_BIND_ADDR") {
-            self.runtime.bind_addr = if v.trim().is_empty() { None } else { Some(v) };
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_ADVERTISED_BASE_URL") {
-            self.runtime.advertised_base_url = if v.trim().is_empty() { None } else { Some(v) };
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_ALLOW_PUBLIC_BIND_WITHOUT_AUTH") {
-            self.runtime.allow_public_bind_without_auth =
-                parse_env_bool("OPENSHELL_ALLOW_PUBLIC_BIND_WITHOUT_AUTH", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_HTTP_TIMEOUT_SECONDS") {
-            self.runtime.http_timeout_seconds =
-                parse_env_u64("OPENSHELL_HTTP_TIMEOUT_SECONDS", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_HTTP_MAX_IN_FLIGHT") {
-            self.runtime.http_max_in_flight = parse_env_usize("OPENSHELL_HTTP_MAX_IN_FLIGHT", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_QUEUE_MAX_CONCURRENCY") {
-            self.queue.max_concurrency = parse_env_usize("OPENSHELL_QUEUE_MAX_CONCURRENCY", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_QUEUE_MODE") {
-            let mode = v.trim().to_ascii_lowercase();
-            self.queue.mode = match mode.as_str() {
-                "collect" => QueueMode::Collect,
-                "followup" => QueueMode::Followup,
-                "steer" => QueueMode::Steer,
-                "interrupt" => QueueMode::Interrupt,
-                _ => {
-                    return Err(anyhow::anyhow!(
-                        "invalid OPENSHELL_QUEUE_MODE={v:?}: expected one of 'collect', 'followup', 'steer', 'interrupt'"
-                    ));
-                }
-            };
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_QUEUE_LANE_BUFFER") {
-            self.queue.lane_buffer = parse_env_usize("OPENSHELL_QUEUE_LANE_BUFFER", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_QUEUE_DEBOUNCE_MS") {
-            self.queue.debounce_ms = parse_env_u64("OPENSHELL_QUEUE_DEBOUNCE_MS", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_QUEUE_OVERFLOW_POLICY") {
-            let policy = v.trim().to_ascii_lowercase();
-            self.queue.overflow_policy = match policy.as_str() {
-                "block" => QueueOverflowPolicy::Block,
-                "drop" => QueueOverflowPolicy::Drop,
-                "summarize" => QueueOverflowPolicy::Summarize,
-                _ => {
-                    return Err(anyhow::anyhow!(
-                        "invalid OPENSHELL_QUEUE_OVERFLOW_POLICY={v:?}: expected one of 'block', 'drop', 'summarize'"
-                    ));
-                }
-            };
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_QUEUE_OVERFLOW_SUMMARY_MAX_MESSAGES") {
-            self.queue.overflow_summary_max_messages =
-                parse_env_usize("OPENSHELL_QUEUE_OVERFLOW_SUMMARY_MAX_MESSAGES", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_CONTEXT_MAX_PROMPT_TOKENS") {
-            self.context.max_prompt_tokens =
-                parse_env_usize("OPENSHELL_CONTEXT_MAX_PROMPT_TOKENS", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_CONTEXT_MIN_RECENT_MESSAGES") {
-            self.context.min_recent_messages =
-                parse_env_usize("OPENSHELL_CONTEXT_MIN_RECENT_MESSAGES", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_CONTEXT_MAX_TOOL_CHARS") {
-            self.context.max_tool_chars = parse_env_usize("OPENSHELL_CONTEXT_MAX_TOOL_CHARS", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_CONTEXT_COMPACTION_ENABLED") {
-            self.context.compaction_enabled =
-                parse_env_bool("OPENSHELL_CONTEXT_COMPACTION_ENABLED", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_CONTEXT_COMPACTION_TRIGGER_TOKENS") {
-            self.context.compaction_trigger_tokens =
-                parse_env_usize("OPENSHELL_CONTEXT_COMPACTION_TRIGGER_TOKENS", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_CONTEXT_COMPACTION_RETAIN_MESSAGES") {
-            self.context.compaction_retain_messages =
-                parse_env_usize("OPENSHELL_CONTEXT_COMPACTION_RETAIN_MESSAGES", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_CONTEXT_COMPACTION_HORIZON") {
-            if !v.trim().is_empty() {
-                self.context.compaction_horizon = v;
-            }
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_CONTEXT_COMPACTION_FLUSH_MAX_CHARS") {
-            self.context.compaction_flush_max_chars =
-                parse_env_usize("OPENSHELL_CONTEXT_COMPACTION_FLUSH_MAX_CHARS", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_MODEL") {
-            if !v.trim().is_empty() {
-                self.general.model = v;
-            }
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_FAILOVER_COOLDOWN_BASE_SECONDS") {
-            self.general.failover_cooldown_base_seconds =
-                parse_env_u64("OPENSHELL_FAILOVER_COOLDOWN_BASE_SECONDS", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_FAILOVER_COOLDOWN_MAX_SECONDS") {
-            self.general.failover_cooldown_max_seconds =
-                parse_env_u64("OPENSHELL_FAILOVER_COOLDOWN_MAX_SECONDS", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_FALLBACK_MODELS") {
-            self.general.fallback_models = v
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect();
-        }
-        if let Ok(v) = std::env::var("OPENAI_API_KEY") {
-            if !v.trim().is_empty() {
-                self.keys.openai_api_key = Some(v);
-            }
-        }
-        if let Ok(v) = std::env::var("OPENAI_API_KEYS") {
-            self.keys.openai_api_keys = v
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect();
-        }
-        if let Ok(v) = std::env::var("ANTHROPIC_API_KEY") {
-            if !v.trim().is_empty() {
-                self.keys.anthropic_api_key = Some(v);
-            }
-        }
-        if let Ok(v) = std::env::var("ANTHROPIC_API_KEYS") {
-            self.keys.anthropic_api_keys = v
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect();
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_CONTROL_API_KEY") {
-            self.security.control_api_key = if v.trim().is_empty() { None } else { Some(v) };
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_CONTROL_API_KEYS") {
-            self.security.control_api_keys = v
-                .split(',')
-                .map(|token| token.trim())
-                .filter(|token| !token.is_empty())
-                .map(|token| ControlApiKeyConfig {
-                    token: token.to_string(),
-                    scopes: Vec::new(),
-                    description: None,
-                })
-                .collect();
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_MUTATING_AUTH_EXEMPT_PREFIXES") {
-            self.security.mutating_auth_exempt_prefixes = v
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect();
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_AUTOMATION_ENABLED") {
-            self.automation.enabled = parse_env_bool("OPENSHELL_AUTOMATION_ENABLED", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_HEARTBEAT_INTERVAL_SECONDS") {
-            self.automation.heartbeat_interval_seconds =
-                parse_env_u64("OPENSHELL_HEARTBEAT_INTERVAL_SECONDS", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_WEBHOOK_SECRET") {
-            self.automation.webhook_secret = if v.trim().is_empty() { None } else { Some(v) };
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SKILLS_REQUIRE_SOURCE_PROVENANCE") {
-            self.skills.require_source_provenance =
-                parse_env_bool("OPENSHELL_SKILLS_REQUIRE_SOURCE_PROVENANCE", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SKILLS_REQUIRE_HTTPS_SOURCE") {
-            self.skills.require_https_source =
-                parse_env_bool("OPENSHELL_SKILLS_REQUIRE_HTTPS_SOURCE", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SKILLS_REQUIRE_TRUSTED_SOURCE") {
-            self.skills.require_trusted_source =
-                parse_env_bool("OPENSHELL_SKILLS_REQUIRE_TRUSTED_SOURCE", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SKILLS_TRUSTED_SOURCE_PREFIXES") {
-            self.skills.trusted_source_prefixes = v
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect();
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SKILLS_REQUIRE_SHA256_SIGNATURE") {
-            self.skills.require_sha256_signature =
-                parse_env_bool("OPENSHELL_SKILLS_REQUIRE_SHA256_SIGNATURE", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_TOOL_PROFILE") {
-            let profile = v.trim().to_ascii_lowercase();
-            self.tools.profile = match profile.as_str() {
-                "minimal" => ToolProfile::Minimal,
-                "coding" => ToolProfile::Coding,
-                "messaging" => ToolProfile::Messaging,
-                "full" => ToolProfile::Full,
-                _ => {
-                    return Err(anyhow::anyhow!(
-                        "invalid OPENSHELL_TOOL_PROFILE={v:?}: expected 'minimal', 'coding', 'messaging', or 'full'"
-                    ));
-                }
-            };
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_TOOLS_ALLOW") {
-            self.tools.allow = v
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect();
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_TOOLS_DENY") {
-            self.tools.deny = v
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect();
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SHELL_DEFAULT_MODE") {
-            let mode = v.trim().to_ascii_lowercase();
-            self.tools.shell_policy.default_mode = match mode.as_str() {
-                "sandbox" => ShellExecutionMode::Sandbox,
-                "elevated" => ShellExecutionMode::Elevated,
-                _ => {
-                    return Err(anyhow::anyhow!(
-                        "invalid OPENSHELL_SHELL_DEFAULT_MODE={v:?}: expected 'sandbox' or 'elevated'"
-                    ));
-                }
-            };
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SHELL_SANDBOX_BACKEND") {
-            let backend = v.trim().to_ascii_lowercase();
-            self.tools.shell_policy.sandbox_backend = match backend.as_str() {
-                "host_constrained" | "host" => ShellSandboxBackend::HostConstrained,
-                "horizons_docker" | "docker" => ShellSandboxBackend::HorizonsDocker,
-                _ => {
-                    return Err(anyhow::anyhow!(
-                        "invalid OPENSHELL_SHELL_SANDBOX_BACKEND={v:?}: expected 'host_constrained' or 'horizons_docker'"
-                    ));
-                }
-            };
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SHELL_ALLOW_ELEVATED") {
-            self.tools.shell_policy.allow_elevated =
-                parse_env_bool("OPENSHELL_SHELL_ALLOW_ELEVATED", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SHELL_SANDBOX_ROOT") {
-            self.tools.shell_policy.sandbox_root = if v.trim().is_empty() { None } else { Some(v) };
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SHELL_SANDBOX_IMAGE") {
-            self.tools.shell_policy.sandbox_image =
-                if v.trim().is_empty() { None } else { Some(v) };
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SHELL_MAX_BACKGROUND_PROCESSES") {
-            self.tools.shell_policy.max_background_processes =
-                parse_env_usize("OPENSHELL_SHELL_MAX_BACKGROUND_PROCESSES", &v)?;
-        }
-        if let Ok(v) = std::env::var("TELEGRAM_BOT_TOKEN") {
-            if !v.trim().is_empty() {
-                self.channels.telegram.bot_token = v;
-                self.channels.telegram.enabled = true;
-            }
-        }
-        if let Ok(v) = std::env::var("DISCORD_BOT_TOKEN") {
-            if !v.trim().is_empty() {
-                self.channels.discord.bot_token = v;
-                self.channels.discord.enabled = true;
-            }
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SLACK_POLL_INTERVAL_MS") {
-            self.channels.slack.poll_interval_ms =
-                parse_env_u64("OPENSHELL_SLACK_POLL_INTERVAL_MS", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SLACK_CHANNEL_IDS") {
-            if !v.trim().is_empty() {
-                self.channels.slack.channel_ids = v
-                    .split(',')
-                    .map(|s| s.trim().to_string())
-                    .filter(|s| !s.is_empty())
-                    .collect();
-            }
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SLACK_START_FROM_LATEST") {
-            self.channels.slack.start_from_latest =
-                parse_env_bool("OPENSHELL_SLACK_START_FROM_LATEST", &v)?;
-        }
-        if let Ok(v) = std::env::var("SLACK_BOT_TOKEN") {
-            if !v.trim().is_empty() {
-                self.channels.slack.bot_token = v;
-                self.channels.slack.enabled = true;
-            }
-        }
-        if let Ok(v) = std::env::var("MATRIX_HOMESERVER_URL") {
-            if !v.trim().is_empty() {
-                self.channels.matrix.homeserver_url = v;
-            }
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_MATRIX_POLL_INTERVAL_MS") {
-            self.channels.matrix.poll_interval_ms =
-                parse_env_u64("OPENSHELL_MATRIX_POLL_INTERVAL_MS", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_MATRIX_ROOM_IDS") {
-            if !v.trim().is_empty() {
-                self.channels.matrix.room_ids = v
-                    .split(',')
-                    .map(|s| s.trim().to_string())
-                    .filter(|s| !s.is_empty())
-                    .collect();
-            }
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_MATRIX_START_FROM_LATEST") {
-            self.channels.matrix.start_from_latest =
-                parse_env_bool("OPENSHELL_MATRIX_START_FROM_LATEST", &v)?;
-        }
-        if let Ok(v) = std::env::var("MATRIX_USER_ID") {
-            if !v.trim().is_empty() {
-                self.channels.matrix.user_id = v;
-            }
-        }
-        if let Ok(v) = std::env::var("MATRIX_ACCESS_TOKEN") {
-            if !v.trim().is_empty() {
-                self.channels.matrix.access_token = v;
-                self.channels.matrix.enabled = true;
-            }
-        }
-        if let Ok(v) = std::env::var("SIGNAL_API_BASE_URL") {
-            if !v.trim().is_empty() {
-                self.channels.signal.api_base_url = v;
-            }
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SIGNAL_POLL_INTERVAL_MS") {
-            self.channels.signal.poll_interval_ms =
-                parse_env_u64("OPENSHELL_SIGNAL_POLL_INTERVAL_MS", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SIGNAL_START_FROM_LATEST") {
-            self.channels.signal.start_from_latest =
-                parse_env_bool("OPENSHELL_SIGNAL_START_FROM_LATEST", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_SIGNAL_RECEIVE_TIMEOUT_SECONDS") {
-            self.channels.signal.receive_timeout_seconds =
-                parse_env_u64("OPENSHELL_SIGNAL_RECEIVE_TIMEOUT_SECONDS", &v)?;
-        }
-        if let Ok(v) = std::env::var("SIGNAL_ACCOUNT") {
-            if !v.trim().is_empty() {
-                self.channels.signal.account = v;
-                self.channels.signal.enabled = true;
-            }
-        }
-        if let Ok(v) = std::env::var("SIGNAL_API_TOKEN") {
-            self.channels.signal.api_token = if v.trim().is_empty() { None } else { Some(v) };
-        }
-        if let Ok(v) = std::env::var("WHATSAPP_ACCESS_TOKEN") {
-            if !v.trim().is_empty() {
-                self.channels.whatsapp.access_token = v;
-                self.channels.whatsapp.enabled = true;
-            }
-        }
-        if let Ok(v) = std::env::var("WHATSAPP_PHONE_NUMBER_ID") {
-            if !v.trim().is_empty() {
-                self.channels.whatsapp.phone_number_id = v;
-            }
-        }
-        if let Ok(v) = std::env::var("WHATSAPP_WEBHOOK_VERIFY_TOKEN") {
-            if !v.trim().is_empty() {
-                self.channels.whatsapp.webhook_verify_token = v;
-            }
-        }
-        if let Ok(v) = std::env::var("WHATSAPP_APP_SECRET") {
-            self.channels.whatsapp.app_secret = if v.trim().is_empty() { None } else { Some(v) };
-        }
-        if let Ok(v) = std::env::var("IMESSAGE_SOURCE_DB") {
-            if !v.trim().is_empty() {
-                self.channels.imessage.source_db = Some(v);
-                self.channels.imessage.enabled = true;
-            }
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_EMAIL_PROVIDER") {
-            if !v.trim().is_empty() {
-                self.channels.email.provider = v;
-            }
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_EMAIL_QUERY") {
-            if !v.trim().is_empty() {
-                self.channels.email.query = v;
-            }
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_EMAIL_POLL_INTERVAL_MS") {
-            self.channels.email.poll_interval_ms =
-                parse_env_u64("OPENSHELL_EMAIL_POLL_INTERVAL_MS", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_EMAIL_START_FROM_LATEST") {
-            self.channels.email.start_from_latest =
-                parse_env_bool("OPENSHELL_EMAIL_START_FROM_LATEST", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_EMAIL_MARK_PROCESSED_AS_READ") {
-            self.channels.email.mark_processed_as_read =
-                parse_env_bool("OPENSHELL_EMAIL_MARK_PROCESSED_AS_READ", &v)?;
-        }
-        if let Ok(v) = std::env::var("GMAIL_ACCESS_TOKEN") {
-            if !v.trim().is_empty() {
-                self.channels.email.gmail_access_token = v;
-                self.channels.email.enabled = true;
-            }
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_LINEAR_POLL_INTERVAL_MS") {
-            self.channels.linear.poll_interval_ms =
-                parse_env_u64("OPENSHELL_LINEAR_POLL_INTERVAL_MS", &v)?;
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_LINEAR_TEAM_IDS") {
-            if !v.trim().is_empty() {
-                self.channels.linear.team_ids = v
-                    .split(',')
-                    .map(|s| s.trim().to_string())
-                    .filter(|s| !s.is_empty())
-                    .collect();
-            }
-        }
-        if let Ok(v) = std::env::var("OPENSHELL_LINEAR_START_FROM_LATEST") {
-            self.channels.linear.start_from_latest =
-                parse_env_bool("OPENSHELL_LINEAR_START_FROM_LATEST", &v)?;
-        }
-        if let Ok(v) = std::env::var("LINEAR_API_KEY") {
-            if !v.trim().is_empty() {
-                self.channels.linear.api_key = v;
-                self.channels.linear.enabled = true;
-            }
-        }
-        Ok(())
-    }
-
     pub fn validate(&self) -> anyhow::Result<()> {
-        if self.general.model.trim().is_empty() {
-            return Err(anyhow::anyhow!("general.model is required"));
+        if self.general.system_prompt.trim().is_empty() {
+            return Err(anyhow::anyhow!("general.system_prompt is required"));
         }
-        if self.general.failover_cooldown_base_seconds == 0 {
+        if self.llm.active_profile.trim().is_empty() {
+            return Err(anyhow::anyhow!("llm.active_profile is required"));
+        }
+        if self.llm.profiles.is_empty() {
             return Err(anyhow::anyhow!(
-                "general.failover_cooldown_base_seconds must be > 0"
+                "llm.profiles must contain at least one profile"
             ));
         }
-        if self.general.failover_cooldown_max_seconds == 0 {
+        if self.llm.failover_cooldown_base_seconds == 0 {
             return Err(anyhow::anyhow!(
-                "general.failover_cooldown_max_seconds must be > 0"
+                "llm.failover_cooldown_base_seconds must be > 0"
             ));
         }
-        if self.general.failover_cooldown_base_seconds > self.general.failover_cooldown_max_seconds
-        {
+        if self.llm.failover_cooldown_max_seconds == 0 {
             return Err(anyhow::anyhow!(
-                "general.failover_cooldown_base_seconds must be <= general.failover_cooldown_max_seconds"
+                "llm.failover_cooldown_max_seconds must be > 0"
+            ));
+        }
+        if self.llm.failover_cooldown_base_seconds > self.llm.failover_cooldown_max_seconds {
+            return Err(anyhow::anyhow!(
+                "llm.failover_cooldown_base_seconds must be <= llm.failover_cooldown_max_seconds"
             ));
         }
         if self
-            .general
-            .fallback_models
+            .llm
+            .fallback_profiles
             .iter()
-            .any(|model| model.trim().is_empty())
+            .any(|profile| profile.trim().is_empty())
         {
             return Err(anyhow::anyhow!(
-                "general.fallback_models cannot contain empty values"
+                "llm.fallback_profiles cannot contain empty values"
             ));
         }
+        for (profile_name, profile) in &self.llm.profiles {
+            if profile_name.trim().is_empty() {
+                return Err(anyhow::anyhow!(
+                    "llm.profiles keys must not be empty or whitespace"
+                ));
+            }
+            if profile.model.trim().is_empty() {
+                return Err(anyhow::anyhow!(
+                    "llm.profiles.{profile_name}.model is required"
+                ));
+            }
+            if profile
+                .fallback_models
+                .iter()
+                .any(|model| model.trim().is_empty())
+            {
+                return Err(anyhow::anyhow!(
+                    "llm.profiles.{profile_name}.fallback_models cannot contain empty values"
+                ));
+            }
+        }
+        let _ = self.llm_profile_chain_names()?;
         if self
             .keys
             .openai_api_keys
@@ -1665,6 +2087,19 @@ impl OpenShellConfig {
         }
         if self.context.max_tool_chars == 0 {
             return Err(anyhow::anyhow!("context.max_tool_chars must be > 0"));
+        }
+        if self.context.tool_loops_max == 0 {
+            return Err(anyhow::anyhow!("context.tool_loops_max must be > 0"));
+        }
+        if self.context.tool_max_runtime_seconds == 0 {
+            return Err(anyhow::anyhow!(
+                "context.tool_max_runtime_seconds must be > 0"
+            ));
+        }
+        if self.context.tool_no_progress_limit == 0 {
+            return Err(anyhow::anyhow!(
+                "context.tool_no_progress_limit must be > 0"
+            ));
         }
         if self.context.compaction_enabled && !self.memory.enabled {
             return Err(anyhow::anyhow!(
@@ -1766,16 +2201,92 @@ impl OpenShellConfig {
         if self.channels.webchat.enabled && self.channels.webchat.port == 0 {
             return Err(anyhow::anyhow!("channels.webchat.port must be > 0"));
         }
+        validate_channel_access(
+            "channels.telegram",
+            self.channels.telegram.enabled,
+            &self.channels.telegram.access,
+        )?;
         if self.channels.telegram.enabled && self.channels.telegram.bot_token.trim().is_empty() {
             return Err(anyhow::anyhow!(
                 "channels.telegram.bot_token is required when channels.telegram.enabled=true"
             ));
         }
+        if self.channels.telegram.enabled {
+            if self.channels.telegram.long_poll_timeout_seconds == 0 {
+                return Err(anyhow::anyhow!(
+                    "channels.telegram.long_poll_timeout_seconds must be > 0"
+                ));
+            }
+            if self.channels.telegram.allowed_updates.is_empty() {
+                return Err(anyhow::anyhow!(
+                    "channels.telegram.allowed_updates must contain at least one update type when channels.telegram.enabled=true"
+                ));
+            }
+            if self
+                .channels
+                .telegram
+                .allowed_updates
+                .iter()
+                .any(|update| update.trim().is_empty())
+            {
+                return Err(anyhow::anyhow!(
+                    "channels.telegram.allowed_updates cannot contain empty values"
+                ));
+            }
+            if self.channels.telegram.retry_base_ms == 0 {
+                return Err(anyhow::anyhow!(
+                    "channels.telegram.retry_base_ms must be > 0"
+                ));
+            }
+            if self.channels.telegram.retry_max_ms == 0 {
+                return Err(anyhow::anyhow!(
+                    "channels.telegram.retry_max_ms must be > 0"
+                ));
+            }
+            if self.channels.telegram.retry_max_ms < self.channels.telegram.retry_base_ms {
+                return Err(anyhow::anyhow!(
+                    "channels.telegram.retry_max_ms must be >= channels.telegram.retry_base_ms"
+                ));
+            }
+            if self.channels.telegram.non_transient_delay_seconds == 0 {
+                return Err(anyhow::anyhow!(
+                    "channels.telegram.non_transient_delay_seconds must be > 0"
+                ));
+            }
+            if self.channels.telegram.max_message_chars == 0 {
+                return Err(anyhow::anyhow!(
+                    "channels.telegram.max_message_chars must be > 0"
+                ));
+            }
+            if self.channels.telegram.max_message_chars > 4096 {
+                return Err(anyhow::anyhow!(
+                    "channels.telegram.max_message_chars must be <= 4096"
+                ));
+            }
+        }
+        validate_channel_access(
+            "channels.discord",
+            self.channels.discord.enabled,
+            &self.channels.discord.access,
+        )?;
         if self.channels.discord.enabled && self.channels.discord.bot_token.trim().is_empty() {
             return Err(anyhow::anyhow!(
                 "channels.discord.bot_token is required when channels.discord.enabled=true"
             ));
         }
+        if self.channels.discord.enabled
+            && !self.channels.discord.intent_guild_messages
+            && !self.channels.discord.intent_message_content
+        {
+            return Err(anyhow::anyhow!(
+                "channels.discord must enable at least one gateway intent when channels.discord.enabled=true"
+            ));
+        }
+        validate_channel_access(
+            "channels.slack",
+            self.channels.slack.enabled,
+            &self.channels.slack.access,
+        )?;
         if self.channels.slack.enabled {
             if self.channels.slack.bot_token.trim().is_empty() {
                 return Err(anyhow::anyhow!(
@@ -1785,6 +2296,11 @@ impl OpenShellConfig {
             if self.channels.slack.poll_interval_ms == 0 {
                 return Err(anyhow::anyhow!(
                     "channels.slack.poll_interval_ms must be > 0"
+                ));
+            }
+            if !(1..=200).contains(&self.channels.slack.history_limit) {
+                return Err(anyhow::anyhow!(
+                    "channels.slack.history_limit must be between 1 and 200"
                 ));
             }
             if self.channels.slack.channel_ids.is_empty() {
@@ -1804,6 +2320,11 @@ impl OpenShellConfig {
                 ));
             }
         }
+        validate_channel_access(
+            "channels.matrix",
+            self.channels.matrix.enabled,
+            &self.channels.matrix.access,
+        )?;
         if self.channels.matrix.enabled {
             if self.channels.matrix.homeserver_url.trim().is_empty() {
                 return Err(anyhow::anyhow!(
@@ -1834,6 +2355,11 @@ impl OpenShellConfig {
                     "channels.matrix.poll_interval_ms must be > 0"
                 ));
             }
+            if self.channels.matrix.sync_timeout_ms == 0 {
+                return Err(anyhow::anyhow!(
+                    "channels.matrix.sync_timeout_ms must be > 0"
+                ));
+            }
             if self.channels.matrix.room_ids.is_empty() {
                 return Err(anyhow::anyhow!(
                     "channels.matrix.room_ids must contain at least one room id when channels.matrix.enabled=true"
@@ -1851,6 +2377,11 @@ impl OpenShellConfig {
                 ));
             }
         }
+        validate_channel_access(
+            "channels.signal",
+            self.channels.signal.enabled,
+            &self.channels.signal.access,
+        )?;
         if self.channels.signal.enabled {
             let api_base_url = self.channels.signal.api_base_url.trim();
             if api_base_url.is_empty() {
@@ -1889,6 +2420,11 @@ impl OpenShellConfig {
                 }
             }
         }
+        validate_channel_access(
+            "channels.whatsapp",
+            self.channels.whatsapp.enabled,
+            &self.channels.whatsapp.access,
+        )?;
         if self.channels.whatsapp.enabled {
             if self.channels.whatsapp.access_token.trim().is_empty() {
                 return Err(anyhow::anyhow!(
@@ -1919,9 +2455,19 @@ impl OpenShellConfig {
                 }
             }
         }
+        validate_channel_access(
+            "channels.imessage",
+            self.channels.imessage.enabled,
+            &self.channels.imessage.access,
+        )?;
         if self.channels.imessage.enabled && self.channels.imessage.poll_interval_ms == 0 {
             return Err(anyhow::anyhow!(
                 "channels.imessage.poll_interval_ms must be > 0"
+            ));
+        }
+        if self.channels.imessage.enabled && self.channels.imessage.max_per_poll == 0 {
+            return Err(anyhow::anyhow!(
+                "channels.imessage.max_per_poll must be > 0"
             ));
         }
         if self.channels.imessage.enabled
@@ -1934,6 +2480,11 @@ impl OpenShellConfig {
                 "channels.imessage.source_db is required when channels.imessage.enabled=true"
             ));
         }
+        validate_channel_access(
+            "channels.email",
+            self.channels.email.enabled,
+            &self.channels.email.access,
+        )?;
         if self.channels.email.enabled {
             if !self
                 .channels
@@ -1956,12 +2507,20 @@ impl OpenShellConfig {
                     "channels.email.poll_interval_ms must be > 0"
                 ));
             }
+            if self.channels.email.max_results == 0 {
+                return Err(anyhow::anyhow!("channels.email.max_results must be > 0"));
+            }
             if self.channels.email.query.trim().is_empty() {
                 return Err(anyhow::anyhow!(
                     "channels.email.query must not be empty when channels.email.enabled=true"
                 ));
             }
         }
+        validate_channel_access(
+            "channels.linear",
+            self.channels.linear.enabled,
+            &self.channels.linear.access,
+        )?;
         if self.channels.linear.enabled {
             if self.channels.linear.api_key.trim().is_empty() {
                 return Err(anyhow::anyhow!(
@@ -1972,6 +2531,9 @@ impl OpenShellConfig {
                 return Err(anyhow::anyhow!(
                     "channels.linear.poll_interval_ms must be > 0"
                 ));
+            }
+            if self.channels.linear.max_issues == 0 {
+                return Err(anyhow::anyhow!("channels.linear.max_issues must be > 0"));
             }
             if self
                 .channels
@@ -2018,6 +2580,11 @@ impl OpenShellConfig {
                     plugin.id
                 ));
             }
+            validate_channel_access(
+                &format!("channels.external_plugins[{plugin_id}]"),
+                plugin.enabled,
+                &plugin.access,
+            )?;
             if !plugin.enabled {
                 continue;
             }
@@ -2126,36 +2693,132 @@ impl OpenShellConfig {
             }
         }
         let _ = self.runtime_network_policy()?;
-        let _ = self.api_keys_for_model_name(&self.general.model)?;
-        for fallback_model in &self.general.fallback_models {
-            let _ = self.api_keys_for_model_name(fallback_model)?;
+        for profile_name in self.llm_profile_chain_names()? {
+            let profile = self.llm_profile(&profile_name)?;
+            let _ = self.api_keys_for_provider(profile.provider)?;
         }
         Ok(())
     }
 
-    pub fn api_key_for_model(&self) -> anyhow::Result<String> {
-        self.api_keys_for_model_name(&self.general.model)?
+    fn channel_access_config(&self, channel_id: &str) -> Option<&ChannelAccessConfig> {
+        match channel_id {
+            "telegram" => Some(&self.channels.telegram.access),
+            "discord" => Some(&self.channels.discord.access),
+            "slack" => Some(&self.channels.slack.access),
+            "matrix" => Some(&self.channels.matrix.access),
+            "signal" => Some(&self.channels.signal.access),
+            "whatsapp" => Some(&self.channels.whatsapp.access),
+            "imessage" => Some(&self.channels.imessage.access),
+            "email" => Some(&self.channels.email.access),
+            "linear" => Some(&self.channels.linear.access),
+            _ => self
+                .channels
+                .external_plugins
+                .iter()
+                .find(|plugin| plugin.id.eq_ignore_ascii_case(channel_id))
+                .map(|plugin| &plugin.access),
+        }
+    }
+
+    pub fn channel_access_mode(&self, channel_id: &str) -> SenderAccessMode {
+        self.channel_access_config(channel_id)
+            .map(|access| access.mode)
+            .unwrap_or(SenderAccessMode::Pairing)
+    }
+
+    pub fn channel_is_sender_allowlisted(&self, channel_id: &str, sender_id: &str) -> bool {
+        self.channel_access_config(channel_id)
+            .map(|access| {
+                access
+                    .allowed_senders
+                    .iter()
+                    .map(|entry| entry.trim())
+                    .any(|entry| entry == sender_id)
+            })
+            .unwrap_or(false)
+    }
+
+    pub fn llm_profile(&self, name: &str) -> anyhow::Result<&LlmProfileConfig> {
+        self.llm
+            .profiles
+            .get(name)
+            .ok_or_else(|| anyhow::anyhow!("llm profile {:?} not found", name))
+    }
+
+    pub fn llm_profile_chain_names(&self) -> anyhow::Result<Vec<String>> {
+        let active = self.llm.active_profile.trim();
+        if active.is_empty() {
+            return Err(anyhow::anyhow!("llm.active_profile is required"));
+        }
+
+        let mut names = Vec::with_capacity(1 + self.llm.fallback_profiles.len());
+        names.push(active.to_string());
+        for fallback in &self.llm.fallback_profiles {
+            let fallback = fallback.trim();
+            if fallback.is_empty() {
+                return Err(anyhow::anyhow!(
+                    "llm.fallback_profiles cannot contain empty values"
+                ));
+            }
+            if !names.iter().any(|existing| existing == fallback) {
+                names.push(fallback.to_string());
+            }
+        }
+
+        for name in &names {
+            if !self.llm.profiles.contains_key(name) {
+                return Err(anyhow::anyhow!(
+                    "llm profile {:?} referenced by active/fallback chain is not defined; available profiles: {:?}",
+                    name,
+                    self.llm.profiles.keys().collect::<Vec<_>>()
+                ));
+            }
+        }
+        Ok(names)
+    }
+
+    pub fn configured_models(&self) -> anyhow::Result<Vec<String>> {
+        let mut models = Vec::new();
+        for profile_name in self.llm_profile_chain_names()? {
+            let profile = self.llm_profile(&profile_name)?;
+            push_unique_model_name(&mut models, profile.model.as_str());
+            for fallback in &profile.fallback_models {
+                push_unique_model_name(&mut models, fallback.as_str());
+            }
+        }
+        Ok(models)
+    }
+
+    pub fn default_model(&self) -> anyhow::Result<&str> {
+        let profile_name = self.llm.active_profile.trim();
+        let profile = self.llm_profile(profile_name)?;
+        Ok(profile.model.trim())
+    }
+
+    pub fn api_key_for_active_profile_model(&self) -> anyhow::Result<String> {
+        let profile_name = self.llm.active_profile.trim();
+        let profile = self.llm_profile(profile_name)?;
+        self.api_keys_for_provider(profile.provider)?
             .into_iter()
             .next()
             .ok_or_else(|| {
                 anyhow::anyhow!(
-                    "no usable API keys found for general.model={:?}",
-                    self.general.model
+                    "no usable API keys found for llm.active_profile={:?}",
+                    self.llm.active_profile
                 )
             })
     }
 
-    pub fn api_keys_for_model_name(&self, model_name: &str) -> anyhow::Result<Vec<String>> {
-        let provider = detect_provider_for_model(model_name)?;
+    pub fn api_keys_for_provider(&self, provider: LlmProvider) -> anyhow::Result<Vec<String>> {
         let mut keys = Vec::new();
         match provider {
-            ModelProvider::Anthropic => {
+            LlmProvider::Anthropic => {
                 push_unique_trimmed(&mut keys, self.keys.anthropic_api_key.as_deref());
                 for key in &self.keys.anthropic_api_keys {
                     push_unique_trimmed(&mut keys, Some(key.as_str()));
                 }
             }
-            ModelProvider::OpenAI => {
+            LlmProvider::Openai => {
                 push_unique_trimmed(&mut keys, self.keys.openai_api_key.as_deref());
                 for key in &self.keys.openai_api_keys {
                     push_unique_trimmed(&mut keys, Some(key.as_str()));
@@ -2164,15 +2827,50 @@ impl OpenShellConfig {
         }
         if keys.is_empty() {
             let provider_name = match provider {
-                ModelProvider::Anthropic => "Anthropic",
-                ModelProvider::OpenAI => "OpenAI",
+                LlmProvider::Anthropic => "Anthropic",
+                LlmProvider::Openai => "OpenAI",
             };
             return Err(anyhow::anyhow!(
-                "at least one {provider_name} API key is required for model {model_name:?}"
+                "at least one {provider_name} API key is required for configured llm profiles"
             ));
         }
         Ok(keys)
     }
+}
+
+fn validate_channel_access(
+    channel_field: &str,
+    enabled: bool,
+    access: &ChannelAccessConfig,
+) -> anyhow::Result<()> {
+    let mut seen = std::collections::HashSet::new();
+    for sender in &access.allowed_senders {
+        let trimmed = sender.trim();
+        if trimmed.is_empty() {
+            return Err(anyhow::anyhow!(
+                "{channel_field}.access.allowed_senders cannot contain empty values"
+            ));
+        }
+        if trimmed.chars().any(char::is_control) {
+            return Err(anyhow::anyhow!(
+                "{channel_field}.access.allowed_senders cannot contain control characters"
+            ));
+        }
+        if !seen.insert(trimmed.to_string()) {
+            return Err(anyhow::anyhow!(
+                "{channel_field}.access.allowed_senders contains duplicate sender id {:?}",
+                trimmed
+            ));
+        }
+    }
+
+    if enabled && access.mode == SenderAccessMode::Allowlist && access.allowed_senders.is_empty() {
+        return Err(anyhow::anyhow!(
+            "{channel_field}.access.allowed_senders must contain at least one sender when access.mode=allowlist and the channel is enabled"
+        ));
+    }
+
+    Ok(())
 }
 
 fn resolve_bind_addr(
@@ -2234,29 +2932,6 @@ fn resolve_runtime_exposure(
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ModelProvider {
-    OpenAI,
-    Anthropic,
-}
-
-fn detect_provider_for_model(model_name: &str) -> anyhow::Result<ModelProvider> {
-    let model = model_name.trim().to_ascii_lowercase();
-    if model.starts_with("claude-") {
-        return Ok(ModelProvider::Anthropic);
-    }
-    if model.starts_with("gpt-")
-        || model.starts_with("o1")
-        || model.starts_with("o3")
-        || model.starts_with("o4")
-    {
-        return Ok(ModelProvider::OpenAI);
-    }
-    Err(anyhow::anyhow!(
-        "unsupported model {model_name:?}: provider cannot be inferred"
-    ))
-}
-
 fn push_unique_trimmed(target: &mut Vec<String>, candidate: Option<&str>) {
     let Some(raw) = candidate else { return };
     let trimmed = raw.trim();
@@ -2268,26 +2943,16 @@ fn push_unique_trimmed(target: &mut Vec<String>, candidate: Option<&str>) {
     }
 }
 
-fn parse_env_usize(name: &str, raw: &str) -> anyhow::Result<usize> {
-    raw.trim()
-        .parse::<usize>()
-        .map_err(|e| anyhow::anyhow!("invalid {name}={raw:?}: {e}"))
-}
-
-fn parse_env_u64(name: &str, raw: &str) -> anyhow::Result<u64> {
-    raw.trim()
-        .parse::<u64>()
-        .map_err(|e| anyhow::anyhow!("invalid {name}={raw:?}: {e}"))
-}
-
-fn parse_env_bool(name: &str, raw: &str) -> anyhow::Result<bool> {
-    let normalized = raw.trim().to_ascii_lowercase();
-    match normalized.as_str() {
-        "1" | "true" | "yes" | "on" => Ok(true),
-        "0" | "false" | "no" | "off" => Ok(false),
-        _ => Err(anyhow::anyhow!(
-            "invalid {name}={raw:?}: expected boolean (true/false)"
-        )),
+fn push_unique_model_name(target: &mut Vec<String>, candidate: &str) {
+    let trimmed = candidate.trim();
+    if trimmed.is_empty() {
+        return;
+    }
+    if !target
+        .iter()
+        .any(|existing| existing.eq_ignore_ascii_case(trimmed))
+    {
+        target.push(trimmed.to_string());
     }
 }
 
@@ -2326,6 +2991,107 @@ pub fn default_config_path() -> anyhow::Result<PathBuf> {
     Ok(Path::new(&home).join(".opencraw").join("config.toml"))
 }
 
+fn config_fragments_dir(base_config_path: &Path) -> PathBuf {
+    let parent = base_config_path
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    parent.join("configs")
+}
+
+async fn read_config_fragment_entries(
+    fragments_dir: &Path,
+) -> anyhow::Result<Vec<(ConfigFileKind, PathBuf)>> {
+    let metadata = match tokio::fs::metadata(fragments_dir).await {
+        Ok(metadata) => metadata,
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(err) => {
+            return Err(anyhow::anyhow!(
+                "read configs directory {}: {err}",
+                fragments_dir.display()
+            ));
+        }
+    };
+    if !metadata.is_dir() {
+        return Err(anyhow::anyhow!(
+            "configs path {} exists but is not a directory",
+            fragments_dir.display()
+        ));
+    }
+
+    let mut read_dir = tokio::fs::read_dir(fragments_dir).await.map_err(|err| {
+        anyhow::anyhow!("open configs directory {}: {err}", fragments_dir.display())
+    })?;
+
+    let mut entries: Vec<(String, ConfigFileKind, PathBuf)> = Vec::new();
+    let mut seen_kinds: std::collections::HashMap<ConfigFileKind, PathBuf> =
+        std::collections::HashMap::new();
+
+    while let Some(entry) = read_dir.next_entry().await.map_err(|err| {
+        anyhow::anyhow!(
+            "read configs directory entry {}: {err}",
+            fragments_dir.display()
+        )
+    })? {
+        let path = entry.path();
+        let file_name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| anyhow::anyhow!("invalid config filename: {}", path.display()))?
+            .to_string();
+
+        if file_name.starts_with('.') {
+            continue;
+        }
+
+        let file_type = entry.file_type().await.map_err(|err| {
+            anyhow::anyhow!("read config fragment metadata {}: {err}", path.display())
+        })?;
+        if !file_type.is_file() {
+            tracing::debug!(
+                path = %path.display(),
+                "ignoring non-file entry in configs directory"
+            );
+            continue;
+        }
+
+        if path.extension().and_then(|ext| ext.to_str()) != Some("toml") {
+            tracing::debug!(
+                path = %path.display(),
+                "ignoring non-toml entry in configs directory"
+            );
+            continue;
+        }
+
+        let Some(kind) = ConfigFileKind::from_file_name(&file_name) else {
+            tracing::debug!(
+                file_name = %file_name,
+                expected = %ConfigFileKind::canonical_file_names_csv(),
+                "ignoring unknown config fragment filename"
+            );
+            continue;
+        };
+
+        if let Some(existing_path) = seen_kinds.insert(kind, path.clone()) {
+            return Err(anyhow::anyhow!(
+                "duplicate config fragment kind {:?}: {} and {} (use only one of aliases for {})",
+                kind,
+                existing_path.display(),
+                path.display(),
+                kind.canonical_file_name()
+            ));
+        }
+
+        entries.push((file_name, kind, path));
+    }
+
+    entries.sort_by(|left, right| left.0.cmp(&right.0));
+    Ok(entries
+        .into_iter()
+        .map(|(_, kind, path)| (kind, path))
+        .collect())
+}
+
 fn expand_home(path: &str) -> anyhow::Result<PathBuf> {
     let trimmed = path.trim().to_string();
     if !trimmed.starts_with("~/") {
@@ -2338,15 +3104,24 @@ fn expand_home(path: &str) -> anyhow::Result<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::{
-        BindMode, ControlApiKeyConfig, DiscoveryMode, ExternalChannelPluginConfig, OpenShellConfig,
-        RuntimeExposure, ToolProfile, ToolsConfig, canonical_tool_name,
+        BindMode, ChannelAccessConfig, ControlApiKeyConfig, DiscoveryMode,
+        ExternalChannelPluginConfig, OpenShellConfig, RuntimeExposure, SenderAccessMode,
+        ToolProfile, ToolsConfig, canonical_tool_name,
     };
+    use std::path::{Path, PathBuf};
+    use uuid::Uuid;
 
     fn base_config() -> OpenShellConfig {
         toml::from_str(
             r#"
-[general]
+[llm]
+active_profile = "default"
+
+[llm.profiles.default]
+provider = "openai"
 model = "gpt-4o-mini"
+
+[general]
 system_prompt = "test prompt"
 
 [keys]
@@ -2358,6 +3133,220 @@ port = 3000
 "#,
         )
         .expect("parse base config")
+    }
+
+    fn temp_config_root(name: &str) -> PathBuf {
+        std::env::temp_dir().join(format!("opencraw-config-{name}-{}", Uuid::new_v4()))
+    }
+
+    fn write_file(path: &Path, contents: &str) {
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent).expect("create parent directory");
+        }
+        std::fs::write(path, contents).expect("write file");
+    }
+
+    fn load_with_path_blocking(path: PathBuf) -> anyhow::Result<OpenShellConfig> {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .expect("build tokio runtime");
+        runtime.block_on(async { OpenShellConfig::load(Some(path)).await })
+    }
+
+    #[test]
+    fn loads_and_applies_configs_directory_fragments() {
+        let root = temp_config_root("fragments-merge");
+        let config_path = root.join("config.toml");
+        let telegram_path = root.join("configs/channel-telegram.toml");
+        write_file(
+            &config_path,
+            r#"
+[llm]
+active_profile = "default"
+
+[llm.profiles.default]
+provider = "openai"
+model = "gpt-4o-mini"
+
+[general]
+system_prompt = "test"
+
+[keys]
+openai_api_key = "x"
+
+[channels.webchat]
+enabled = true
+port = 3000
+"#,
+        );
+        write_file(
+            &telegram_path,
+            r#"
+[channels.telegram]
+enabled = true
+bot_token = "token"
+
+[channels.telegram.access]
+mode = "open"
+"#,
+        );
+
+        let cfg = load_with_path_blocking(config_path.clone()).expect("load config");
+        assert!(
+            cfg.channels.telegram.enabled,
+            "channel fragment should override base config"
+        );
+        assert_eq!(
+            cfg.channels.telegram.access.mode,
+            SenderAccessMode::Open,
+            "channel access mode should come from channel fragment"
+        );
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn ignores_unknown_config_fragment_file_name() {
+        let root = temp_config_root("fragments-unknown-file");
+        let config_path = root.join("config.toml");
+        write_file(
+            &config_path,
+            r#"
+[llm]
+active_profile = "default"
+
+[llm.profiles.default]
+provider = "openai"
+model = "gpt-4o-mini"
+
+[general]
+system_prompt = "test"
+
+[keys]
+openai_api_key = "x"
+
+[channels.webchat]
+enabled = true
+port = 3000
+
+[channels.telegram]
+enabled = false
+bot_token = ""
+"#,
+        );
+        write_file(
+            &root.join("configs/provider-telegram.toml"),
+            r#"
+[channels.telegram]
+enabled = true
+bot_token = "token"
+"#,
+        );
+
+        let cfg = load_with_path_blocking(config_path.clone())
+            .expect("unknown fragment filename should be ignored");
+        assert!(
+            !cfg.channels.telegram.enabled,
+            "unknown fragment file must not override known config"
+        );
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn ignores_non_toml_files_in_configs_dir() {
+        let root = temp_config_root("fragments-ignore-non-toml");
+        let config_path = root.join("config.toml");
+        write_file(
+            &config_path,
+            r#"
+[llm]
+active_profile = "default"
+
+[llm.profiles.default]
+provider = "openai"
+model = "gpt-4o-mini"
+
+[general]
+system_prompt = "test"
+
+[keys]
+openai_api_key = "x"
+
+[channels.webchat]
+enabled = true
+port = 3000
+
+[channels.email]
+enabled = false
+poll_interval_ms = 5000
+"#,
+        );
+        write_file(
+            &root.join("configs/channel-email.toml.bak.20260210T221132Z"),
+            r#"
+[channels.email]
+enabled = true
+poll_interval_ms = 1000
+"#,
+        );
+
+        let cfg = load_with_path_blocking(config_path.clone())
+            .expect("non-toml fragment files should be ignored");
+        assert!(
+            !cfg.channels.email.enabled,
+            "non-toml backup fragment must not override channel config"
+        );
+        assert_eq!(
+            cfg.channels.email.poll_interval_ms, 5000,
+            "base config should remain unchanged when backup files are present"
+        );
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn rejects_invalid_fragment_schema() {
+        let root = temp_config_root("fragments-invalid-schema");
+        let config_path = root.join("config.toml");
+        write_file(
+            &config_path,
+            r#"
+[llm]
+active_profile = "default"
+
+[llm.profiles.default]
+provider = "openai"
+model = "gpt-4o-mini"
+
+[general]
+system_prompt = "test"
+
+[keys]
+openai_api_key = "x"
+
+[channels.webchat]
+enabled = true
+port = 3000
+"#,
+        );
+        write_file(
+            &root.join("configs/security.toml"),
+            r#"
+[security]
+not_a_real_key = 1
+"#,
+        );
+
+        let err =
+            load_with_path_blocking(config_path.clone()).expect_err("invalid schema should fail");
+        assert!(
+            err.to_string().contains("parse config fragment"),
+            "unexpected error: {err}"
+        );
+
+        let _ = std::fs::remove_dir_all(root);
     }
 
     #[test]
@@ -2399,6 +3388,18 @@ port = 3000
         assert!(cfg.tool_enabled("apply_patch"));
         assert!(cfg.tool_enabled("browser"));
         assert!(!cfg.tool_enabled("imessage"));
+    }
+
+    #[test]
+    fn profile_defaults_enable_messaging_tools() {
+        let cfg = ToolsConfig {
+            profile: ToolProfile::Messaging,
+            ..ToolsConfig::default()
+        };
+        assert!(cfg.tool_enabled("email"));
+        assert!(cfg.tool_enabled("imessage"));
+        assert!(cfg.tool_enabled("linear"));
+        assert!(!cfg.tool_enabled("shell_execute"));
     }
 
     #[test]
@@ -2506,6 +3507,65 @@ port = 3000
     }
 
     #[test]
+    fn enabled_allowlist_mode_requires_sender_ids() {
+        let mut cfg = base_config();
+        cfg.channels.telegram.enabled = true;
+        cfg.channels.telegram.bot_token = "token".to_string();
+        cfg.channels.telegram.access.mode = SenderAccessMode::Allowlist;
+        cfg.channels.telegram.access.allowed_senders.clear();
+
+        let err = cfg
+            .validate()
+            .expect_err("enabled allowlist mode without senders should fail");
+        assert!(
+            err.to_string().contains(
+                "channels.telegram.access.allowed_senders must contain at least one sender"
+            )
+        );
+    }
+
+    #[test]
+    fn channel_access_lookup_is_provider_local() {
+        let mut cfg = base_config();
+        cfg.channels.telegram.access.mode = SenderAccessMode::Open;
+        cfg.channels.telegram.access.allowed_senders = vec!["12345".to_string()];
+
+        assert_eq!(cfg.channel_access_mode("telegram"), SenderAccessMode::Open);
+        assert!(cfg.channel_is_sender_allowlisted("telegram", "12345"));
+        assert!(!cfg.channel_is_sender_allowlisted("telegram", "99999"));
+    }
+
+    #[test]
+    fn external_plugin_access_lookup_uses_plugin_config() {
+        let mut cfg = base_config();
+        cfg.channels
+            .external_plugins
+            .push(ExternalChannelPluginConfig {
+                id: "custom_ops".to_string(),
+                enabled: true,
+                send_url: "https://plugins.example.com/send".to_string(),
+                poll_url: None,
+                auth_token: None,
+                poll_interval_ms: 3000,
+                start_from_latest: true,
+                supports_streaming_deltas: false,
+                supports_typing_events: false,
+                supports_reactions: false,
+                access: ChannelAccessConfig {
+                    mode: SenderAccessMode::Allowlist,
+                    allowed_senders: vec!["ops-user".to_string()],
+                },
+            });
+
+        assert_eq!(
+            cfg.channel_access_mode("custom_ops"),
+            SenderAccessMode::Allowlist
+        );
+        assert!(cfg.channel_is_sender_allowlisted("custom_ops", "ops-user"));
+        assert!(!cfg.channel_is_sender_allowlisted("custom_ops", "random-user"));
+    }
+
+    #[test]
     fn external_plugin_id_conflicting_with_builtin_is_rejected() {
         let mut cfg = base_config();
         cfg.channels
@@ -2521,6 +3581,7 @@ port = 3000
                 supports_streaming_deltas: false,
                 supports_typing_events: false,
                 supports_reactions: false,
+                access: ChannelAccessConfig::default(),
             });
 
         let err = cfg
@@ -2548,6 +3609,7 @@ port = 3000
                 supports_streaming_deltas: false,
                 supports_typing_events: false,
                 supports_reactions: false,
+                access: ChannelAccessConfig::default(),
             });
 
         let err = cfg

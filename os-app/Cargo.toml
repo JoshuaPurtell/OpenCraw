@@ -29,7 +29,6 @@ bytes = { workspace = true }
 chrono = { workspace = true }
 clap = { workspace = true }
 cron = { workspace = true }
-dotenvy = { workspace = true }
 dashmap = { workspace = true }
 futures-util = { workspace = true }
 reqwest = { workspace = true }

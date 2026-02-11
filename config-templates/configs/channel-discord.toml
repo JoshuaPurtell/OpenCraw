@@ -1,0 +1,13 @@
+[channels.discord]
+enabled = false
+# bot_token = "..."
+require_mention_in_group_chats = true
+intent_guild_messages = true
+intent_message_content = true
+
+[channels.discord.access]
+# "pairing" (default), "allowlist", or "open" (local testing only)
+mode = "pairing"
+# Discord sender IDs are snowflakes.
+# allowed_senders = ["123456789012345678"]
+allowed_senders = []

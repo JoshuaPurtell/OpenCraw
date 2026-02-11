@@ -197,8 +197,9 @@ pub async fn build_dev_runtime(
     )) as Arc<dyn PipelineRunner>;
 
     // Continual learning wiring (required by Horizons `all` feature).
+    let default_model = cfg.default_model()?.to_string();
     let mipro_llm: Arc<dyn MiproLlmClient> = Arc::new(MiproLlmAdapter {
-        llm: os_llm::LlmClient::new(&cfg.api_key_for_model()?, &cfg.general.model)?,
+        llm: os_llm::LlmClient::new(&cfg.api_key_for_active_profile_model()?, &default_model)?,
     });
     let sampler: Arc<dyn MiproVariantSampler> = Arc::new(mipro_v2::BasicSampler::new());
     let metric: Arc<dyn mipro_v2::EvalMetric> = Arc::new(ExactMatchMetric);
@@ -481,8 +482,9 @@ pub async fn build_prod_runtime(
         None,
     )) as Arc<dyn PipelineRunner>;
 
+    let default_model = cfg.default_model()?.to_string();
     let mipro_llm: Arc<dyn MiproLlmClient> = Arc::new(MiproLlmAdapter {
-        llm: os_llm::LlmClient::new(&cfg.api_key_for_model()?, &cfg.general.model)?,
+        llm: os_llm::LlmClient::new(&cfg.api_key_for_active_profile_model()?, &default_model)?,
     });
     let sampler: Arc<dyn MiproVariantSampler> = Arc::new(mipro_v2::BasicSampler::new());
     let metric: Arc<dyn mipro_v2::EvalMetric> = Arc::new(ExactMatchMetric);
@@ -574,8 +576,8 @@ fn build_dev_voyager_memory(
 }
 
 fn build_ai_approver(cfg: &OpenShellConfig) -> Result<Arc<dyn ActionApprover>> {
-    let key = cfg.api_key_for_model()?;
-    let llm = os_llm::LlmClient::new(&key, &cfg.general.model)?;
+    let key = cfg.api_key_for_active_profile_model()?;
+    let llm = os_llm::LlmClient::new(&key, cfg.default_model()?)?;
     Ok(Arc::new(LlmSafetyApprover { llm }))
 }
 

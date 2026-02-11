@@ -1,0 +1,8 @@
+[keys]
+# Set at least one key for the active LLM provider in config.toml.
+# openai_api_key = "..."
+# anthropic_api_key = "..."
+
+# Optional key rotation pools:
+# openai_api_keys = ["key-1", "key-2"]
+# anthropic_api_keys = ["key-1", "key-2"]

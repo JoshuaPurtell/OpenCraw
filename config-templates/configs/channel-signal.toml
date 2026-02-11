@@ -1,0 +1,15 @@
+[channels.signal]
+enabled = false
+api_base_url = "http://127.0.0.1:8080"
+# account = "+15551234567"
+# api_token = "..."
+poll_interval_ms = 3000
+start_from_latest = true
+receive_timeout_seconds = 5
+
+[channels.signal.access]
+# "pairing" (default), "allowlist", or "open" (local testing only)
+mode = "pairing"
+# Signal sender IDs are usually E164 numbers.
+# allowed_senders = ["+15551234567"]
+allowed_senders = []

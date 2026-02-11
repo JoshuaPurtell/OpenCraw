@@ -141,8 +141,14 @@ mod tests {
     fn test_config() -> OpenShellConfig {
         toml::from_str(
             r#"
-[general]
+[llm]
+active_profile = "default"
+
+[llm.profiles.default]
+provider = "openai"
 model = "gpt-4o-mini"
+
+[general]
 system_prompt = "test prompt"
 
 [keys]
@@ -169,7 +175,7 @@ port = 3000
         let err = control
             .patch(
                 Some("deadbeef"),
-                serde_json::json!({ "general": { "model": "gpt-4.1-mini" } }),
+                serde_json::json!({ "llm": { "profiles": { "default": { "model": "gpt-4.1-mini" } } } }),
             )
             .await
             .expect_err("stale hash should fail");
@@ -190,13 +196,22 @@ port = 3000
         let after = control
             .patch(
                 Some(&before.base_hash),
-                serde_json::json!({ "general": { "model": "gpt-4.1-mini" } }),
+                serde_json::json!({ "llm": { "profiles": { "default": { "model": "gpt-4.1-mini" } } } }),
             )
             .await
             .expect("patch should succeed");
 
         assert_ne!(before.base_hash, after.base_hash);
-        assert_eq!(after.config.general.model, "gpt-4.1-mini");
+        assert_eq!(
+            after
+                .config
+                .llm
+                .profiles
+                .get("default")
+                .expect("default profile exists")
+                .model,
+            "gpt-4.1-mini"
+        );
 
         let on_disk = tokio::fs::read_to_string(&path)
             .await

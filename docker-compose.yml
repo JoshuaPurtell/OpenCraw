@@ -7,10 +7,9 @@ services:
       - "3000:3000"
     volumes:
       - ~/.opencraw/config.toml:/home/opencraw/.opencraw/config.toml:ro
+      - ~/.opencraw/configs:/home/opencraw/.opencraw/configs:ro
       - opencraw-data:/home/opencraw/.opencraw/data
     environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       RUST_LOG: ${RUST_LOG:-info}
     depends_on:
       postgres:

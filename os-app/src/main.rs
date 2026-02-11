@@ -12,6 +12,7 @@ mod dev_backends;
 mod discovery_runtime;
 mod gateway;
 mod http_auth;
+mod init;
 mod pairing;
 mod routes;
 mod server;
@@ -19,19 +20,13 @@ mod session;
 mod setup;
 mod skills_runtime;
 
-use anyhow::Context;
 use clap::{Parser, Subcommand};
-use std::path::PathBuf;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::fmt::format::FmtSpan;
 
 #[derive(Debug, Parser)]
 #[command(name = "opencraw", version, about = "OpenCraw personal AI assistant")]
 struct Cli {
-    /// Path to a .env file to load before startup.
-    #[arg(short = 'e', long = "env", global = true)]
-    env_file: Option<PathBuf>,
-
     #[command(subcommand)]
     command: Option<Command>,
 }
@@ -39,31 +34,18 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Command {
     /// Start the OpenCraw server (default).
-    Serve {
-        /// Path to config file. Defaults to ~/.opencraw/config.toml
-        #[arg(long)]
-        config: Option<PathBuf>,
-    },
+    Serve,
+    /// Initialize ~/.opencraw with local config templates (idempotent).
+    Init,
     /// Validate config and perform basic health checks.
-    Doctor {
-        /// Path to config file. Defaults to ~/.opencraw/config.toml
-        #[arg(long)]
-        config: Option<PathBuf>,
-    },
+    Doctor,
     /// Show current runtime status and health summary.
-    Status {
-        /// Path to config file. Defaults to ~/.opencraw/config.toml
-        #[arg(long)]
-        config: Option<PathBuf>,
-    },
+    Status,
     /// One-shot send to a recipient via a configured channel.
     Send {
         channel: String,
         recipient: String,
         message: String,
-        /// Path to config file. Defaults to ~/.opencraw/config.toml
-        #[arg(long)]
-        config: Option<PathBuf>,
     },
 }
 
@@ -74,27 +56,40 @@ async fn main() -> anyhow::Result<()> {
 
     let cli = Cli::parse();
 
-    if let Some(env_path) = &cli.env_file {
-        dotenvy::from_path_override(env_path)
-            .with_context(|| format!("failed to load env file: {}", env_path.display()))?;
-    }
-
     let command = if let Some(command) = cli.command {
         command
     } else {
-        Command::Serve { config: None }
+        Command::Serve
     };
 
     match command {
-        Command::Serve { config } => server::serve(config).await,
-        Command::Doctor { config } => server::doctor(config).await,
-        Command::Status { config } => server::status(config).await,
+        Command::Serve => server::serve(None).await,
+        Command::Init => {
+            let report = init::initialize_default().await?;
+            if report.created.is_empty() {
+                println!(
+                    "opencraw init: already initialized at {}",
+                    report.root.display()
+                );
+            } else {
+                println!("opencraw init: initialized {}", report.root.display());
+                for path in &report.created {
+                    println!("created {}", path.display());
+                }
+                if !report.skipped.is_empty() {
+                    println!("kept {} existing file(s) unchanged", report.skipped.len());
+                }
+            }
+            println!("next: edit local configs under {}", report.root.display());
+            Ok(())
+        }
+        Command::Doctor => server::doctor(None).await,
+        Command::Status => server::status(None).await,
         Command::Send {
             channel,
             recipient,
             message,
-            config,
-        } => server::send_one_shot(config, &channel, &recipient, &message).await,
+        } => server::send_one_shot(None, &channel, &recipient, &message).await,
     }
 }
 

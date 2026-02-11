@@ -2,7 +2,7 @@
 //!
 //! See: docs/channels/pairing.md
 
-use crate::config::OpenShellConfig;
+use crate::config::{OpenShellConfig, SenderAccessMode};
 use chrono::{DateTime, Duration, Utc};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
@@ -189,7 +189,9 @@ impl PairingRuntime {
         if let Some(existing) = state
             .requests
             .iter()
-            .find(|request| request.status == PairingRequestStatus::Pending && request.sender_id == sender_id)
+            .find(|request| {
+                request.status == PairingRequestStatus::Pending && request.sender_id == sender_id
+            })
             .cloned()
         {
             return PairingDecision::Denied(PairingDenial {
@@ -323,11 +325,17 @@ static PAIRING_RUNTIME: OnceLock<Mutex<PairingRuntime>> = OnceLock::new();
 
 fn with_runtime<R>(f: impl FnOnce(&mut PairingRuntime) -> R) -> R {
     let runtime = PAIRING_RUNTIME.get_or_init(|| Mutex::new(PairingRuntime::default()));
-    let mut guard = runtime.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    let mut guard = runtime
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
     f(&mut guard)
 }
 
-pub fn evaluate_sender(cfg: &OpenShellConfig, channel_id: &str, sender_id: &str) -> PairingDecision {
+pub fn evaluate_sender(
+    cfg: &OpenShellConfig,
+    channel_id: &str,
+    sender_id: &str,
+) -> PairingDecision {
     with_runtime(|runtime| runtime.evaluate_sender(cfg, channel_id, sender_id, Utc::now()))
 }
 
@@ -335,7 +343,10 @@ pub fn is_allowed(cfg: &OpenShellConfig, channel_id: &str, sender_id: &str) -> b
     evaluate_sender(cfg, channel_id, sender_id).is_allowed()
 }
 
-pub fn approve_pairing_request(channel_id: &str, code: &str) -> Result<PairingRequest, PairingError> {
+pub fn approve_pairing_request(
+    channel_id: &str,
+    code: &str,
+) -> Result<PairingRequest, PairingError> {
     with_runtime(|runtime| runtime.approve_request(channel_id, code, Utc::now()))
 }
 
@@ -351,7 +362,9 @@ pub fn list_pairing_requests(channel_id: &str) -> Result<Vec<PairingRequest>, Pa
     with_runtime(|runtime| runtime.list_requests(channel_id, Utc::now()))
 }
 
-pub fn list_pending_pairing_requests(channel_id: &str) -> Result<Vec<PairingRequest>, PairingError> {
+pub fn list_pending_pairing_requests(
+    channel_id: &str,
+) -> Result<Vec<PairingRequest>, PairingError> {
     Ok(list_pairing_requests(channel_id)?
         .into_iter()
         .filter(|request| request.status == PairingRequestStatus::Pending)
@@ -359,17 +372,11 @@ pub fn list_pending_pairing_requests(channel_id: &str) -> Result<Vec<PairingRequ
 }
 
 fn is_allowlisted(cfg: &OpenShellConfig, channel_id: &str, sender_id: &str) -> bool {
-    // Preserve legacy behavior: if the explicit allowlist is empty, `allow_all_senders` decides.
-    if cfg.security.allowed_users.is_empty() {
-        return cfg.security.allow_all_senders;
+    match cfg.channel_access_mode(channel_id) {
+        SenderAccessMode::Open => true,
+        SenderAccessMode::Allowlist => cfg.channel_is_sender_allowlisted(channel_id, sender_id),
+        SenderAccessMode::Pairing => false,
     }
-
-    let composite = format!("{channel_id}:{sender_id}");
-    cfg.security
-        .allowed_users
-        .iter()
-        .map(|entry| entry.trim())
-        .any(|entry| entry == sender_id || entry == composite)
 }
 
 fn normalize_channel_id(value: &str) -> Result<String, PairingError> {
@@ -377,7 +384,10 @@ fn normalize_channel_id(value: &str) -> Result<String, PairingError> {
     if normalized.is_empty() || normalized.len() > MAX_IDENTITY_LEN {
         return Err(PairingError::InvalidChannelId);
     }
-    if normalized.chars().any(|ch| ch.is_control() || ch.is_whitespace()) {
+    if normalized
+        .chars()
+        .any(|ch| ch.is_control() || ch.is_whitespace())
+    {
         return Err(PairingError::InvalidChannelId);
     }
     Ok(normalized)
@@ -465,20 +475,30 @@ mod tests {
     use super::*;
     use crate::config::{
         ApprovalMode, AutomationConfig, ChannelsConfig, ContextConfig, DiscordConfig, EmailConfig,
-        GeneralConfig, ImessageConfig, KeysConfig, LinearConfig, MatrixConfig, MemoryConfig,
-        OpenShellConfig, OptimizationConfig, QueueConfig, RuntimeConfig, SecurityConfig,
-        SignalConfig, SkillsConfig, SlackConfig, TelegramConfig, ToolsConfig, WebChatConfig,
-        WhatsAppConfig,
+        GeneralConfig, ImessageConfig, KeysConfig, LinearConfig, LlmConfig, LlmProfileConfig,
+        LlmProvider, MatrixConfig, MemoryConfig, OpenShellConfig, OptimizationConfig, QueueConfig,
+        RuntimeConfig, SecurityConfig, SenderAccessMode, SignalConfig, SkillsConfig, SlackConfig,
+        TelegramConfig, ToolsConfig, WebChatConfig, WhatsAppConfig,
     };
     use chrono::TimeZone;
 
     fn base_cfg() -> OpenShellConfig {
         OpenShellConfig {
-            general: GeneralConfig {
-                model: "gpt-4o-mini".to_string(),
-                fallback_models: Vec::new(),
+            llm: LlmConfig {
+                active_profile: "default".to_string(),
+                fallback_profiles: Vec::new(),
                 failover_cooldown_base_seconds: 5,
                 failover_cooldown_max_seconds: 300,
+                profiles: std::collections::BTreeMap::from([(
+                    "default".to_string(),
+                    LlmProfileConfig {
+                        provider: LlmProvider::Openai,
+                        model: "gpt-4o-mini".to_string(),
+                        fallback_models: Vec::new(),
+                    },
+                )]),
+            },
+            general: GeneralConfig {
                 system_prompt: "x".to_string(),
             },
             keys: KeysConfig::default(),
@@ -503,8 +523,7 @@ mod tests {
                 shell_approval: ApprovalMode::Human,
                 browser_approval: ApprovalMode::Ai,
                 filesystem_write_approval: ApprovalMode::Ai,
-                allowed_users: vec![],
-                allow_all_senders: false,
+                human_approval_timeout_seconds: 300,
                 control_api_key: None,
                 control_api_keys: vec![],
                 mutating_auth_exempt_prefixes: vec![
@@ -648,7 +667,10 @@ mod tests {
             )
             .expect("rejected request");
         assert_eq!(rejected.status, PairingRequestStatus::Rejected);
-        assert_eq!(rejected.resolution_note.as_deref(), Some("operator rejected"));
+        assert_eq!(
+            rejected.resolution_note.as_deref(),
+            Some("operator rejected")
+        );
 
         let next = expect_denied(runtime.evaluate_sender(
             &cfg,
@@ -683,9 +705,10 @@ mod tests {
         let requests = runtime
             .list_requests("telegram", now + Duration::minutes(61))
             .expect("list requests");
-        assert!(requests
-            .iter()
-            .any(|request| request.code == first.code && request.status == PairingRequestStatus::Expired));
+        assert!(
+            requests.iter().any(|request| request.code == first.code
+                && request.status == PairingRequestStatus::Expired)
+        );
     }
 
     #[test]
@@ -720,9 +743,9 @@ mod tests {
     }
 
     #[test]
-    fn allow_all_senders_allows_external_channels_when_allowlist_empty() {
+    fn open_mode_allows_external_channels_without_pairing() {
         let mut cfg = base_cfg();
-        cfg.security.allow_all_senders = true;
+        cfg.channels.imessage.access.mode = SenderAccessMode::Open;
         let mut runtime = PairingRuntime::default();
         assert!(
             runtime
@@ -732,9 +755,10 @@ mod tests {
     }
 
     #[test]
-    fn allowlist_matches_raw_sender_or_composite() {
+    fn allowlist_mode_matches_sender_in_channel_config() {
         let mut cfg = base_cfg();
-        cfg.security.allowed_users = vec!["+14155551212".to_string()];
+        cfg.channels.imessage.access.mode = SenderAccessMode::Allowlist;
+        cfg.channels.imessage.access.allowed_senders = vec!["+14155551212".to_string()];
         let mut runtime = PairingRuntime::default();
         assert!(
             runtime
@@ -743,11 +767,17 @@ mod tests {
         );
 
         let mut cfg = base_cfg();
-        cfg.security.allowed_users = vec!["imessage:+14155551212".to_string()];
+        cfg.channels.telegram.access.mode = SenderAccessMode::Allowlist;
+        cfg.channels.telegram.access.allowed_senders = vec!["123".to_string()];
         let mut runtime = PairingRuntime::default();
         assert!(
-            runtime
+            !runtime
                 .evaluate_sender(&cfg, "imessage", "+14155551212", ts(9, 0))
+                .is_allowed()
+        );
+        assert!(
+            runtime
+                .evaluate_sender(&cfg, "telegram", "123", ts(9, 0))
                 .is_allowed()
         );
     }

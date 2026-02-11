@@ -3464,7 +3464,6 @@ dependencies = [
  "clap",
  "cron",
  "dashmap",
- "dotenvy",
  "futures-util",
  "horizons_core",
  "horizons_graph",
