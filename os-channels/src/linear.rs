@@ -98,7 +98,7 @@ impl LinearAdapter {
     }
 
     pub fn with_max_issues(mut self, max_issues: usize) -> Self {
-        self.max_issues = max_issues.max(1);
+        self.max_issues = max_issues;
         self
     }
 }
@@ -336,7 +336,7 @@ impl LinearAdapter {
     }
 
     fn auth_header(&self) -> String {
-        format!("Linear {}", self.api_key)
+        self.api_key.clone()
     }
 }
 

@@ -9,11 +9,14 @@ use tokio::sync::{Mutex, RwLock, mpsc};
 use tokio_tungstenite::tungstenite::Message;
 
 const DISCORD_GATEWAY_URL: &str = "wss://gateway.discord.gg/?v=10&encoding=json";
+const DISCORD_DEFAULT_INTENTS: u64 = (1 << 9) | (1 << 15);
 
 #[derive(Clone)]
 pub struct DiscordAdapter {
     http: reqwest::Client,
     bot_token: String,
+    gateway_intents: u64,
+    require_mention_in_group_chats: bool,
 }
 
 impl DiscordAdapter {
@@ -24,11 +27,26 @@ impl DiscordAdapter {
         Ok(Self {
             http,
             bot_token: bot_token.to_string(),
+            gateway_intents: DISCORD_DEFAULT_INTENTS,
+            require_mention_in_group_chats: true,
         })
     }
 
     fn api_url(&self, path: &str) -> String {
         format!("https://discord.com/api/v10{path}")
+    }
+
+    pub fn with_gateway_intents(mut self, gateway_intents: u64) -> Self {
+        self.gateway_intents = gateway_intents;
+        self
+    }
+
+    pub fn with_require_mention_in_group_chats(
+        mut self,
+        require_mention_in_group_chats: bool,
+    ) -> Self {
+        self.require_mention_in_group_chats = require_mention_in_group_chats;
+        self
     }
 }
 
@@ -41,10 +59,14 @@ impl ChannelAdapter for DiscordAdapter {
     async fn start(&self, tx: mpsc::Sender<InboundMessage>) -> Result<()> {
         let http = self.http.clone();
         let token = self.bot_token.clone();
+        let gateway_intents = self.gateway_intents;
+        let require_mention_in_group_chats = self.require_mention_in_group_chats;
         tokio::spawn(async move {
             let adapter = DiscordAdapter {
                 http,
                 bot_token: token,
+                gateway_intents,
+                require_mention_in_group_chats,
             };
             if let Err(e) = adapter.run_gateway_loop(tx).await {
                 tracing::error!(%e, "discord gateway loop exited");
@@ -101,7 +123,7 @@ impl DiscordAdapter {
             "op": 2,
             "d": {
                 "token": format!("Bot {}", self.bot_token),
-                "intents": (1 << 9) | (1 << 15),
+                "intents": self.gateway_intents,
                 "properties": { "os": "linux", "browser": "opencraw", "device": "opencraw" }
             }
         });
@@ -177,7 +199,7 @@ impl DiscordAdapter {
                     }
 
                     let is_group = event.guild_id.is_some();
-                    if is_group {
+                    if is_group && self.require_mention_in_group_chats {
                         if let Some(bot_id) = bot_user_id.read().await.clone() {
                             let mention1 = format!("<@{bot_id}>");
                             let mention2 = format!("<@!{bot_id}>");

@@ -103,4 +103,6 @@ pub struct OutboundMessage {
     pub reply_to_message_id: Option<MessageId>,
     #[serde(default)]
     pub attachments: Vec<Attachment>,
+    #[serde(default)]
+    pub metadata: serde_json::Value,
 }

@@ -180,7 +180,28 @@ async fn build_plugin(
             })
         }
         ChannelPluginId::Telegram => {
-            let adapter = Arc::new(TelegramAdapter::new(&cfg.channels.telegram.bot_token)?);
+            let parse_mode = match cfg.channels.telegram.parse_mode {
+                crate::config::TelegramParseMode::Plain => None,
+                crate::config::TelegramParseMode::Markdown => Some("Markdown"),
+                crate::config::TelegramParseMode::MarkdownV2 => Some("MarkdownV2"),
+                crate::config::TelegramParseMode::Html => Some("HTML"),
+            };
+            let adapter = Arc::new(
+                TelegramAdapter::new(&cfg.channels.telegram.bot_token)?
+                    .with_long_poll_timeout_seconds(cfg.channels.telegram.long_poll_timeout_seconds)
+                    .with_allowed_updates(cfg.channels.telegram.allowed_updates.clone())
+                    .with_retry_backoff(
+                        cfg.channels.telegram.retry_base_ms,
+                        cfg.channels.telegram.retry_max_ms,
+                    )
+                    .with_non_transient_delay(std::time::Duration::from_secs(
+                        cfg.channels.telegram.non_transient_delay_seconds,
+                    ))
+                    .with_parse_mode(parse_mode)
+                    .with_disable_link_previews(cfg.channels.telegram.disable_link_previews)
+                    .with_bot_commands(crate::commands::telegram_bot_commands())
+                    .with_max_message_chars(cfg.channels.telegram.max_message_chars),
+            );
             adapter.start(inbound_tx).await?;
             let capability_schema = capability_schema(adapter.as_ref());
             let adapter: Arc<dyn ChannelAdapter> = adapter;
@@ -192,7 +213,22 @@ async fn build_plugin(
             })
         }
         ChannelPluginId::Discord => {
-            let adapter = Arc::new(DiscordAdapter::new(&cfg.channels.discord.bot_token)?);
+            let intents = (if cfg.channels.discord.intent_guild_messages {
+                1_u64 << 9
+            } else {
+                0
+            }) | (if cfg.channels.discord.intent_message_content {
+                1_u64 << 15
+            } else {
+                0
+            });
+            let adapter = Arc::new(
+                DiscordAdapter::new(&cfg.channels.discord.bot_token)?
+                    .with_gateway_intents(intents)
+                    .with_require_mention_in_group_chats(
+                        cfg.channels.discord.require_mention_in_group_chats,
+                    ),
+            );
             adapter.start(inbound_tx).await?;
             let capability_schema = capability_schema(adapter.as_ref());
             let adapter: Arc<dyn ChannelAdapter> = adapter;
@@ -210,7 +246,8 @@ async fn build_plugin(
                         cfg.channels.slack.poll_interval_ms,
                     ))
                     .with_channel_ids(cfg.channels.slack.channel_ids.clone())
-                    .with_start_from_latest(cfg.channels.slack.start_from_latest),
+                    .with_start_from_latest(cfg.channels.slack.start_from_latest)
+                    .with_history_limit(cfg.channels.slack.history_limit),
             );
             adapter.start(inbound_tx).await?;
             let capability_schema = capability_schema(adapter.as_ref());
@@ -233,7 +270,8 @@ async fn build_plugin(
                     cfg.channels.matrix.poll_interval_ms,
                 ))
                 .with_room_ids(cfg.channels.matrix.room_ids.clone())
-                .with_start_from_latest(cfg.channels.matrix.start_from_latest),
+                .with_start_from_latest(cfg.channels.matrix.start_from_latest)
+                .with_sync_timeout_ms(cfg.channels.matrix.sync_timeout_ms),
             );
             adapter.start(inbound_tx).await?;
             let capability_schema = capability_schema(adapter.as_ref());
@@ -302,6 +340,7 @@ async fn build_plugin(
                         cfg.channels.imessage.poll_interval_ms,
                     ))
                     .with_start_from_latest(cfg.channels.imessage.start_from_latest)
+                    .with_max_per_poll(cfg.channels.imessage.max_per_poll)
                     .with_group_prefixes(cfg.channels.imessage.group_prefixes.clone()),
             );
             adapter.start(inbound_tx).await?;
@@ -322,7 +361,8 @@ async fn build_plugin(
                     ))
                     .with_query(cfg.channels.email.query.clone())
                     .with_start_from_latest(cfg.channels.email.start_from_latest)
-                    .with_mark_processed_as_read(cfg.channels.email.mark_processed_as_read),
+                    .with_mark_processed_as_read(cfg.channels.email.mark_processed_as_read)
+                    .with_max_results(cfg.channels.email.max_results),
             );
             adapter.start(inbound_tx).await?;
             let capability_schema = capability_schema(adapter.as_ref());
@@ -341,7 +381,8 @@ async fn build_plugin(
                         cfg.channels.linear.poll_interval_ms,
                     ))
                     .with_team_ids(cfg.channels.linear.team_ids.clone())
-                    .with_start_from_latest(cfg.channels.linear.start_from_latest),
+                    .with_start_from_latest(cfg.channels.linear.start_from_latest)
+                    .with_max_issues(cfg.channels.linear.max_issues),
             );
             adapter.start(inbound_tx).await?;
             let capability_schema = capability_schema(adapter.as_ref());

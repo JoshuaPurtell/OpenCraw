@@ -54,7 +54,7 @@ impl ImessageAdapter {
     }
 
     pub fn with_max_per_poll(mut self, max_per_poll: usize) -> Self {
-        self.max_per_poll = max_per_poll.max(1);
+        self.max_per_poll = max_per_poll;
         self
     }
 

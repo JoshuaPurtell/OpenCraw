@@ -64,7 +64,7 @@ impl SlackAdapter {
     }
 
     pub fn with_history_limit(mut self, history_limit: usize) -> Self {
-        self.history_limit = history_limit.clamp(1, 200);
+        self.history_limit = history_limit;
         self
     }
 

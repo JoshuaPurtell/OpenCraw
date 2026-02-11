@@ -66,7 +66,7 @@ impl EmailAdapter {
     }
 
     pub fn with_max_results(mut self, max_results: usize) -> Self {
-        self.max_results = max_results.max(1);
+        self.max_results = max_results;
         self
     }
 
@@ -192,12 +192,12 @@ impl EmailAdapter {
 
     async fn list_message_refs(&self) -> Result<Vec<GmailMessageRef>> {
         let url = self.api_url("messages")?;
+        let max_results = self.max_results.to_string();
         let resp = self
-            .auth(
-                self.http
-                    .get(url)
-                    .query(&[("q", self.query.as_str()), ("maxResults", "25")]),
-            )
+            .auth(self.http.get(url).query(&[
+                ("q", self.query.as_str()),
+                ("maxResults", max_results.as_str()),
+            ]))
             .send()
             .await?;
 

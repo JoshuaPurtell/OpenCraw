@@ -73,7 +73,7 @@ impl MatrixAdapter {
     }
 
     pub fn with_sync_timeout_ms(mut self, sync_timeout_ms: u64) -> Self {
-        self.sync_timeout_ms = sync_timeout_ms.max(1);
+        self.sync_timeout_ms = sync_timeout_ms;
         self
     }
 
