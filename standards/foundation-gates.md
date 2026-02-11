@@ -3,8 +3,8 @@
 Date: 2026-02-09  
 Source standards:
 
-- `/Users/synth/zangbot/plans/14-rust-foundation-best-practices.md`
-- `/Users/synth/zangbot/plans/15-divine-engineering-standard.md`
+- `standards/rust.md` (origin: zangbot `plans/14-rust-foundation-best-practices.md`)
+- `standards/foundation-gates.md` (origin: zangbot `plans/15-divine-engineering-standard.md`)
 
 ## Required Merge Gates
 
