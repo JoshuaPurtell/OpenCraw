@@ -13,15 +13,49 @@ const GMAIL_API_BASE: &str = "https://gmail.googleapis.com/gmail/v1/users/me";
 const DEFAULT_MAX_RESULTS: usize = 10;
 const MAX_RESULTS_CAP: usize = 50;
 
+#[derive(Clone, Copy, Debug)]
+pub struct EmailActionToggles {
+    pub list_inbox: bool,
+    pub search: bool,
+    pub read: bool,
+    pub send: bool,
+}
+
+impl EmailActionToggles {
+    pub fn all_enabled() -> Self {
+        Self {
+            list_inbox: true,
+            search: true,
+            read: true,
+            send: true,
+        }
+    }
+
+    fn allows(self, action: &str) -> bool {
+        match action {
+            "list_inbox" => self.list_inbox,
+            "search" => self.search,
+            "read" => self.read,
+            "send" => self.send,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct EmailTool {
     http: reqwest::Client,
     gmail_access_token: String,
     default_query: String,
+    action_toggles: EmailActionToggles,
 }
 
 impl EmailTool {
-    pub fn new(gmail_access_token: &str, default_query: String) -> Result<Self> {
+    pub fn new(
+        gmail_access_token: &str,
+        default_query: String,
+        action_toggles: EmailActionToggles,
+    ) -> Result<Self> {
         let token = gmail_access_token.trim();
         if token.is_empty() {
             return Err(ToolError::InvalidArguments(
@@ -43,7 +77,17 @@ impl EmailTool {
             http,
             gmail_access_token: token.to_string(),
             default_query,
+            action_toggles,
         })
+    }
+
+    fn ensure_action_enabled(&self, action: &str) -> Result<()> {
+        if self.action_toggles.allows(action) {
+            return Ok(());
+        }
+        Err(ToolError::Unauthorized(format!(
+            "email action {action:?} is disabled by channels.email.actions.{action}"
+        )))
     }
 
     fn api_url(&self, path: &str) -> Result<Url> {
@@ -243,6 +287,7 @@ impl Tool for EmailTool {
     #[tracing::instrument(level = "info", skip_all)]
     async fn execute(&self, arguments: serde_json::Value) -> Result<serde_json::Value> {
         let action = require_string(&arguments, "action")?;
+        self.ensure_action_enabled(&action)?;
         match action.as_str() {
             "list_inbox" => {
                 let max_results = parse_max_results(&arguments)?;

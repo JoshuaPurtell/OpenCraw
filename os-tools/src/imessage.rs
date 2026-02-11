@@ -12,13 +12,37 @@ use std::time::Duration;
 const DEFAULT_LIMIT: usize = 20;
 const MAX_LIMIT: usize = 100;
 
+#[derive(Clone, Copy, Debug)]
+pub struct ImessageActionToggles {
+    pub list_recent: bool,
+    pub send: bool,
+}
+
+impl ImessageActionToggles {
+    pub fn all_enabled() -> Self {
+        Self {
+            list_recent: true,
+            send: true,
+        }
+    }
+
+    fn allows(self, action: &str) -> bool {
+        match action {
+            "list_recent" => self.list_recent,
+            "send" => self.send,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct ImessageTool {
     source_db: PathBuf,
+    action_toggles: ImessageActionToggles,
 }
 
 impl ImessageTool {
-    pub fn new(source_db: impl AsRef<Path>) -> Result<Self> {
+    pub fn new(source_db: impl AsRef<Path>, action_toggles: ImessageActionToggles) -> Result<Self> {
         let source_db = source_db.as_ref().to_path_buf();
         if source_db.as_os_str().is_empty() {
             return Err(ToolError::InvalidArguments(
@@ -31,7 +55,19 @@ impl ImessageTool {
                 source_db.display()
             )));
         }
-        Ok(Self { source_db })
+        Ok(Self {
+            source_db,
+            action_toggles,
+        })
+    }
+
+    fn ensure_action_enabled(&self, action: &str) -> Result<()> {
+        if self.action_toggles.allows(action) {
+            return Ok(());
+        }
+        Err(ToolError::Unauthorized(format!(
+            "imessage action {action:?} is disabled by channels.imessage.actions.{action}"
+        )))
     }
 
     async fn list_recent(
@@ -115,6 +151,7 @@ LIMIT ?3
                     content: content.to_string(),
                     reply_to_message_id: None,
                     attachments: vec![],
+                    metadata: serde_json::Value::Null,
                 },
             )
             .await
@@ -152,6 +189,7 @@ impl Tool for ImessageTool {
     #[tracing::instrument(level = "info", skip_all)]
     async fn execute(&self, arguments: serde_json::Value) -> Result<serde_json::Value> {
         let action = require_string(&arguments, "action")?;
+        self.ensure_action_enabled(&action)?;
         match action.as_str() {
             "list_recent" => {
                 let limit = parse_limit(&arguments)?;
