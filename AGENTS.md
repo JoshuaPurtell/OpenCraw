@@ -7,7 +7,9 @@ Before doing anything in this repository (analysis, commands, edits, tests, or p
 1. `~/.claude/CLAUDE.md`
 2. This file (`AGENTS.md`)
 3. `standards/rust.md`
-4. `standards/foundation-gates.md`
+4. `standards/rust-toolchain-policy.md`
+5. `standards/foundation-gates.md`
+6. `standards/verification-governance.md`
 
 ## Hard Rules
 

@@ -1,6 +1,6 @@
 # Rust Foundation Best Practices (Internet-Reviewed)
 
-Date: 2026-02-09
+Date: 2026-02-11
 Status: Baseline quality contract for Zangbot
 
 ## Goal
@@ -13,16 +13,16 @@ This document is strict on purpose: the objective is to reduce future refactors,
 
 1. Use `edition = "2024"` and `resolver = "3"` at workspace root.
 2. Set and maintain an explicit `rust-version` policy in `Cargo.toml`.
-3. Verify latest dependency resolution in CI on a schedule (separate from lockfile builds).
+3. Verify latest dependency resolution in a scheduled verification lane (separate from lockfile builds).
 
 Why:
 
 - Rust 2024 implies resolver v3 (MSRV-aware behavior), and resolver is a workspace-global setting.
-- Cargo recommends verifying against latest dependencies in CI.
+- Cargo recommends verifying against latest dependencies in continuous verification.
 
 ## 2) Lint and Compiler Discipline
 
-1. Enforce clippy in CI with at least `clippy::all` and `clippy::correctness`.
+1. Enforce clippy in required verification gates with at least `clippy::all` and `clippy::correctness`.
 2. Treat correctness/soundness lints as build blockers.
 3. Use explicit lint level strategy (`warn`/`deny`/`forbid`) deliberately.
 
@@ -89,13 +89,13 @@ Why:
 ## 8) Database Correctness Guardrails
 
 1. Prefer compile-time checked SQL for core queries.
-2. Enforce query metadata freshness in CI (`cargo sqlx prepare --check --workspace`).
-3. Use offline metadata mode in CI to keep builds deterministic.
+2. Enforce query metadata freshness in verification gates (`cargo sqlx prepare --check --workspace`).
+3. Use offline metadata mode in verification gates to keep builds deterministic.
 
 Why:
 
 - SQLx query macros validate SQL against the actual schema at build time.
-- `prepare --check` fails CI when schema/query metadata is stale.
+- `prepare --check` fails verification when schema/query metadata is stale.
 
 ## 9) Unsafe Code and Undefined Behavior Strategy
 
@@ -109,7 +109,7 @@ Why:
 
 ## 10) Supply Chain and Security Gates
 
-1. Run `cargo-audit` regularly in CI.
+1. Run `cargo-audit` regularly in verification lanes.
 2. Run policy checks with `cargo-deny` (advisories, licenses, source policies, duplicate crates).
 3. Track remediation SLAs for security advisories.
 4. Optional high-assurance layer: use `cargo-vet` for trust/audit attestations on third-party crates.
@@ -130,7 +130,7 @@ Why:
 
 - Rust Book explicitly frames tests as required beyond type checking for correctness.
 
-## 12) CI Contract (Required before scale)
+## 12) Verification Contract (Required before scale)
 
 Minimum required checks:
 
@@ -141,7 +141,7 @@ Minimum required checks:
 5. `cargo audit`
 6. Optional scheduled lane: latest-deps verification and Miri subset
 
-Latest-deps lane should follow Cargo CI guidance (separate from lockfile-pinned builds).
+Latest-deps lane should follow Cargo guidance for continuous verification (separate from lockfile-pinned builds).
 
 ## 13) Non-Negotiable Architecture Guardrails
 
@@ -154,7 +154,7 @@ This is how we keep the system clean at scale while preserving DRY without creat
 
 ## 14) Adoption Plan (Immediate)
 
-1. Create a `FOUNDATION_GATES.md` and make CI enforce it.
+1. Create a `FOUNDATION_GATES.md` and enforce it through approved verification runners.
 2. Add lint/profile/toolchain policy in first commit of implementation.
 3. Block feature merges until core gates are green.
 4. Revisit only when evidence shows a gate is net-negative.
