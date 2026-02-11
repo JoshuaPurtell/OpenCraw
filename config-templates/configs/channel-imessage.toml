@@ -1,0 +1,18 @@
+[channels.imessage]
+enabled = false
+source_db = "~/Library/Messages/chat.db"
+poll_interval_ms = 1500
+start_from_latest = true
+max_per_poll = 200
+group_prefixes = ["@opencraw", "opencraw"]
+
+[channels.imessage.actions]
+list_recent = true
+send = true
+
+[channels.imessage.access]
+# "pairing" (default), "allowlist", or "open" (local testing only)
+mode = "pairing"
+# iMessage sender IDs are phone numbers or email handles.
+# allowed_senders = ["+14155551212"]
+allowed_senders = []

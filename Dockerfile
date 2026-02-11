@@ -3,12 +3,6 @@ FROM rust:1.93-bookworm AS builder
 
 WORKDIR /build
 
-# OpenCraw uses path dependencies to a sibling `../Horizons` checkout.
-# In Docker we clone Horizons into `/Horizons` to satisfy those paths.
-ARG HORIZONS_REF=main
-RUN git clone --depth 1 --branch "${HORIZONS_REF}" https://github.com/synth-laboratories/Horizons /Horizons \
-    || git clone --depth 1 https://github.com/synth-laboratories/Horizons /Horizons
-
 # Copy workspace manifests first for layer caching.
 COPY Cargo.toml Cargo.lock ./
 COPY os-llm/Cargo.toml os-llm/Cargo.toml
@@ -21,7 +15,11 @@ RUN mkdir -p os-llm/src os-tools/src os-channels/src os-app/src && \
     echo "fn main() {}" > os-app/src/main.rs && \
     touch os-llm/src/lib.rs os-tools/src/lib.rs os-channels/src/lib.rs
 
+# rusqlite and libsql both bundle sqlite3.c; allow the duplicate symbols.
+ENV RUSTFLAGS="-C link-args=-Wl,--allow-multiple-definition"
+
 # Fetch + compile deps (cached unless Cargo.toml changes).
+# Horizons is fetched automatically as a git dependency.
 RUN cargo build --release --workspace 2>/dev/null || true
 
 # Copy real source.
@@ -43,6 +41,7 @@ COPY --from=builder /build/target/release/opencraw /usr/local/bin/opencraw
 
 RUN useradd -m opencraw
 USER opencraw
+WORKDIR /home/opencraw
 
 EXPOSE 3000
 

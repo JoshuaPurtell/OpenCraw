@@ -1,0 +1,39 @@
+[channels.linear]
+enabled = false
+# api_key = "..."
+graphql_url = "https://api.linear.app/graphql"
+# default_team_id = "team_uuid_for_issue_create"
+poll_interval_ms = 3000
+team_ids = []
+start_from_latest = true
+max_issues = 50
+
+[channels.linear.limits]
+default_max_results = 20
+max_results_cap = 100
+reference_lookup_max_results = 100
+graphql_max_query_chars = 64000
+graphql_max_variables_bytes = 128000
+
+[channels.linear.actions]
+whoami = true
+list_assigned = true
+list_users = true
+list_teams = true
+list_projects = true
+get_project = true
+create_issue = true
+create_project = true
+update_project = true
+update_issue = true
+assign_issue = true
+comment_issue = true
+graphql_query = true
+graphql_mutation = true
+
+[channels.linear.access]
+# "pairing" (default), "allowlist", or "open" (local testing only)
+mode = "pairing"
+# Linear sender IDs map to actor/user ids from webhook/poll events.
+# allowed_senders = ["user_abc123"]
+allowed_senders = []

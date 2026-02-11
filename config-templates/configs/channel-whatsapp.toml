@@ -1,0 +1,13 @@
+[channels.whatsapp]
+enabled = false
+# access_token = "..."
+# phone_number_id = "..."
+# webhook_verify_token = "..."
+# app_secret = "..."
+
+[channels.whatsapp.access]
+# "pairing" (default), "allowlist", or "open" (local testing only)
+mode = "pairing"
+# WhatsApp sender IDs are usually E164 numbers without punctuation from webhook payloads.
+# allowed_senders = ["15551234567"]
+allowed_senders = []

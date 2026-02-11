@@ -35,6 +35,23 @@ pub struct ToolDefinition {
     pub parameters: serde_json::Value,
 }
 
+impl ToolDefinition {
+    /// Create a `ToolDefinition` after validating the name against all provider constraints.
+    pub fn validated(
+        name: impl Into<String>,
+        description: impl Into<String>,
+        parameters: serde_json::Value,
+    ) -> crate::error::Result<Self> {
+        let name = name.into();
+        crate::client::validate_tool_name_all_providers(&name)?;
+        Ok(Self {
+            name,
+            description: description.into(),
+            parameters,
+        })
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Usage {
     pub prompt_tokens: u32,

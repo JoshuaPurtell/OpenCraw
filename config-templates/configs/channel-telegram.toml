@@ -1,0 +1,18 @@
+[channels.telegram]
+enabled = false
+# bot_token = "..."
+parse_mode = "markdown"
+disable_link_previews = true
+max_message_chars = 4000
+long_poll_timeout_seconds = 30
+allowed_updates = ["message", "message_reaction", "callback_query"]
+retry_base_ms = 250
+retry_max_ms = 30000
+non_transient_delay_seconds = 10
+
+[channels.telegram.access]
+# "pairing" (default), "allowlist", or "open" (local testing only)
+mode = "pairing"
+# Telegram sender IDs are numeric and are logged as sender_id.
+# allowed_senders = ["123456789"]
+allowed_senders = []

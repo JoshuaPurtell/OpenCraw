@@ -3,11 +3,13 @@ name = "os-channels"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+rust-version.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 axum = { workspace = true }
+base64 = { workspace = true }
 chrono = { workspace = true }
 dashmap = { workspace = true }
 futures-util = { workspace = true }

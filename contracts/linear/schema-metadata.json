@@ -1,0 +1,15 @@
+{
+  "fetched_at_utc": "2026-02-11T20:53:39Z",
+  "graphql_url": "https://api.linear.app/graphql",
+  "schema_sha256": "f8f75b92ede8c4267cf4e48a9a30309700ab816c6a21a3aebe5452b52f121ec1",
+  "counts": {
+    "query_fields": 145,
+    "mutation_fields": 345,
+    "subscription_fields": 0,
+    "input_objects": 340,
+    "enum_types": 73,
+    "state_related_enums": 12,
+    "scalar_types": 13,
+    "directives": 5
+  }
+}

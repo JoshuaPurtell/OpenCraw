@@ -1,5 +1,5 @@
 use crate::error::{Result, ToolError};
-use crate::traits::{require_string, Tool, ToolSpec};
+use crate::traits::{Tool, ToolSpec, require_string};
 use async_trait::async_trait;
 use horizons_core::core_agents::models::RiskLevel;
 
@@ -8,6 +8,12 @@ pub struct ClipboardTool;
 impl ClipboardTool {
     pub fn new() -> Self {
         Self
+    }
+}
+
+impl Default for ClipboardTool {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

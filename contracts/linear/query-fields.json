@@ -1,0 +1,3758 @@
+[
+  {
+    "name": "administrableTeams",
+    "description": "All teams you the user can administrate. Administrable teams are teams whose settings the user can change, but to whose issues the user doesn't necessarily have access to.",
+    "returns": "TeamConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned teams.",
+        "type": "TeamFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "agentActivities",
+    "description": "All agent activities.",
+    "returns": "AgentActivityConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned agent activities.",
+        "type": "AgentActivityFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "agentActivity",
+    "description": "A specific agent activity.",
+    "returns": "AgentActivity!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the agent activity to retrieve.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "agentSession",
+    "description": "A specific agent session.",
+    "returns": "AgentSession!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the agent session to retrieve.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "agentSessions",
+    "description": "All agent sessions.",
+    "returns": "AgentSessionConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "applicationInfo",
+    "description": "Get basic information for an application.",
+    "returns": "Application!",
+    "args": [
+      {
+        "name": "clientId",
+        "description": "The client ID of the application.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "archivedTeams",
+    "description": "[Internal] All archived teams of the organization.",
+    "returns": "[Team!]!",
+    "args": []
+  },
+  {
+    "name": "asksWebPage",
+    "description": "An Asks web page by ID.",
+    "returns": "AsksWebPage!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the Asks web page.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "asksWebSetting",
+    "description": "Asks web form settings by ID.",
+    "returns": "AsksWebSettings!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the Asks web settings.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachment",
+    "description": "\nOne specific issue attachment.\n[Deprecated] 'url' can no longer be used as the 'id' parameter. Use 'attachmentsForUrl' instead",
+    "returns": "Attachment!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentIssue",
+    "description": "\nQuery an issue by its associated attachment, and its id.\n",
+    "returns": "Issue!",
+    "args": [
+      {
+        "name": "id",
+        "description": "`id` of the attachment for which you'll want to get the issue for. [Deprecated] `url` as the `id` parameter.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentSources",
+    "description": "[Internal] Get a list of all unique attachment sources in the workspace.",
+    "returns": "AttachmentSourcesPayload!",
+    "args": [
+      {
+        "name": "teamId",
+        "description": "(optional) if provided will only return attachment sources for the given team.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachments",
+    "description": "All issue attachments.\n\nTo get attachments for a given URL, use `attachmentsForURL` query.",
+    "returns": "AttachmentConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned attachments.",
+        "type": "AttachmentFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "attachmentsForURL",
+    "description": "Returns issue attachments for a given `url`.",
+    "returns": "AttachmentConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      },
+      {
+        "name": "url",
+        "description": "The attachment URL.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "auditEntries",
+    "description": "All audit log entries.",
+    "returns": "AuditEntryConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned audit entries.",
+        "type": "AuditEntryFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "auditEntryTypes",
+    "description": "List of audit entry types.",
+    "returns": "[AuditEntryType!]!",
+    "args": []
+  },
+  {
+    "name": "authenticationSessions",
+    "description": "User's active sessions.",
+    "returns": "[AuthenticationSessionResponse!]!",
+    "args": []
+  },
+  {
+    "name": "availableUsers",
+    "description": "Fetch users belonging to this user account.",
+    "returns": "AuthResolverResponse!",
+    "args": []
+  },
+  {
+    "name": "comment",
+    "description": "A specific comment.",
+    "returns": "Comment!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the comment to retrieve.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "hash",
+        "description": "The hash of the comment to retrieve.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "comments",
+    "description": "All comments.",
+    "returns": "CommentConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned comments.",
+        "type": "CommentFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customView",
+    "description": "One specific custom view.",
+    "returns": "CustomView!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customViewDetailsSuggestion",
+    "description": "[INTERNAL] Suggests metadata for a view based on it's filters.",
+    "returns": "CustomViewSuggestionPayload!",
+    "args": [
+      {
+        "name": "modelName",
+        "description": null,
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "filter",
+        "description": null,
+        "type": "JSONObject!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customViewHasSubscribers",
+    "description": "Whether a custom view has other subscribers than the current user in the organization.",
+    "returns": "CustomViewHasSubscribersPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the custom view.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customViews",
+    "description": "Custom views for the user.",
+    "returns": "CustomViewConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned custom views.",
+        "type": "CustomViewFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      },
+      {
+        "name": "sort",
+        "description": "[INTERNAL] Sort returned custom views.",
+        "type": "[CustomViewSortInput!]",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customer",
+    "description": "One specific customer.",
+    "returns": "Customer!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerNeed",
+    "description": "One specific customer need",
+    "returns": "CustomerNeed!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the need to retrieve.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "hash",
+        "description": "The hash of the need to retrieve.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerNeeds",
+    "description": "All customer needs.",
+    "returns": "CustomerNeedConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned customers needs.",
+        "type": "CustomerNeedFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerStatus",
+    "description": "One specific customer status.",
+    "returns": "CustomerStatus!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerStatuses",
+    "description": "All customer statuses.",
+    "returns": "CustomerStatusConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerTier",
+    "description": "One specific customer tier.",
+    "returns": "CustomerTier!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customerTiers",
+    "description": "All customer tiers.",
+    "returns": "CustomerTierConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "customers",
+    "description": "All customers.",
+    "returns": "CustomerConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned customers.",
+        "type": "CustomerFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      },
+      {
+        "name": "sorts",
+        "description": "Sort returned customers.",
+        "type": "[CustomerSortInput!]",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "cycle",
+    "description": "One specific cycle.",
+    "returns": "Cycle!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "cycles",
+    "description": "All cycles.",
+    "returns": "CycleConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned users.",
+        "type": "CycleFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "document",
+    "description": "One specific document.",
+    "returns": "Document!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "documentContentHistory",
+    "description": "A collection of document content history entries.",
+    "returns": "DocumentContentHistoryPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "documents",
+    "description": "All documents in the workspace.",
+    "returns": "DocumentConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned documents.",
+        "type": "DocumentFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "emailIntakeAddress",
+    "description": "One specific email intake address.",
+    "returns": "EmailIntakeAddress!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "emoji",
+    "description": "A specific emoji.",
+    "returns": "Emoji!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier or the name of the emoji to retrieve.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "emojis",
+    "description": "All custom emojis.",
+    "returns": "EmojiConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "entityExternalLink",
+    "description": "One specific entity link.",
+    "returns": "EntityExternalLink!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "externalUser",
+    "description": "One specific external user.",
+    "returns": "ExternalUser!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the external user to retrieve.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "externalUsers",
+    "description": "All external users for the organization.",
+    "returns": "ExternalUserConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "failuresForOauthWebhooks",
+    "description": "[INTERNAL] Webhook failure events for webhooks that belong to an OAuth application. (last 50)",
+    "returns": "[WebhookFailureEvent!]!",
+    "args": [
+      {
+        "name": "oauthClientId",
+        "description": "The identifier of the OAuth client to retrieve failures for.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "favorite",
+    "description": "One specific favorite.",
+    "returns": "Favorite!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "favorites",
+    "description": "The user's favorites.",
+    "returns": "FavoriteConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "fetchData",
+    "description": "[Internal] Fetch an arbitrary set of data using natural language query. Be specific about what you want including properties for each entity, sort order, filters, limit and properties.",
+    "returns": "FetchDataPayload!",
+    "args": [
+      {
+        "name": "query",
+        "description": "Natural language query describing what data to fetch.\n    \n    Examples:\n    - \"All issues for the project with id 12345678-1234-1234-1234-123456789abc including comments\"\n    - \"The latest project update for each project that's a part of the initiative with id 12345678-1234-1234-1234-123456789abc, including it's sub-initiatives\"",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiative",
+    "description": "One specific initiative.",
+    "returns": "Initiative!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeRelation",
+    "description": "One specific initiative relation.",
+    "returns": "ProjectRelation!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeRelations",
+    "description": "All initiative relationships.",
+    "returns": "InitiativeRelationConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeToProject",
+    "description": "One specific initiativeToProject.",
+    "returns": "InitiativeToProject!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeToProjects",
+    "description": "returns a list of initiative to project entities.",
+    "returns": "InitiativeToProjectConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeUpdate",
+    "description": "A specific  initiative update.",
+    "returns": "InitiativeUpdate!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the  initiative update to retrieve.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiativeUpdates",
+    "description": "All  InitiativeUpdates.",
+    "returns": "InitiativeUpdateConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned initiative updates.",
+        "type": "InitiativeUpdateFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "initiatives",
+    "description": "All initiatives in the workspace.",
+    "returns": "InitiativeConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned initiatives.",
+        "type": "InitiativeFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      },
+      {
+        "name": "sort",
+        "description": "[INTERNAL] Sort returned initiatives.",
+        "type": "[InitiativeSortInput!]",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integration",
+    "description": "One specific integration.",
+    "returns": "Integration!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationHasScopes",
+    "description": "Checks if the integration has all required scopes.",
+    "returns": "IntegrationHasScopesPayload!",
+    "args": [
+      {
+        "name": "scopes",
+        "description": "Required scopes.",
+        "type": "[String!]!",
+        "defaultValue": null
+      },
+      {
+        "name": "integrationId",
+        "description": "The integration ID.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationTemplate",
+    "description": "One specific integrationTemplate.",
+    "returns": "IntegrationTemplate!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationTemplates",
+    "description": "Template and integration connections.",
+    "returns": "IntegrationTemplateConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrations",
+    "description": "All integrations.",
+    "returns": "IntegrationConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "integrationsSettings",
+    "description": "One specific set of settings.",
+    "returns": "IntegrationsSettings!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issue",
+    "description": "One specific issue.",
+    "returns": "Issue!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueFigmaFileKeySearch",
+    "description": "Find issues that are related to a given Figma file key.",
+    "returns": "IssueConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      },
+      {
+        "name": "fileKey",
+        "description": "The Figma file key.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueFilterSuggestion",
+    "description": "Suggests filters for an issue view based on a text prompt.",
+    "returns": "IssueFilterSuggestionPayload!",
+    "args": [
+      {
+        "name": "projectId",
+        "description": "The ID of the project if filtering a project view",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "prompt",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueImportCheckCSV",
+    "description": "Checks a CSV file validity against a specific import service.",
+    "returns": "IssueImportCheckPayload!",
+    "args": [
+      {
+        "name": "csvUrl",
+        "description": "CSV storage url.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "service",
+        "description": "The service the CSV containing data from.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueImportCheckSync",
+    "description": "Checks whether it will be possible to setup sync for this project or repository at the end of import",
+    "returns": "IssueImportSyncCheckPayload!",
+    "args": [
+      {
+        "name": "issueImportId",
+        "description": "The ID of the issue import for which to check sync eligibility",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueImportJqlCheck",
+    "description": "Checks whether a custom JQL query is valid and can be used to filter issues of a Jira import",
+    "returns": "IssueImportJqlCheckPayload!",
+    "args": [
+      {
+        "name": "jiraHostname",
+        "description": "Jira installation or cloud hostname.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "jiraToken",
+        "description": "Jira personal access token to access Jira REST API.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "jiraEmail",
+        "description": "Jira user account email.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "jiraProject",
+        "description": "Jira project key to use as the base filter of the query.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "jql",
+        "description": "The JQL query to validate.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueLabel",
+    "description": "One specific label.",
+    "returns": "IssueLabel!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueLabels",
+    "description": "All issue labels.",
+    "returns": "IssueLabelConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned issue labels.",
+        "type": "IssueLabelFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issuePriorityValues",
+    "description": "Issue priority values and corresponding labels.",
+    "returns": "[IssuePriorityValue!]!",
+    "args": []
+  },
+  {
+    "name": "issueRelation",
+    "description": "One specific issue relation.",
+    "returns": "IssueRelation!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueRelations",
+    "description": "All issue relationships.",
+    "returns": "IssueRelationConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueRepositorySuggestions",
+    "description": "Returns code repositories that are most likely to be relevant for implementing an issue.",
+    "returns": "RepositorySuggestionsPayload!",
+    "args": [
+      {
+        "name": "agentSessionId",
+        "description": "Optional AgentSession ID associated with the issue for which the suggestions are being generated.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "candidateRepositories",
+        "description": "List of candidate repositories to restrict suggestions to.",
+        "type": "[CandidateRepository!]!",
+        "defaultValue": null
+      },
+      {
+        "name": "issueId",
+        "description": "The ID of the issue to get repository suggestions for.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueSearch",
+    "description": "[DEPRECATED] Search issues. This endpoint is deprecated and will be removed in the future – use `searchIssues` instead.",
+    "returns": "IssueConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned issues.",
+        "type": "IssueFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "query",
+        "description": "[Deprecated] Search string to look for.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueTitleSuggestionFromCustomerRequest",
+    "description": "Suggests issue title based on a customer request.",
+    "returns": "IssueTitleSuggestionFromCustomerRequestPayload!",
+    "args": [
+      {
+        "name": "request",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueToRelease",
+    "description": "[ALPHA] One specific issueToRelease.",
+    "returns": "IssueToRelease!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueToReleases",
+    "description": "[ALPHA] Returns a list of issue to release entities.",
+    "returns": "IssueToReleaseConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issueVcsBranchSearch",
+    "description": "Find issue based on the VCS branch name.",
+    "returns": "Issue",
+    "args": [
+      {
+        "name": "branchName",
+        "description": "The VCS branch name to search for.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "issues",
+    "description": "All issues.",
+    "returns": "IssueConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned issues.",
+        "type": "IssueFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      },
+      {
+        "name": "sort",
+        "description": "[INTERNAL] Sort returned issues.",
+        "type": "[IssueSortInput!]",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "latestReleaseByAccessKey",
+    "description": "[ALPHA] Returns the latest release for the pipeline associated with the access key.",
+    "returns": "Release",
+    "args": []
+  },
+  {
+    "name": "notification",
+    "description": "One specific notification.",
+    "returns": "Notification!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationSubscription",
+    "description": "One specific notification subscription.",
+    "returns": "NotificationSubscription!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationSubscriptions",
+    "description": "The user's notification subscriptions.",
+    "returns": "NotificationSubscriptionConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notifications",
+    "description": "All notifications.",
+    "returns": "NotificationConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filters returned notifications.",
+        "type": "NotificationFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "notificationsUnreadCount",
+    "description": "[Internal] A number of unread notifications.",
+    "returns": "Int!",
+    "args": []
+  },
+  {
+    "name": "organization",
+    "description": "The user's organization.",
+    "returns": "Organization!",
+    "args": []
+  },
+  {
+    "name": "organizationDomainClaimRequest",
+    "description": "[INTERNAL] Checks whether the domain can be claimed.",
+    "returns": "OrganizationDomainClaimPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The ID of the organization domain to claim.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationExists",
+    "description": "Does the organization exist.",
+    "returns": "OrganizationExistsPayload!",
+    "args": [
+      {
+        "name": "urlKey",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationInvite",
+    "description": "One specific organization invite.",
+    "returns": "OrganizationInvite!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationInviteDetails",
+    "description": "One specific organization invite.",
+    "returns": "OrganizationInviteDetailsPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationInvites",
+    "description": "All invites for the organization.",
+    "returns": "OrganizationInviteConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "organizationMeta",
+    "description": "[INTERNAL] Get organization metadata by urlKey or organization id.",
+    "returns": "OrganizationMeta",
+    "args": [
+      {
+        "name": "urlKey",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "project",
+    "description": "One specific project.",
+    "returns": "Project!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectFilterSuggestion",
+    "description": "Suggests filters for a project view based on a text prompt.",
+    "returns": "ProjectFilterSuggestionPayload!",
+    "args": [
+      {
+        "name": "prompt",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectLabel",
+    "description": "One specific label.",
+    "returns": "ProjectLabel!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectLabels",
+    "description": "All project labels.",
+    "returns": "ProjectLabelConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned project labels.",
+        "type": "ProjectLabelFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectMilestone",
+    "description": "One specific project milestone.",
+    "returns": "ProjectMilestone!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectMilestones",
+    "description": "All milestones for the project.",
+    "returns": "ProjectMilestoneConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned project milestones.",
+        "type": "ProjectMilestoneFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectRelation",
+    "description": "One specific project relation.",
+    "returns": "ProjectRelation!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectRelations",
+    "description": "All project relationships.",
+    "returns": "ProjectRelationConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectStatus",
+    "description": "One specific project status.",
+    "returns": "ProjectStatus!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectStatusProjectCount",
+    "description": "[INTERNAL] Count of projects using this project status across the organization.",
+    "returns": "ProjectStatusCountPayload!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the project status to find the project count for.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectStatuses",
+    "description": "All project statuses.",
+    "returns": "ProjectStatusConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectUpdate",
+    "description": "A specific project update.",
+    "returns": "ProjectUpdate!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the project update to retrieve.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projectUpdates",
+    "description": "All project updates.",
+    "returns": "ProjectUpdateConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned project updates.",
+        "type": "ProjectUpdateFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "projects",
+    "description": "All projects.",
+    "returns": "ProjectConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned projects.",
+        "type": "ProjectFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      },
+      {
+        "name": "sort",
+        "description": "[INTERNAL] Sort returned projects.",
+        "type": "[ProjectSortInput!]",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "pushSubscriptionTest",
+    "description": "Sends a test push message.",
+    "returns": "PushSubscriptionTestPayload!",
+    "args": [
+      {
+        "name": "targetMobile",
+        "description": "Whether to send to mobile devices.",
+        "type": "Boolean",
+        "defaultValue": "false"
+      },
+      {
+        "name": "sendStrategy",
+        "description": "The send strategy to use.",
+        "type": "SendStrategy",
+        "defaultValue": "push"
+      }
+    ]
+  },
+  {
+    "name": "rateLimitStatus",
+    "description": "The status of the rate limiter.",
+    "returns": "RateLimitPayload!",
+    "args": []
+  },
+  {
+    "name": "release",
+    "description": "[ALPHA] One specific release.",
+    "returns": "Release!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releasePipeline",
+    "description": "[ALPHA] One specific release pipeline.",
+    "returns": "ReleasePipeline!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releasePipelineByAccessKey",
+    "description": "[ALPHA] Returns a release pipeline by ID. Requires the access key to have access to the pipeline.",
+    "returns": "ReleasePipeline!",
+    "args": []
+  },
+  {
+    "name": "releasePipelines",
+    "description": "[ALPHA] All release pipelines.",
+    "returns": "ReleasePipelineConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseStage",
+    "description": "[ALPHA] One specific release stage.",
+    "returns": "ReleaseStage!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releaseStages",
+    "description": "[ALPHA] All release stages.",
+    "returns": "ReleaseStageConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "releases",
+    "description": "[ALPHA] All releases.",
+    "returns": "ReleaseConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "roadmap",
+    "description": "One specific roadmap.",
+    "returns": "Roadmap!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "roadmapToProject",
+    "description": "One specific roadmapToProject.",
+    "returns": "RoadmapToProject!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "roadmapToProjects",
+    "description": null,
+    "returns": "RoadmapToProjectConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "roadmaps",
+    "description": "All roadmaps in the workspace.",
+    "returns": "RoadmapConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "searchDocuments",
+    "description": "Search documents.",
+    "returns": "DocumentSearchPayload!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      },
+      {
+        "name": "term",
+        "description": "Search string to look for.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "includeComments",
+        "description": "Should associated comments be searched (default: false).",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "teamId",
+        "description": "UUID of a team to use as a boost.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "searchIssues",
+    "description": "Search issues.",
+    "returns": "IssueSearchPayload!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned issues.",
+        "type": "IssueFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      },
+      {
+        "name": "term",
+        "description": "Search string to look for.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "includeComments",
+        "description": "Should associated comments be searched (default: false).",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "teamId",
+        "description": "UUID of a team to use as a boost.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "searchProjects",
+    "description": "Search projects.",
+    "returns": "ProjectSearchPayload!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      },
+      {
+        "name": "term",
+        "description": "Search string to look for.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "includeComments",
+        "description": "Should associated comments be searched (default: false).",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "teamId",
+        "description": "UUID of a team to use as a boost.",
+        "type": "String",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "semanticSearch",
+    "description": "Search for various resources using natural language.",
+    "returns": "SemanticSearchPayload!",
+    "args": [
+      {
+        "name": "query",
+        "description": "Search query to look for.",
+        "type": "String!",
+        "defaultValue": null
+      },
+      {
+        "name": "types",
+        "description": "The types of results to return (default: all).",
+        "type": "[SemanticSearchResultType!]",
+        "defaultValue": null
+      },
+      {
+        "name": "maxResults",
+        "description": "The maximum number of results to return (default: 50).",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Whether to include archived results in the search (default: false).",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "filters",
+        "description": "Filters to apply to the semantic search results of each type.",
+        "type": "SemanticSearchFilters",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "ssoUrlFromEmail",
+    "description": "Fetch SSO login URL for the email provided.",
+    "returns": "SsoUrlFromEmailResponse!",
+    "args": [
+      {
+        "name": "isDesktop",
+        "description": "Whether the client is the desktop app.",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "type",
+        "description": "Type of identity provider.",
+        "type": "IdentityProviderType!",
+        "defaultValue": "general"
+      },
+      {
+        "name": "email",
+        "description": "Email to query the SSO login URL by.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "team",
+    "description": "One specific team.",
+    "returns": "Team!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "teamMembership",
+    "description": "One specific team membership.",
+    "returns": "TeamMembership!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "teamMemberships",
+    "description": "All team memberships.",
+    "returns": "TeamMembershipConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "teams",
+    "description": "All teams whose issues can be accessed by the user. This might be different from `administrableTeams`, which also includes teams whose settings can be changed by the user.",
+    "returns": "TeamConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned teams.",
+        "type": "TeamFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "template",
+    "description": "A specific template.",
+    "returns": "Template!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the template to retrieve.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "templates",
+    "description": "All templates from all users.",
+    "returns": "[Template!]!",
+    "args": []
+  },
+  {
+    "name": "templatesForIntegration",
+    "description": "Returns all templates that are associated with the integration type.",
+    "returns": "[Template!]!",
+    "args": [
+      {
+        "name": "integrationType",
+        "description": "The type of integration for which to return associated templates.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "timeSchedule",
+    "description": "A specific time schedule.",
+    "returns": "TimeSchedule!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the time schedule to retrieve.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "timeSchedules",
+    "description": "All time schedules.",
+    "returns": "TimeScheduleConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "triageResponsibilities",
+    "description": "All triage responsibilities.",
+    "returns": "TriageResponsibilityConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "triageResponsibility",
+    "description": "A specific triage responsibility.",
+    "returns": "TriageResponsibility!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the triage responsibility to retrieve.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "user",
+    "description": "One specific user.",
+    "returns": "User!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the user to retrieve. To retrieve the authenticated user, use `viewer` query.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "userSessions",
+    "description": "Lists the sessions of a user. Can only be called by an admin or owner.",
+    "returns": "[AuthenticationSessionResponse!]!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the user to list sessions of.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "userSettings",
+    "description": "The user's settings.",
+    "returns": "UserSettings!",
+    "args": []
+  },
+  {
+    "name": "users",
+    "description": "All users for the organization.",
+    "returns": "UserConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned users.",
+        "type": "UserFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "includeDisabled",
+        "description": "Should query return disabled/suspended users (default: false).",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      },
+      {
+        "name": "sort",
+        "description": "[INTERNAL] Sort returned users.",
+        "type": "[UserSortInput!]",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "verifyGitHubEnterpriseServerInstallation",
+    "description": "Verify that we received the correct response from the GitHub Enterprise Server.",
+    "returns": "GitHubEnterpriseServerInstallVerificationPayload!",
+    "args": [
+      {
+        "name": "integrationId",
+        "description": "The integration ID.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "viewer",
+    "description": "The currently authenticated user.",
+    "returns": "User!",
+    "args": []
+  },
+  {
+    "name": "webhook",
+    "description": "A specific webhook.",
+    "returns": "Webhook!",
+    "args": [
+      {
+        "name": "id",
+        "description": "The identifier of the webhook to retrieve.",
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "webhooks",
+    "description": "All webhooks.",
+    "returns": "WebhookConnection!",
+    "args": [
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "workflowState",
+    "description": "One specific state.",
+    "returns": "WorkflowState!",
+    "args": [
+      {
+        "name": "id",
+        "description": null,
+        "type": "String!",
+        "defaultValue": null
+      }
+    ]
+  },
+  {
+    "name": "workflowStates",
+    "description": "All issue workflow states.",
+    "returns": "WorkflowStateConnection!",
+    "args": [
+      {
+        "name": "filter",
+        "description": "Filter returned workflow states.",
+        "type": "WorkflowStateFilter",
+        "defaultValue": null
+      },
+      {
+        "name": "before",
+        "description": "A cursor to be used with last for backward pagination.",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "after",
+        "description": "A cursor to be used with first for forward pagination",
+        "type": "String",
+        "defaultValue": null
+      },
+      {
+        "name": "first",
+        "description": "The number of items to forward paginate (used with after). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "last",
+        "description": "The number of items to backward paginate (used with before). Defaults to 50.",
+        "type": "Int",
+        "defaultValue": null
+      },
+      {
+        "name": "includeArchived",
+        "description": "Should archived resources be included (default: false)",
+        "type": "Boolean",
+        "defaultValue": null
+      },
+      {
+        "name": "orderBy",
+        "description": "By which field should the pagination order by. Available options are createdAt (default) and updatedAt.",
+        "type": "PaginationOrderBy",
+        "defaultValue": null
+      }
+    ]
+  }
+]

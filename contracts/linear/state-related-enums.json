@@ -1,0 +1,380 @@
+[
+  {
+    "name": "AgentSessionStatus",
+    "description": "The status of an agent session.",
+    "values": [
+      {
+        "name": "pending",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "active",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "complete",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "awaitingInput",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "error",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "stale",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "CustomerStatusType",
+    "description": "[DEPRECATED] A type of customer status.",
+    "values": [
+      {
+        "name": "active",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "inactive",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "GitAutomationStates",
+    "description": "The various states of a pull/merge request.",
+    "values": [
+      {
+        "name": "draft",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "start",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "review",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "mergeable",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "merge",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "InitiativeStatus",
+    "description": null,
+    "values": [
+      {
+        "name": "Planned",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Active",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Completed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "IssueSuggestionState",
+    "description": null,
+    "values": [
+      {
+        "name": "active",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "stale",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "accepted",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "dismissed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "OAuthClientApprovalStatus",
+    "description": "The different requests statuses possible for an OAuth client approval request.",
+    "values": [
+      {
+        "name": "requested",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "approved",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "denied",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "OrganizationInviteStatus",
+    "description": "The different statuses possible for an organization invite.",
+    "values": [
+      {
+        "name": "pending",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "accepted",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "expired",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ProjectMilestoneStatus",
+    "description": "The status of a project milestone.",
+    "values": [
+      {
+        "name": "unstarted",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "next",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "overdue",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "done",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "ProjectStatusType",
+    "description": "A type of project status.",
+    "values": [
+      {
+        "name": "backlog",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "planned",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "started",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "paused",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "completed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "canceled",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "PullRequestStatus",
+    "description": "The status of a pull request.",
+    "values": [
+      {
+        "name": "draft",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "open",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "inReview",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "approved",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "merged",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "closed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "SlaStatus",
+    "description": null,
+    "values": [
+      {
+        "name": "Breached",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "HighRisk",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "MediumRisk",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "LowRisk",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Completed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "Failed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  },
+  {
+    "name": "SummaryGenerationStatus",
+    "description": "The generation status of a summary.",
+    "values": [
+      {
+        "name": "pending",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "completed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      },
+      {
+        "name": "failed",
+        "description": null,
+        "isDeprecated": false,
+        "deprecationReason": null
+      }
+    ]
+  }
+]

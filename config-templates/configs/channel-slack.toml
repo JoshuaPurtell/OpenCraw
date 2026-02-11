@@ -1,0 +1,14 @@
+[channels.slack]
+enabled = false
+# bot_token = "..."
+poll_interval_ms = 3000
+channel_ids = []
+start_from_latest = true
+history_limit = 100
+
+[channels.slack.access]
+# "pairing" (default), "allowlist", or "open" (local testing only)
+mode = "pairing"
+# Slack user IDs look like U0123456789.
+# allowed_senders = ["U0123456789"]
+allowed_senders = []

@@ -1,5 +1,5 @@
 use crate::error::{Result, ToolError};
-use crate::traits::{optional_string, require_string, Tool, ToolSpec};
+use crate::traits::{Tool, ToolSpec, optional_string, require_string};
 use async_trait::async_trait;
 use horizons_core::core_agents::models::RiskLevel;
 use regex::Regex;
@@ -64,10 +64,10 @@ impl FilesystemTool {
     }
 
     async fn write_file(&self, path: &Path, content: &str) -> Result<()> {
-        if content.as_bytes().len() > self.file_bytes_max {
+        if content.len() > self.file_bytes_max {
             return Err(ToolError::ExecutionFailed(format!(
                 "content too large: {} bytes (max {})",
-                content.as_bytes().len(),
+                content.len(),
                 self.file_bytes_max
             )));
         }

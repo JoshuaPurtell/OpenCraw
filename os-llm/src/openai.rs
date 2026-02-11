@@ -6,6 +6,7 @@ use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::pin::Pin;
+use std::time::Instant;
 
 const OPENAI_CHAT_COMPLETIONS_URL: &str = "https://api.openai.com/v1/chat/completions";
 
@@ -31,6 +32,13 @@ impl OpenAiClient {
         messages: &[ChatMessage],
         tools: &[ToolDefinition],
     ) -> Result<ChatResponse> {
+        tracing::debug!(
+            model = %self.model,
+            message_count = messages.len(),
+            tool_count = tools.len(),
+            "openai chat request build started"
+        );
+        let started = Instant::now();
         let req = OpenAiChatRequest::new(&self.model, messages, tools, false);
 
         let response = self
@@ -44,13 +52,31 @@ impl OpenAiClient {
         let status = response.status();
         let body = response.text().await?;
         if !status.is_success() {
+            tracing::error!(
+                model = %self.model,
+                status = %status,
+                body_len = body.len(),
+                latency_ms = started.elapsed().as_millis() as u64,
+                "openai chat request failed"
+            );
             return Err(LlmError::Http(format!(
                 "openai chat status={status} body={body}"
             )));
         }
 
         let parsed: OpenAiChatResponse = serde_json::from_str(&body)?;
-        parsed.try_into()
+        let chat_response: ChatResponse = parsed.try_into()?;
+        tracing::info!(
+            model = %self.model,
+            status = %status,
+            latency_ms = started.elapsed().as_millis() as u64,
+            prompt_tokens = chat_response.usage.prompt_tokens,
+            completion_tokens = chat_response.usage.completion_tokens,
+            tool_calls = chat_response.message.tool_calls.len(),
+            finish_reason = %chat_response.finish_reason,
+            "openai chat request completed"
+        );
+        Ok(chat_response)
     }
 
     #[tracing::instrument(level = "info", skip_all)]
@@ -59,6 +85,13 @@ impl OpenAiClient {
         messages: &[ChatMessage],
         tools: &[ToolDefinition],
     ) -> Result<Pin<Box<dyn Stream<Item = Result<StreamChunk>> + Send>>> {
+        tracing::debug!(
+            model = %self.model,
+            message_count = messages.len(),
+            tool_count = tools.len(),
+            "openai stream request build started"
+        );
+        let started = Instant::now();
         let req = OpenAiChatRequest::new(&self.model, messages, tools, true);
 
         let response = self
@@ -71,11 +104,24 @@ impl OpenAiClient {
 
         let status = response.status();
         if !status.is_success() {
-            let body = response.text().await.unwrap_or_default();
+            let body = response.text().await?;
+            tracing::error!(
+                model = %self.model,
+                status = %status,
+                body_len = body.len(),
+                latency_ms = started.elapsed().as_millis() as u64,
+                "openai stream request failed"
+            );
             return Err(LlmError::Http(format!(
                 "openai stream status={status} body={body}"
             )));
         }
+        tracing::info!(
+            model = %self.model,
+            status = %status,
+            latency_ms = started.elapsed().as_millis() as u64,
+            "openai stream request established"
+        );
 
         let state = OpenAiStreamState::new();
         let sse = Box::pin(decode_sse(response.bytes_stream()));
@@ -87,10 +133,17 @@ impl OpenAiClient {
                     match next {
                         Ok(SseEvent::Data(data)) => {
                             if data.trim() == "[DONE]" {
-                                let usage = state.usage.clone().unwrap_or(Usage {
-                                    prompt_tokens: 0,
-                                    completion_tokens: 0,
-                                });
+                                let usage = match state.usage.clone() {
+                                    Some(v) => v,
+                                    None => {
+                                        return Some((
+                                            Err(LlmError::ResponseFormat(
+                                                "openai stream ended without usage".to_string(),
+                                            )),
+                                            (sse, state),
+                                        ));
+                                    }
+                                };
                                 return Some((Ok(StreamChunk::Done { usage }), (sse, state)));
                             }
 
@@ -108,14 +161,42 @@ impl OpenAiClient {
                             };
 
                             if let Some(u) = chunk.usage.as_ref() {
+                                let prompt_tokens = match u.prompt_tokens {
+                                    Some(v) => v as u32,
+                                    None => {
+                                        return Some((
+                                            Err(LlmError::ResponseFormat(
+                                                "openai usage missing prompt_tokens".to_string(),
+                                            )),
+                                            (sse, state),
+                                        ));
+                                    }
+                                };
+                                let completion_tokens = match u.completion_tokens {
+                                    Some(v) => v as u32,
+                                    None => {
+                                        return Some((
+                                            Err(LlmError::ResponseFormat(
+                                                "openai usage missing completion_tokens"
+                                                    .to_string(),
+                                            )),
+                                            (sse, state),
+                                        ));
+                                    }
+                                };
                                 state.usage = Some(Usage {
-                                    prompt_tokens: u.prompt_tokens.unwrap_or(0) as u32,
-                                    completion_tokens: u.completion_tokens.unwrap_or(0) as u32,
+                                    prompt_tokens,
+                                    completion_tokens,
                                 });
                             }
 
                             let Some(choice) = chunk.choices.first() else {
-                                continue;
+                                return Some((
+                                    Err(LlmError::ResponseFormat(
+                                        "openai stream chunk missing choices".to_string(),
+                                    )),
+                                    (sse, state),
+                                ));
                             };
                             let delta = &choice.delta;
                             if let Some(content) = delta.content.as_ref() {
@@ -131,7 +212,18 @@ impl OpenAiClient {
 
                             if let Some(tool_calls) = delta.tool_calls.as_ref() {
                                 for tc in tool_calls {
-                                    let idx = tc.index.unwrap_or(0);
+                                    let idx = match tc.index {
+                                        Some(v) => v,
+                                        None => {
+                                            return Some((
+                                                Err(LlmError::ResponseFormat(
+                                                    "openai tool_call delta missing index"
+                                                        .to_string(),
+                                                )),
+                                                (sse, state),
+                                            ));
+                                        }
+                                    };
                                     let entry = state.tool_calls.entry(idx).or_default();
                                     if entry.id.is_none() {
                                         entry.id = tc.id.clone();
@@ -159,7 +251,16 @@ impl OpenAiClient {
                                         .function
                                         .as_ref()
                                         .and_then(|f| f.arguments.clone())
-                                        .unwrap_or_default();
+                                        .ok_or_else(|| {
+                                            LlmError::ResponseFormat(
+                                                "openai tool_call delta missing function.arguments"
+                                                    .to_string(),
+                                            )
+                                        });
+                                    let arguments = match arguments {
+                                        Ok(v) => v,
+                                        Err(e) => return Some((Err(e), (sse, state))),
+                                    };
                                     if !arguments.is_empty() {
                                         return Some((
                                             Ok(StreamChunk::ToolCallDelta { arguments }),
@@ -351,12 +452,11 @@ impl TryFrom<OpenAiChatResponse> for ChatResponse {
             LlmError::ResponseFormat("openai response missing choices".to_string())
         })?;
 
-        let usage = v.usage.unwrap_or(OpenAiUsage {
-            prompt_tokens: 0,
-            completion_tokens: 0,
-        });
+        let usage = v
+            .usage
+            .ok_or_else(|| LlmError::ResponseFormat("openai response missing usage".to_string()))?;
 
-        let tool_calls = choice
+        let tool_calls: Vec<ToolCall> = choice
             .message
             .tool_calls
             .into_iter()
@@ -366,11 +466,20 @@ impl TryFrom<OpenAiChatResponse> for ChatResponse {
                 arguments: tc.function.arguments,
             })
             .collect();
+        let content = match choice.message.content {
+            Some(v) => v,
+            None if !tool_calls.is_empty() => String::new(),
+            None => {
+                return Err(LlmError::ResponseFormat(
+                    "openai response missing assistant content".to_string(),
+                ));
+            }
+        };
 
         Ok(ChatResponse {
             message: ChatMessage {
                 role: Role::Assistant,
-                content: choice.message.content.unwrap_or_default(),
+                content,
                 tool_calls,
                 tool_call_id: None,
             },
@@ -378,9 +487,9 @@ impl TryFrom<OpenAiChatResponse> for ChatResponse {
                 prompt_tokens: usage.prompt_tokens,
                 completion_tokens: usage.completion_tokens,
             },
-            finish_reason: choice
-                .finish_reason
-                .unwrap_or_else(|| "unknown".to_string()),
+            finish_reason: choice.finish_reason.ok_or_else(|| {
+                LlmError::ResponseFormat("openai response missing finish_reason".to_string())
+            })?,
         })
     }
 }
@@ -422,7 +531,7 @@ where
                         continue;
                     }
                     Some(Err(e)) => {
-                        return Some((Err(LlmError::Http(e.to_string())), (stream, buffer)))
+                        return Some((Err(LlmError::Http(e.to_string())), (stream, buffer)));
                     }
                     None => return None,
                 }

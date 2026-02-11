@@ -1,0 +1,16 @@
+[channels.matrix]
+enabled = false
+homeserver_url = "https://matrix-client.matrix.org"
+# access_token = "..."
+# user_id = "@you:matrix.org"
+poll_interval_ms = 3000
+room_ids = []
+start_from_latest = true
+sync_timeout_ms = 30000
+
+[channels.matrix.access]
+# "pairing" (default), "allowlist", or "open" (local testing only)
+mode = "pairing"
+# Matrix sender IDs look like "@alice:matrix.org".
+# allowed_senders = ["@alice:matrix.org"]
+allowed_senders = []

@@ -1,0 +1,26 @@
+[channels.email]
+enabled = false
+provider = "gmail"
+# gmail_access_token = "..."
+# OAuth note:
+# - Get this token via Google OAuth consent (e.g. OAuth Playground).
+# - Current OpenCraw expects a live access token here and does not auto-refresh it yet.
+poll_interval_ms = 2000
+query = "in:inbox is:unread"
+start_from_latest = true
+mark_processed_as_read = true
+max_results = 25
+
+[channels.email.actions]
+list_labels = true
+list_inbox = true
+search = true
+read = true
+send = true
+
+[channels.email.access]
+# "pairing" (default), "allowlist", or "open" (local testing only)
+mode = "pairing"
+# Email sender IDs are email addresses.
+# allowed_senders = ["you@example.com"]
+allowed_senders = []

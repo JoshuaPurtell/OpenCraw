@@ -1,0 +1,15 @@
+# Local Horizons override for active development.
+# Copy this file to .cargo/config.toml and adjust the path.
+#
+#   cp .cargo/config.toml.example .cargo/config.toml
+#
+# Cargo will use matching crates from these directories instead of
+# fetching from the git remote.  Remove or comment out when done.
+
+paths = [
+    "../Horizons/horizons_core",
+    "../Horizons/horizons_server",
+    "../Horizons/horizons_graph",
+    "../Horizons/mipro_v2",
+    "../Horizons/voyager",
+]

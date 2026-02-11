@@ -1,8 +1,8 @@
 use crate::traits::ChannelAdapter;
 use crate::types::{InboundMessage, InboundMessageKind, OutboundMessage};
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use chrono::Utc;
-use rusqlite::{params, Connection, OpenFlags};
+use rusqlite::{Connection, OpenFlags, params};
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -35,12 +35,12 @@ impl ImessageAdapter {
         }
     }
 
-    pub fn default_source_db() -> PathBuf {
-        let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-        Path::new(&home)
+    pub fn default_source_db() -> Result<PathBuf> {
+        let home = std::env::var("HOME").map_err(|_| anyhow!("HOME is not set"))?;
+        Ok(Path::new(&home)
             .join("Library")
             .join("Messages")
-            .join("chat.db")
+            .join("chat.db"))
     }
 
     pub fn with_poll_interval(mut self, poll_interval: Duration) -> Self {
@@ -54,7 +54,7 @@ impl ImessageAdapter {
     }
 
     pub fn with_max_per_poll(mut self, max_per_poll: usize) -> Self {
-        self.max_per_poll = max_per_poll.max(1);
+        self.max_per_poll = max_per_poll;
         self
     }
 
@@ -112,22 +112,9 @@ impl ImessageAdapter {
     #[tracing::instrument(level = "info", skip_all)]
     async fn poll_loop(&self, tx: mpsc::Sender<InboundMessage>) -> Result<()> {
         let mut last_rowid: Option<i64> = None;
-        let mut failed_attempts: usize = 0;
 
         loop {
-            match self.poll_once(&tx, &mut last_rowid).await {
-                Ok(()) => failed_attempts = 0,
-                Err(e) => {
-                    failed_attempts += 1;
-                    let backoff = Duration::from_millis((failed_attempts.min(20) as u64) * 250);
-                    tracing::warn!(
-                        %e,
-                        failed_attempts,
-                        "imessage poll failed (grant Full Disk Access to read chat.db?)"
-                    );
-                    tokio::time::sleep(backoff).await;
-                }
-            }
+            self.poll_once(&tx, &mut last_rowid).await?;
 
             tokio::time::sleep(self.poll_interval).await;
         }
@@ -141,7 +128,7 @@ impl ImessageAdapter {
         let source_db = self.source_db.clone();
         let start_from_latest = self.start_from_latest;
         let starting_empty = last_rowid.is_none();
-        let last_seen = last_rowid.unwrap_or(0);
+        let last_seen = (*last_rowid).unwrap_or_default();
         let max_per_poll = self.max_per_poll;
         let group_prefixes = self.group_prefixes.clone();
 
@@ -214,21 +201,25 @@ LIMIT ?2
                 continue;
             }
 
-            let Some(sender_id) = raw.handle_id.clone().filter(|s| !s.trim().is_empty()) else {
-                continue;
-            };
+            let sender_id = raw
+                .handle_id
+                .clone()
+                .filter(|s| !s.trim().is_empty())
+                .ok_or_else(|| anyhow!("imessage message missing sender handle_id"))?;
 
-            let text = raw.text.unwrap_or_default();
+            let text = raw
+                .text
+                .ok_or_else(|| anyhow!("imessage message missing text"))?;
             let mut content = text.trim().to_string();
             if content.is_empty() {
-                continue;
+                return Err(anyhow!("imessage message has empty text content"));
             }
 
-            let thread_id = raw.chat_guid.clone();
-            let is_group = thread_id
-                .as_deref()
-                .map(is_chat_handle)
-                .unwrap_or(false);
+            let thread_id = raw
+                .chat_guid
+                .clone()
+                .ok_or_else(|| anyhow!("imessage message missing chat_guid"))?;
+            let is_group = is_chat_handle(&thread_id);
 
             if is_group && !group_prefixes.is_empty() {
                 if let Some(stripped) = strip_any_prefix(&content, &group_prefixes) {
@@ -248,10 +239,10 @@ LIMIT ?2
 
             let inbound = InboundMessage {
                 kind: InboundMessageKind::Message,
-                message_id: raw.guid,
-                channel_id: "imessage".to_string(),
-                sender_id,
-                thread_id,
+                message_id: raw.guid.into(),
+                channel_id: "imessage".into(),
+                sender_id: sender_id.into(),
+                thread_id: Some(thread_id.into()),
                 is_group,
                 content,
                 metadata: meta,
@@ -260,7 +251,7 @@ LIMIT ?2
 
             // If the receiver is gone, just stop sending.
             if tx.send(inbound).await.is_err() {
-                return Ok(());
+                return Err(anyhow!("imessage inbound queue closed"));
             }
         }
 
@@ -301,7 +292,9 @@ fn open_chat_db_readonly(path: &Path) -> Result<Connection> {
 }
 
 fn current_max_rowid(conn: &Connection) -> Result<i64> {
-    let v = conn.query_row("SELECT IFNULL(MAX(ROWID), 0) FROM message", [], |row| row.get(0))?;
+    let v = conn.query_row("SELECT IFNULL(MAX(ROWID), 0) FROM message", [], |row| {
+        row.get(0)
+    })?;
     Ok(v)
 }
 
@@ -318,8 +311,18 @@ fn strip_any_prefix(input: &str, prefixes: &[String]) -> Option<String> {
         if trimmed[..ptrim.len()].eq_ignore_ascii_case(ptrim) {
             let rest = trimmed[ptrim.len()..].trim_start();
             // Common separators after a "mention".
-            let rest = rest.strip_prefix(':').unwrap_or(rest).trim_start();
-            let rest = rest.strip_prefix(',').unwrap_or(rest).trim_start();
+            let rest = if let Some(v) = rest.strip_prefix(':') {
+                v
+            } else {
+                rest
+            }
+            .trim_start();
+            let rest = if let Some(v) = rest.strip_prefix(',') {
+                v
+            } else {
+                rest
+            }
+            .trim_start();
             return Some(rest.to_string());
         }
     }

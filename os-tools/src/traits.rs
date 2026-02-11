@@ -15,13 +15,19 @@ pub trait Tool: Send + Sync {
     async fn execute(&self, arguments: serde_json::Value) -> Result<serde_json::Value>;
 }
 
-pub fn to_llm_tool_def(tool: &dyn Tool) -> os_llm::ToolDefinition {
-    let spec = tool.spec();
-    os_llm::ToolDefinition {
-        name: spec.name,
-        description: spec.description,
-        parameters: spec.parameters_schema,
-    }
+pub fn to_llm_tool_def(tool: &dyn Tool) -> Result<os_llm::ToolDefinition> {
+    let ToolSpec {
+        name,
+        description,
+        parameters_schema,
+        ..
+    } = tool.spec();
+    os_llm::ToolDefinition::validated(name.clone(), description, parameters_schema).map_err(|e| {
+        ToolError::ExecutionFailed(format!(
+            "tool '{}' failed provider name validation: {e}",
+            name
+        ))
+    })
 }
 
 pub(crate) fn require_string(args: &serde_json::Value, key: &str) -> Result<String> {
